@@ -1,0 +1,2747 @@
+[
+  {
+    "itemName": "HD M BLOW 003DB52 IOCL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "IOCL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PPCP 7033 E3 EXXON",
+    "materialType": "Import",
+    "hsnCode": "39023000",
+    "productCategory": "PP ICP",
+    "company": "EXXON",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LD LAMINATION 1070LA17 RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39011020",
+    "productCategory": "LDPE",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HD PIPE PE-100 002DP48 IOCL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "IOCL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LL FILM SLIP 010F18S IOCL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "LLDPE",
+    "company": "IOCL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HD PIPE PE-80 004DP44 IOCL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "IOCL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HD PIPE PE-63 010DP45 IOCL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "IOCL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LD FILM NON SLIP 450E DOW",
+    "materialType": "Import",
+    "hsnCode": "39019090",
+    "productCategory": "LDPE",
+    "company": "DOW",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LD HEAVY DUTY FB3003 LOTRENE",
+    "materialType": "Import",
+    "hsnCode": "39011090",
+    "productCategory": "LDPE",
+    "company": "LOTRENE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE 1007",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "NA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE 3007",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "NA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE 7007",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "NA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HD BLOW 012DB54 IOCL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "IOCL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE GPBM 010DB50 IOCL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "IOCL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP RAFFIA HP456J BASELL",
+    "materialType": "Import",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "BASELL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "POLYOLEFIN PLASTOMER AFFINITY PT 1450G1P DOW",
+    "materialType": "Import",
+    "hsnCode": "39019090",
+    "productCategory": "Plastomer",
+    "company": "DOW",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP RAFFIA 5061P SABIC",
+    "materialType": "Import",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "SABIC",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "TQPP FILM 1100FS IOCL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "IOCL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP RAFFIA 5032E3 EXXON",
+    "materialType": "Import",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "EXXON",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HD PIPE PE-80 HE 1440 BOROUGE",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "BOROUGE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PPCP 7032 E3 EXXON",
+    "materialType": "Import",
+    "hsnCode": "39023000",
+    "productCategory": "PP ICP",
+    "company": "EXXON",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP RAFFIA 5002P SABIC",
+    "materialType": "Import",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "SABIC",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LL FILM SLIP EFDC 7087 EQUATE",
+    "materialType": "Import",
+    "hsnCode": "39011010",
+    "productCategory": "LLDPE",
+    "company": "EQUATE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HD HM EGDA 6888 EQUATE",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "EQUATE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "Chlorinated Paraffin (A1/68)",
+    "materialType": "Domestic",
+    "hsnCode": "38122090",
+    "productCategory": "CPW",
+    "company": "NA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "Chlorinated Paraffin (A1/62)C",
+    "materialType": "Domestic",
+    "hsnCode": "38122090",
+    "productCategory": "CPW",
+    "company": "NA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "Chlorinated Paraffin A258C",
+    "materialType": "Domestic",
+    "hsnCode": "38122090",
+    "productCategory": "CPW",
+    "company": "NA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "Chlorinated Paraffin A2/52",
+    "materialType": "Domestic",
+    "hsnCode": "38122090",
+    "productCategory": "CPW",
+    "company": "NA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP INJECTION MOLDING P1110MG IOCL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "IOCL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE 010DP45U",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "IOCL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP LAMINATION 3155 E5 EXXON",
+    "materialType": "Import",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "EXXON",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP LAMINATION H350EC RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP LAMINATION 1350EG IOCL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "IOCL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP TQ FILM F10SR HMEL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "HMEL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP HE125MO Borouge",
+    "materialType": "Import",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "BOROUGE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP RAFFIA 1030RG IOCL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "IOCL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP RAFFIA HR003 MRPL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "MRPL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE HTA 001HD5 EXXON",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "EXXON",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP IM 6331 TITAN",
+    "materialType": "Import",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "TITAN",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE BM HB5502 TITAN",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "TITAN",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE FILM HF1881 TITAN",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "TITAN",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP RAFFIA OQ HP1106K LUBAN",
+    "materialType": "Import",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "LUBAN",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP LAMINATION 1105SC POLIMAXX",
+    "materialType": "Import",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "POLIMAXX",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PVC KANEVINYL S1001 RESIN",
+    "materialType": "Import",
+    "hsnCode": "39041020",
+    "productCategory": "PVC",
+    "company": "KANEKA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE 118WJ SABIC",
+    "materialType": "Import",
+    "hsnCode": "39011010",
+    "productCategory": "LLDPE",
+    "company": "SABIC",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE FI0851P SABIC",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "SABIC",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HD HM 6097 LUBAN",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "LUBAN",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP RAFFIA H030SG RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE AT6202 DOW",
+    "materialType": "Import",
+    "hsnCode": "39011010",
+    "productCategory": "LLDPE",
+    "company": "DOW",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE 7000F",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "TITAN",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE MBM 50100P MARLEX",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "MARLEX",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE GPBM 5502BN MARLEX",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "MARLEX",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP HOMO IM P1600MN IOCL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "IOCL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE F18S010UA GAIL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "GAIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP RAFFIA PPH-T03 SINOPEC",
+    "materialType": "Import",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "SINOPEC",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PVC SUSPENSION RESIN LS100H",
+    "materialType": "Import",
+    "hsnCode": "39041020",
+    "productCategory": "PVC",
+    "company": "LG",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "POLYCARBONATE MAKROLON 2856 COVESTRO",
+    "materialType": "Import",
+    "hsnCode": "39074000",
+    "productCategory": "PC",
+    "company": "COVESTRO",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PVC RESIN",
+    "materialType": "Import",
+    "hsnCode": "39041020",
+    "productCategory": "PVC",
+    "company": "NA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PVC SUSPENSION RESIN S65D FORMOSA",
+    "materialType": "Import",
+    "hsnCode": "39041020",
+    "productCategory": "PVC",
+    "company": "FORMOSA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP IM H110MA RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE 150E DOW",
+    "materialType": "Import",
+    "hsnCode": "39011090",
+    "productCategory": "LDPE",
+    "company": "DOW",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "POLYESTER CHIPS PET RESIN",
+    "materialType": "Import",
+    "hsnCode": "39076990",
+    "productCategory": "PET",
+    "company": "WANKAI",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE IM 080M60 IOCL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "IOCL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP PPH T03 SINOPEC",
+    "materialType": "Import",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "SINOPEC",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE F00952 SABIC",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "SABIC",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE F0120L POLYSURE",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "HMEL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LMDPE MDP06939 TRICOLENE",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "LMDPE",
+    "company": "TRICON",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE EXTRUSION FD0474 LOTRENE",
+    "materialType": "Import",
+    "hsnCode": "39011020",
+    "productCategory": "LDPE",
+    "company": "LOTRENE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP RANDOM COPOLYMER RB707CF BOREALIS",
+    "materialType": "Import",
+    "hsnCode": "39023000",
+    "productCategory": "PP RCP",
+    "company": "BOROUGE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PE COPOLYMER EVA 2518 SIPCHEM",
+    "materialType": "Import",
+    "hsnCode": "39013000",
+    "productCategory": "PP ICP",
+    "company": "SIPCHEM",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE PE-100 7700M",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "ILPC",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "POLYSTER CHIPS WK881",
+    "materialType": "Import",
+    "hsnCode": "39076190",
+    "productCategory": "PET",
+    "company": "WANKAI",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PLASTIC GRANULES HDPE",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "NA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "Chlorinated Paraffin - B2/52",
+    "materialType": "Domestic",
+    "hsnCode": "38122090",
+    "productCategory": "CPW",
+    "company": "NA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE FD0474 LOTRENE",
+    "materialType": "Import",
+    "hsnCode": "39011020",
+    "productCategory": "LDPE",
+    "company": "LOTRENE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE PIPE PE-100 P4808N SABIC",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "SABIC",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE PIPE PE-100 P6006N SABIC",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "SABIC",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE PIPE PE-100 P50H03 OPAL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "OPAL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PE PLASTIC GRANULES",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "NA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PE BLOWN FILM 5401G DOW",
+    "materialType": "Import",
+    "hsnCode": "39014010",
+    "productCategory": "Metallocene",
+    "company": "DOW",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE EC 7000 DOW",
+    "materialType": "Import",
+    "hsnCode": "39011020",
+    "productCategory": "LDPE",
+    "company": "DOW",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE FB2230 BOROUGE",
+    "materialType": "Import",
+    "hsnCode": "39011010",
+    "productCategory": "LLDPE",
+    "company": "BOROUGE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP IMPACT COPOLYMER C080MA RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39023000",
+    "productCategory": "PP ICP",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PE METALLOCENE 1018MK EXXON",
+    "materialType": "Import",
+    "hsnCode": "39019000",
+    "productCategory": "Metallocene",
+    "company": "EXXON",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "TITANIAM",
+    "materialType": "Import",
+    "hsnCode": "282300",
+    "productCategory": "Titanium",
+    "company": "TITAN",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP LAMINATION WHITE",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "NA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PE METALLOCENE 1018MK EXXONMOBIL",
+    "materialType": "Import",
+    "hsnCode": "39014090",
+    "productCategory": "Metallocene",
+    "company": "EXXON",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE LUPOLEN 2427F LYONDELLBASELL",
+    "materialType": "Import",
+    "hsnCode": "39011010",
+    "productCategory": "LDPE",
+    "company": "BASELL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE HEAVYDUTY 22FA002 RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39011020",
+    "productCategory": "LDPE",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE HM F52H04 OPAL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "OPAL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "POLYESTER CHIPS PET RESIN WK881",
+    "materialType": "Import",
+    "hsnCode": "39076990",
+    "productCategory": "PET",
+    "company": "WANKAI",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP LAMINATION BLUE",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "NA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE HM FILM TR144 MARLEX",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "MARLEX",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE HM FILM Q TR144 LOTRENE",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "LOTRENE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP LAMINATION H350FG RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE MP FB5026 LOTRENE",
+    "materialType": "Import",
+    "hsnCode": "39011020",
+    "productCategory": "LDPE",
+    "company": "LOTRENE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "POLYOLEFIN PLASTOMER AFFINITY 1881G DOW",
+    "materialType": "Import",
+    "hsnCode": "39019090",
+    "productCategory": "Plastomer",
+    "company": "DOW",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PVC SUSPENSION RESIN HS1000R",
+    "materialType": "Import",
+    "hsnCode": "39041020",
+    "productCategory": "PVC",
+    "company": "HANWHA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE FJ00952 SABIC",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "SABIC",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PET BOTTLE GRADE WK-821 WANKAI",
+    "materialType": "Import",
+    "hsnCode": "39076990",
+    "productCategory": "PET",
+    "company": "WANKAI",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PVC RESIN P1000 HANWHA",
+    "materialType": "Import",
+    "hsnCode": "39041020",
+    "productCategory": "PVC",
+    "company": "HANWHA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PE METALLOCENE 1018MA EXXONMOBIL",
+    "materialType": "Import",
+    "hsnCode": "39019000",
+    "productCategory": "Metallocene",
+    "company": "EXXON",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP IM HM012T MRPL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "MRPL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE HEAVYDUTY FE3000 LOTRENE",
+    "materialType": "Import",
+    "hsnCode": "39011090",
+    "productCategory": "LDPE",
+    "company": "LOTRENE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE MILK POUCH 1005FY20 RIL",
+    "materialType": "Domestic",
+    "hsnCode": "390110",
+    "productCategory": "LDPE",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "FILLER MASTER BATCH",
+    "materialType": "Domestic",
+    "hsnCode": "38249900",
+    "productCategory": "Filler",
+    "company": "NA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE HEAVYDUTY J22FA002E RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39011020",
+    "productCategory": "LDPE",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PE RESIN 2645.11G DOW",
+    "materialType": "Import",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "DOW",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE LUPOLEN 2221D LYONDELLBASELL",
+    "materialType": "Import",
+    "hsnCode": "39011090",
+    "productCategory": "LDPE",
+    "company": "BASELL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE SLIP HP4023WN SABIC",
+    "materialType": "Import",
+    "hsnCode": "39011020",
+    "productCategory": "LDPE",
+    "company": "SABIC",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE HM 6095 LUBAN",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "LUBAN",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE LUPOLEN 2221D BASELL",
+    "materialType": "Import",
+    "hsnCode": "39011090",
+    "productCategory": "LDPE",
+    "company": "BASELL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP IM M12RR HMEL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "HMEL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE SLIP JF19010 RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE SLIP 2427K BASELL",
+    "materialType": "Import",
+    "hsnCode": "39011090",
+    "productCategory": "LDPE",
+    "company": "BASELL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PE METALLOCENE SLIP 8784MK EXXON",
+    "materialType": "Import",
+    "hsnCode": "39014090",
+    "productCategory": "Metallocene",
+    "company": "EXXON",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE PIPE PE-100 M7100 LOTTE",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "LOTTE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE MBM B55HM0003 GAIL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "GAIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE IM HD50MA180 RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE IM M60075 RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE HM HF0961 TITAN",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "TITAN",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE FILM F0146D HMEL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "HMEL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PE METALLOCENE NON-SLIP EXXON 8784ML",
+    "materialType": "Import",
+    "hsnCode": "39014090",
+    "productCategory": "Metallocene",
+    "company": "EXXON",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PVC RESIN B57 FORMOSA",
+    "materialType": "Import",
+    "hsnCode": "39041020",
+    "productCategory": "PVC",
+    "company": "FORMOSA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE FILM F46003 RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP RCP SRM100NC RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39023000",
+    "productCategory": "PP RCP",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PVC RESIN SG5 XINFA",
+    "materialType": "Import",
+    "hsnCode": "39041020",
+    "productCategory": "PVC",
+    "company": "XINFA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE LAMINATION NA204000 BASELL",
+    "materialType": "Import",
+    "hsnCode": "39011090",
+    "productCategory": "LDPE",
+    "company": "BASELL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE GP SLIP HP4025ZN SABIC",
+    "materialType": "Import",
+    "hsnCode": "39011010",
+    "productCategory": "LDPE",
+    "company": "SABIC",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE NON-SLIP J1020FF20 RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39011020",
+    "productCategory": "LDPE",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP RAFFIA 1102K",
+    "materialType": "Import",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "NA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PET BOTTLE GRADE WK-881 WANKAI",
+    "materialType": "Import",
+    "hsnCode": "39076190",
+    "productCategory": "PET",
+    "company": "WANKAI",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE LE2270 BOROUGE",
+    "materialType": "Import",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "BOROUGE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE HM FILM F55HM0003 GAIL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "GAIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE HEAVY DUTY LFI2130 SASOL",
+    "materialType": "Import",
+    "hsnCode": "39011020",
+    "productCategory": "LDPE",
+    "company": "SASOL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE D22S010 GAIL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "GAIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE GPBM B63A003 GAIL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "GAIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE D22S010A GAIL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "GAIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP IM HJ333MO BOROUGE",
+    "materialType": "Import",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "BOROUGE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE SLIP F20S009 GAIL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "GAIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE SLIP F20S010IA BCPL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "BCPL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE METALLOCENE 5400G DOW",
+    "materialType": "Import",
+    "hsnCode": "39014010",
+    "productCategory": "Metallocene",
+    "company": "DOW",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE PIPE PE-63 46GP009 RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PE METALLOCENE 7021ML EXXON",
+    "materialType": "Import",
+    "hsnCode": "39019000",
+    "productCategory": "Metallocene",
+    "company": "EXXON",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE METALLOCENE 3518CB EXXON",
+    "materialType": "Import",
+    "hsnCode": "39019090",
+    "productCategory": "Metallocene",
+    "company": "EXXON",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE NON-SLIP F0218L HMEL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "HMEL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE SLIP F0120L HMEL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "HMEL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE NON-SLIP F18A020UA GAIL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "GAIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE SLIP F2001S OPAL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "OPAL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE SLIP F2002S OPAL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "OPAL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP CP MI3530 RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39023000",
+    "productCategory": "PP ICP",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE SLIP F20S010 BCPL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "BCPL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE MBM B0148D HMEL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "HMEL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE DRIP D0120L HMEL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "HMEL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE MDPE FB1350 BOROUGE",
+    "materialType": "Import",
+    "hsnCode": "39014010",
+    "productCategory": "HDPE",
+    "company": "BOROUGE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "ABS MOULD FORMOSA AG15E1",
+    "materialType": "Import",
+    "hsnCode": "39033000",
+    "productCategory": "ABS",
+    "company": "FORMOSA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE NON-SLIP F2002A OPAL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "OPAL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PVC RESIN S-1000 HUAYI",
+    "materialType": "Import",
+    "hsnCode": "39041090",
+    "productCategory": "PVC",
+    "company": "HUAYI",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE NON-SLIP JF18020 RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE SLIP J1020FS20 RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39011020",
+    "productCategory": "LDPE",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PVC K67 TH1000 TAIYO",
+    "materialType": "Import",
+    "hsnCode": "39041020",
+    "productCategory": "PVC",
+    "company": "TAIYO",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PC MOULD 1220UR LOTTE",
+    "materialType": "Import",
+    "hsnCode": "39074000",
+    "productCategory": "PC",
+    "company": "LOTTE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "ABS MOULD MP-0160R LOTTE",
+    "materialType": "Import",
+    "hsnCode": "39033000",
+    "productCategory": "ABS",
+    "company": "LOTTE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE HEXENE 2645G DOW",
+    "materialType": "Import",
+    "hsnCode": "39011020",
+    "productCategory": "LLDPE",
+    "company": "DOW",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE GPBM B6401 HALDIA",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "HALDIA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE HM F5400 HALDIA",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "HALDIA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LD SLIP J24FS040 RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39011020",
+    "productCategory": "LDPE",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE PE63 E52A003A GAIL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "GAIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "MODIFIED ABS AB20RW",
+    "materialType": "Domestic",
+    "hsnCode": "39033000",
+    "productCategory": "ABS",
+    "company": "NA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP MOULD AM650N RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE SLIP 118WM SABIC",
+    "materialType": "Import",
+    "hsnCode": "39011010",
+    "productCategory": "LLDPE",
+    "company": "SABIC",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP RANDOM BLOW SR20NS RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39023000",
+    "productCategory": "PP RCP",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP MOULD AM120N RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP THERMO HC205TF BOROUGE",
+    "materialType": "Import",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "BOROUGE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE MOULD I56A200UA GAIL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "GAIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP TQ FILM HF010 MRPL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "MRPL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE MOULD I26A500UA GAIL",
+    "materialType": "Domestic",
+    "hsnCode": "39014000",
+    "productCategory": "LLDPE",
+    "company": "GAIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "POM MOULD YUNNIAN M90 YTH",
+    "materialType": "Import",
+    "hsnCode": "39071000",
+    "productCategory": "POM",
+    "company": "YUNNIAN",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE NON SLIP F22A025IA BCPL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "BCPL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE NON-SLIP 218NJ SABIC",
+    "materialType": "Import",
+    "hsnCode": "39011010",
+    "productCategory": "LLDPE",
+    "company": "SABIC",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP CP B120MA RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39023000",
+    "productCategory": "PP ICP",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE RAFFIA Y50A010UA GAIL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "GAIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE LAMINATION 7019EC SABIC",
+    "materialType": "Import",
+    "hsnCode": "39011090",
+    "productCategory": "LDPE",
+    "company": "SABIC",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE HM HTA001HP EXXON",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "EXXON",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "ABS MOULD TAITA 5000W",
+    "materialType": "Import",
+    "hsnCode": "39033000",
+    "productCategory": "ABS",
+    "company": "TAITA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE DRIP JD22010 RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PMMA MOULD VH-001 MITSUBISHI",
+    "materialType": "Import",
+    "hsnCode": "39061090",
+    "productCategory": "PMMA",
+    "company": "MITSUBISHI",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP TQ H100EY RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "N1 030 GF M NATURAL",
+    "materialType": "Import",
+    "hsnCode": "39081010",
+    "productCategory": "Glass Filled",
+    "company": "NA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "SONYL B 6 GF30 NATURAL",
+    "materialType": "Import",
+    "hsnCode": "39081090",
+    "productCategory": "Glass Filled",
+    "company": "NA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE SLIP F19010 RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE NON-SLIP JF18010 RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP MOULD H200MG RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP CP EXTRUSION C015EG RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39023000",
+    "productCategory": "PP ICP",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PVC K67 WH1000F WANHUA",
+    "materialType": "Import",
+    "hsnCode": "39041090",
+    "productCategory": "PVC",
+    "company": "WANHUA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP CP NM03RR HMEL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP ICP",
+    "company": "HMEL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE PE80 P51H10 OPAL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "OPAL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP CP 4080MA IOCL",
+    "materialType": "Domestic",
+    "hsnCode": "39023000",
+    "productCategory": "PP ICP",
+    "company": "IOCL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "POM MOULD BASF N2320",
+    "materialType": "Import",
+    "hsnCode": "39074000",
+    "productCategory": "POM",
+    "company": "BASF",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP RAFFIA HGX 030SP MARLEX",
+    "materialType": "Import",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "MARLEX",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PET CP WK801 WANKAI",
+    "materialType": "Import",
+    "hsnCode": "39076190",
+    "productCategory": "PET",
+    "company": "WANKAI",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP RAFFIA H036RG NAYARA",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "NAYARA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE MOULD 16MA400 RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39011020",
+    "productCategory": "LDPE",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PVC RESIN TK1000 SHINETSU",
+    "materialType": "Import",
+    "hsnCode": "39041020",
+    "productCategory": "PVC",
+    "company": "SHINETSU",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE METALLOCENE SLIP 1018RK EXXON",
+    "materialType": "Import",
+    "hsnCode": "39014090",
+    "productCategory": "LLDPE",
+    "company": "EXXON",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PBT FRV0 GF15 NC0204 02072 LOXISTER",
+    "materialType": "Import",
+    "hsnCode": "39011010",
+    "productCategory": "PBT",
+    "company": "LOXISTER",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE MBM B55H02 OPAL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "OPAL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PC MOULD MAKROLON 2407 COVESTRO",
+    "materialType": "Import",
+    "hsnCode": "39202020",
+    "productCategory": "PC",
+    "company": "COVESTRO",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP MOULD HM065AT MRPL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "MRPL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP RANDOM RE420MO BOROUGE",
+    "materialType": "Import",
+    "hsnCode": "39021000",
+    "productCategory": "PP RCP",
+    "company": "BOROUGE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP CP NM08NR HMEL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP ICP",
+    "company": "HMEL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP RAFFIA NSY114G VIETNAM",
+    "materialType": "Import",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "VIETNAM",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PET PREFORM 10GM 26/22 30.37 PCO HF CLEAR",
+    "materialType": "Domestic",
+    "hsnCode": "39233090",
+    "productCategory": "PET Preform",
+    "company": "MD",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP RANDOM BLOW SR20NC RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39023000",
+    "productCategory": "PP RCP",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PET PREFORM PCO 10.1 GMS 26/22 MM CLEAR (1 BOX = 2100 PCS)",
+    "materialType": "Domestic",
+    "hsnCode": "39233090",
+    "productCategory": "PET Preform",
+    "company": "MD",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "CLOSURE GREEN 1.75 GMS 26/22 MM (1 BOX = 6500 PCS)",
+    "materialType": "Domestic",
+    "hsnCode": "39235010",
+    "productCategory": "PET Closure",
+    "company": "MD",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "CLOSURE RED 1.75 GMS 26/22 MM (1 BOX = 6500 PCS)",
+    "materialType": "Domestic",
+    "hsnCode": "39235010",
+    "productCategory": "PET Closure",
+    "company": "MD",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PET PREFORM PCO 10.1 GMS 26/22 MM GREEN (1 BOX = 2100 PCS)",
+    "materialType": "Domestic",
+    "hsnCode": "39233090",
+    "productCategory": "PET Preform",
+    "company": "MD",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PET PREFORM PCO 1881 10.2 GMS 28 MM GREEN (1 BOX = 2000 PCS)",
+    "materialType": "Domestic",
+    "hsnCode": "39233090",
+    "productCategory": "PET Preform",
+    "company": "MD",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PET PREFORM PCO 1881 10.2 GMS 28 MM CLEAR (1 BOX = 2000 PCS)",
+    "materialType": "Domestic",
+    "hsnCode": "39233090",
+    "productCategory": "PET Preform",
+    "company": "MD",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE OG IM HDMS HMEL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "HMEL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE SLIP 20FS010 RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE SLIP 71501S HALDIA",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "HALDIA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE METALLOCENE NONSLIP HP3518CN LG",
+    "materialType": "Import",
+    "hsnCode": "39014010",
+    "productCategory": "Metallocene",
+    "company": "LG",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP MOULD H120IG NAYARA",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "NAYARA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP RAFIA H036RG NAYARA",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "NAYARA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP TQ H110QS NAYARA",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "NAYARA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "CLOSURE ORANGE 1.75 GMS 26/22 MM (1 BOX = 6500 PCS)",
+    "materialType": "Domestic",
+    "hsnCode": "39235010",
+    "productCategory": "PET Closure",
+    "company": "MD",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "CLOSURE DARK GREEN 1.75 GMS 26/22 MM (1 BOX = 6500 PCS)",
+    "materialType": "Domestic",
+    "hsnCode": "39235010",
+    "productCategory": "PET Closure",
+    "company": "MD",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "CLOSURE - WARMFILL GREEN 1.75GMS 26/22MM (1 BOX = 6500 PCS)",
+    "materialType": "Domestic",
+    "hsnCode": "39235010",
+    "productCategory": "PET Closure",
+    "company": "MD",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "CLOSURE - WARMFILL BLACK 1.75GMS 26/22MM (1 BOX = 6500 PCS)",
+    "materialType": "Domestic",
+    "hsnCode": "39235010",
+    "productCategory": "PET Closure",
+    "company": "MD",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "CLOSURE WHITE 1.75 GMS 26/22 MM (1 BOX = 6500 PCS)",
+    "materialType": "Domestic",
+    "hsnCode": "39235010",
+    "productCategory": "PET Closure",
+    "company": "MD",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "CLOSURE WHITE PCO 1881 28 MM (1 BOX = 2000 PCS)",
+    "materialType": "Domestic",
+    "hsnCode": "39235010",
+    "productCategory": "PET Closure",
+    "company": "MD",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE NONSLIP F2003A OPAL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "OPAL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE LAMINATION 801YY TITAN",
+    "materialType": "Import",
+    "hsnCode": "39011090",
+    "productCategory": "LDPE",
+    "company": "TITAN",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LOXIAMID-S PA66 LU HS1 IM2 BK0401 04701",
+    "materialType": "Import",
+    "hsnCode": "39089090",
+    "productCategory": "Nylon",
+    "company": "LOXIM",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "POM HLMC90 HENGLI",
+    "materialType": "Import",
+    "hsnCode": "39071000",
+    "productCategory": "POM",
+    "company": "HENGLI",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PET PREFORM PCO 1881 13.5 GMS 28 MM CLEAR (1 BOX = 2000 PCS)",
+    "materialType": "Domestic",
+    "hsnCode": "39233090",
+    "productCategory": "PET Preform",
+    "company": "MD",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PET PREFORM PCO 1881 12.2 GMS 28 MM CLEAR (1 BOX = 2000 PCS)",
+    "materialType": "Domestic",
+    "hsnCode": "39233090",
+    "productCategory": "PET Preform",
+    "company": "MD",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PET PREFORM PCO 1881 14.5 GMS 28 MM CLEAR (1 BOX = 2000 PCS)",
+    "materialType": "Domestic",
+    "hsnCode": "39233090",
+    "productCategory": "PET Preform",
+    "company": "MD",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PVC K67 DG1000S TIANJIN",
+    "materialType": "Import",
+    "hsnCode": "39041020",
+    "productCategory": "PVC",
+    "company": "TIANJIN",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP CP BJ368MO BOROUGE",
+    "materialType": "Import",
+    "hsnCode": "39021000",
+    "productCategory": "PP ICP",
+    "company": "BOROUGE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP ICP 2300NCA IRPC",
+    "materialType": "Import",
+    "hsnCode": "39021000",
+    "productCategory": "PP ICP",
+    "company": "IRPC",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP LAMINATION HY035R MRPL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "MRPL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE PE63 P5002 OPAL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "OPAL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PVC K67 S1001 KANEKA",
+    "materialType": "Import",
+    "hsnCode": "39042110",
+    "productCategory": "PVC",
+    "company": "KANEKA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP IMPACT COPOLYMER C080MT RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39023000",
+    "productCategory": "PP ICP",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP RAFFIA PPH T03 ORIENTAL",
+    "materialType": "Import",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "ORIENTAL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE METALLOCENE 5401GT DOW",
+    "materialType": "Import",
+    "hsnCode": "39014090",
+    "productCategory": "Metallocene",
+    "company": "DOW",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE NONSLIP FT6230 BOROUGE",
+    "materialType": "Import",
+    "hsnCode": "39011090",
+    "productCategory": "LLDPE",
+    "company": "BOROUGE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "NYLON 1022B10 UBE",
+    "materialType": "Import",
+    "hsnCode": "39081019",
+    "productCategory": "Nylon",
+    "company": "UBE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE FILM E45A003A GAIL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "GAIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE HEAVY DUTY 2420D INNOPLUS",
+    "materialType": "Import",
+    "hsnCode": "39011020",
+    "productCategory": "LDPE",
+    "company": "INNOPLUS",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE RAFFIA HD55EF010 RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PVC RESIN SG5 - ERDOS",
+    "materialType": "Import",
+    "hsnCode": "39076990",
+    "productCategory": "PVC",
+    "company": "ERDOS",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE J1005FY20 RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39011020",
+    "productCategory": "LDPE",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE RAFFIA Y5710 OPAL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "OPAL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "ABS MOULD HI121H LG",
+    "materialType": "Import",
+    "hsnCode": "39033000",
+    "productCategory": "ABS",
+    "company": "LG",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE HM F0050D HMEL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "HMEL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE GPBM B5004 OPAL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "OPAL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "NYLON 1030B4 OG",
+    "materialType": "Domestic",
+    "hsnCode": "39081019",
+    "productCategory": "Nylon",
+    "company": "NA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE GPBM B56003 RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE MOULD 6201XR EXXON",
+    "materialType": "Import",
+    "hsnCode": "39014090",
+    "productCategory": "LLDPE",
+    "company": "EXXON",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE HEAVY DUTY 165BW EXXON",
+    "materialType": "Import",
+    "hsnCode": "39011010",
+    "productCategory": "LDPE",
+    "company": "EXXON",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE SLIP 4025AS TASNEE",
+    "materialType": "Import",
+    "hsnCode": "39011010",
+    "productCategory": "LDPE",
+    "company": "TASNEE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE MOULD M26500 RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39011010",
+    "productCategory": "LLDPE",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PB 030 GF (BLACK)",
+    "materialType": "Domestic",
+    "hsnCode": "39079900",
+    "productCategory": "PBT",
+    "company": "RAVAGO",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PBT DT 20100",
+    "materialType": "Domestic",
+    "hsnCode": "39079900",
+    "productCategory": "PBT",
+    "company": "RAVAGO",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP THERMO H019TG RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PVC K67 67GER0I RIL",
+    "materialType": "Domestic",
+    "hsnCode": "39041090",
+    "productCategory": "PVC",
+    "company": "RIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "RMI N2 230 GF (BLACK)",
+    "materialType": "Domestic",
+    "hsnCode": "39089020",
+    "productCategory": "Nylon",
+    "company": "RAVAGO",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PC/ABS THERMOPLASTIC ALLOYS C1200HF-701 CYCOLOY",
+    "materialType": "Import",
+    "hsnCode": "39074000",
+    "productCategory": "PC",
+    "company": "CYCOLOY",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE HM EX5 MPC",
+    "materialType": "Import",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "MPC",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE RAFFIA W50A009A GAIL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "GAIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "ABS STAREX PT0180 BLACK",
+    "materialType": "Import",
+    "hsnCode": "39033000",
+    "productCategory": "ABS",
+    "company": "STAREX",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "CLOSURE WHITE PCO 1881 28 MM CSD(1 BOX = 2000 PCS)",
+    "materialType": "Domestic",
+    "hsnCode": "39235010",
+    "productCategory": "PET Closure",
+    "company": "MD",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "CLOSURE GREEN PCO 1881 28 MM CSD(1 BOX = 2000 PCS)",
+    "materialType": "Domestic",
+    "hsnCode": "39235010",
+    "productCategory": "PET Closure",
+    "company": "MD",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE METALLOCENE NS F0118LM HMEL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "HMEL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE FILM F0153S HMEL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "HMEL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP RAFFIA HP550J JINNENG",
+    "materialType": "Import",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "JINNENG",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP RANDOM RM12CR HMEL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PP RCP",
+    "company": "HMEL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "SAN NX3200 TAIRISAN",
+    "materialType": "Import",
+    "hsnCode": "39032000",
+    "productCategory": "SAN",
+    "company": "TAIRISAN",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE NON-SLIP F0320L HMEL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "HMEL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE RAFFIA R5410 OPAL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "OPAL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PVC RESIN P1000SB HANWHA",
+    "materialType": "Import",
+    "hsnCode": "39041020",
+    "productCategory": "PVC",
+    "company": "HANWHA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE MOULD M2550 OPAL",
+    "materialType": "Domestic",
+    "hsnCode": "39014090",
+    "productCategory": "LLDPE",
+    "company": "OPAL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "POM NATURAL M90 CF2001 CELCON",
+    "materialType": "Import",
+    "hsnCode": "39071000",
+    "productCategory": "POM",
+    "company": "NA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "CLOSURE RED PCO 1881 28 MM CSD(1 BOX = 2000 PCS)",
+    "materialType": "Domestic",
+    "hsnCode": "39235010",
+    "productCategory": "CLOSURE",
+    "company": "NA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PP IM HG385MO BOROUGE",
+    "materialType": "Import",
+    "hsnCode": "39021000",
+    "productCategory": "PP",
+    "company": "BOROUGE",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE GPBM B52A003A GAIL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "GAIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "HDPE HM FILM F55HM0003A GAIL",
+    "materialType": "Domestic",
+    "hsnCode": "39012000",
+    "productCategory": "HDPE",
+    "company": "GAIL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PE METALLOCENE SLIP F0120LM HMEL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "HMEL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PE METALLOCENE SLIP F0116LM HMEL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "HMEL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LLDPE IM 500M24A IOCL",
+    "materialType": "Domestic",
+    "hsnCode": "39014010",
+    "productCategory": "LLDPE",
+    "company": "IOCL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PVC SUSPENSION S65D FORMOSA",
+    "materialType": "Import",
+    "hsnCode": "39041020",
+    "productCategory": "PVC",
+    "company": "FORMOSA",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PPHP POWDER PW0MH00 OPAL",
+    "materialType": "Domestic",
+    "hsnCode": "39021000",
+    "productCategory": "PPHP",
+    "company": "OPAL",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PVC RESIN SG5 ZHONGTAI",
+    "materialType": "Import",
+    "hsnCode": "39041020",
+    "productCategory": "PVC",
+    "company": "ZHONGTAI",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PVC RESIN SG5 ZHONGTAI",
+    "materialType": "Import",
+    "hsnCode": "39041020",
+    "productCategory": "PVC",
+    "company": "ZHONGTAI",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "GPPS MOULD PS-133 STYRENIX",
+    "materialType": "Import",
+    "hsnCode": "39031990",
+    "productCategory": "GPPS",
+    "company": "STYRENIX",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LDPE HEAVYDUTY HP0321NN SABIC",
+    "materialType": "Import",
+    "hsnCode": "39011020",
+    "productCategory": "LDPE",
+    "company": "SABIC",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "PA-6 N1200UF BLACK",
+    "materialType": "Domestic",
+    "hsnCode": "39089020",
+    "productCategory": "Nylon",
+    "company": "RAVAGO",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "ABS MODIFIED TRANSPARENT 929-555 TORAY",
+    "materialType": "Import",
+    "hsnCode": "39069090",
+    "productCategory": "ABS",
+    "company": "TORAY",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "XYRON 540Z A1A3301 (BLACK)",
+    "materialType": "Import",
+    "hsnCode": "39072090",
+    "productCategory": "",
+    "company": "XYRON",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "XYRON PV40Z A1A3201 (BLACK)",
+    "materialType": "Import",
+    "hsnCode": "39072990",
+    "productCategory": "",
+    "company": "XYRON",
+    "createdAt": "",
+    "updatedAt": ""
+  },
+  {
+    "itemName": "LEONA FR370 W33N2 (BLACK)",
+    "materialType": "Import",
+    "hsnCode": "39081049",
+    "productCategory": "",
+    "company": "LEONA",
+    "createdAt": "",
+    "updatedAt": ""
+  }
+]
