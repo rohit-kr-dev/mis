@@ -1,0 +1,227 @@
+[
+  {
+    "vendorName": "PARAGON RESIN LLP",
+    "totalAmount": 362225,
+    "createdAt": "SERVER_TIMESTAMP",
+    "updatedAt": "SERVER_TIMESTAMP",
+    "periods": [
+      { "period": "Apr-25", "amount": 87525, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "May-25", "amount": 94325, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Jun-25", "amount": 60625, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Jul-25", "amount": 31400, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Aug-25", "amount": 25175, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Sep-25", "amount": 55425, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Oct-25", "amount": 28775, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" }
+    ]
+  },
+  {
+    "vendorName": "HARISHREE POLYMERS PRIVATE LIMITED",
+    "totalAmount": 159100,
+    "createdAt": "SERVER_TIMESTAMP",
+    "updatedAt": "SERVER_TIMESTAMP",
+    "periods": [
+      { "period": "Apr-25", "amount": 78000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "May-25", "amount": 36000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Jun-25", "amount": 2100, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Jul-25", "amount": 21000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Aug-25", "amount": 10000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Sep-25", "amount": 12000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" }
+    ]
+  },
+  {
+    "vendorName": "KAMAKYA CHEMPLAST PRIVATE LIMITED",
+    "totalAmount": 250100,
+    "createdAt": "SERVER_TIMESTAMP",
+    "updatedAt": "SERVER_TIMESTAMP",
+    "periods": [
+      { "period": "Apr-25", "amount": 70100, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "May-25", "amount": 25000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Aug-25", "amount": 105000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Sep-25", "amount": 25000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Oct-25", "amount": 25000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" }
+    ]
+  },
+  {
+    "vendorName": "RAGHUSHARAN OVERSEAS PRIVATE LIMITED",
+    "totalAmount": 114250,
+    "createdAt": "SERVER_TIMESTAMP",
+    "updatedAt": "SERVER_TIMESTAMP",
+    "periods": [
+      { "period": "Apr-25", "amount": 114250, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" }
+    ]
+  },
+  {
+    "vendorName": "SHUBHAM INTERNATIONAL PRIVATE LIMITED",
+    "totalAmount": 38500,
+    "createdAt": "SERVER_TIMESTAMP",
+    "updatedAt": "SERVER_TIMESTAMP",
+    "periods": [
+      { "period": "Apr-25", "amount": 20500, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Jun-25", "amount": 500, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Aug-25", "amount": 7000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Sep-25", "amount": 10500, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" }
+    ]
+  },
+  {
+    "vendorName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "totalAmount": 1003625,
+    "createdAt": "SERVER_TIMESTAMP",
+    "updatedAt": "SERVER_TIMESTAMP",
+    "periods": [
+      { "period": "Apr-25", "amount": 25600, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "May-25", "amount": 166550, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Jun-25", "amount": 108750, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Jul-25", "amount": 158250, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Aug-25", "amount": 150000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Sep-25", "amount": 173825, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Oct-25", "amount": 220750, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" }
+    ]
+  },
+  {
+    "vendorName": "NAGASHREE INDUSTRIES",
+    "totalAmount": 0,
+    "createdAt": "SERVER_TIMESTAMP",
+    "updatedAt": "SERVER_TIMESTAMP",
+    "periods": []
+  },
+  {
+    "vendorName": "BULK LIQUID SOLUTIONS PVT LTD",
+    "totalAmount": 138950,
+    "createdAt": "SERVER_TIMESTAMP",
+    "updatedAt": "SERVER_TIMESTAMP",
+    "periods": [
+      { "period": "Apr-25", "amount": 54750, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "May-25", "amount": 10000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Jun-25", "amount": 17000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Jul-25", "amount": 47200, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Sep-25", "amount": 10000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" }
+    ]
+  },
+  {
+    "vendorName": "TRIMURTI POLYCHEM PRIVATE LIMITED",
+    "totalAmount": 24750,
+    "createdAt": "SERVER_TIMESTAMP",
+    "updatedAt": "SERVER_TIMESTAMP",
+    "periods": [
+      { "period": "Apr-25", "amount": 24750, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" }
+    ]
+  },
+  {
+    "vendorName": "AMBIKA PETROCHEM PRIVATE LIMITED",
+    "totalAmount": 49000,
+    "createdAt": "SERVER_TIMESTAMP",
+    "updatedAt": "SERVER_TIMESTAMP",
+    "periods": [
+      { "period": "Apr-25", "amount": 37000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Jun-25", "amount": 12000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" }
+    ]
+  },
+  {
+    "vendorName": "SQUAREFLEX PACKAGING PRIVATE LIMITED",
+    "totalAmount": 30000,
+    "createdAt": "SERVER_TIMESTAMP",
+    "updatedAt": "SERVER_TIMESTAMP",
+    "periods": [
+      { "period": "Apr-25", "amount": 10000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "May-25", "amount": 20000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" }
+    ]
+  },
+  {
+    "vendorName": "D R POLYMERS PRIVATE LIMITED",
+    "totalAmount": 71000,
+    "createdAt": "SERVER_TIMESTAMP",
+    "updatedAt": "SERVER_TIMESTAMP",
+    "periods": [
+      { "period": "Apr-25", "amount": 40000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "May-25", "amount": 14000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Oct-25", "amount": 17000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" }
+    ]
+  },
+  {
+    "vendorName": "IVORY POLYMERS",
+    "totalAmount": 62000,
+    "createdAt": "SERVER_TIMESTAMP",
+    "updatedAt": "SERVER_TIMESTAMP",
+    "periods": [
+      { "period": "Apr-25", "amount": 6000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "May-25", "amount": 25500, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Jun-25", "amount": 25500, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Sep-25", "amount": 5000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" }
+    ]
+  },
+  {
+    "vendorName": "INTIME VINCOM PRIVATE LIMITED",
+    "totalAmount": 417000,
+    "createdAt": "SERVER_TIMESTAMP",
+    "updatedAt": "SERVER_TIMESTAMP",
+    "periods": [
+      { "period": "Apr-25", "amount": 82000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "May-25", "amount": 58500, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Jun-25", "amount": 62000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Jul-25", "amount": 25000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Aug-25", "amount": 88000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Sep-25", "amount": 72500, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Oct-25", "amount": 30000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" }
+    ]
+  },
+  {
+    "vendorName": "SYNTHETIC PACKERS LIMITED",
+    "totalAmount": 897475,
+    "createdAt": "SERVER_TIMESTAMP",
+    "updatedAt": "SERVER_TIMESTAMP",
+    "periods": [
+      { "period": "Apr-25", "amount": 179125, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "May-25", "amount": 257500, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Jun-25", "amount": 40600, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Jul-25", "amount": 27200, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Aug-25", "amount": 33800, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Sep-25", "amount": 187500, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Oct-25", "amount": 175750, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" }
+    ]
+  },
+  {
+    "vendorName": "TREENITY PLY DECOR",
+    "totalAmount": 480000,
+    "createdAt": "SERVER_TIMESTAMP",
+    "updatedAt": "SERVER_TIMESTAMP",
+    "periods": [
+      { "period": "Apr-25", "amount": 65000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "May-25", "amount": 111500, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Jun-25", "amount": 153500, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Jul-25", "amount": 75000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Sep-25", "amount": 50000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Oct-25", "amount": 25000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" }
+    ]
+  },
+  {
+    "vendorName": "PRESTINE VENTURES PRIVATE LIMITED",
+    "totalAmount": 36500,
+    "createdAt": "SERVER_TIMESTAMP",
+    "updatedAt": "SERVER_TIMESTAMP",
+    "periods": [
+      { "period": "Apr-25", "amount": 20000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "May-25", "amount": 10500, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Jun-25", "amount": 6000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" }
+    ]
+  },
+  {
+    "vendorName": "LPB Plastic Private Limited",
+    "totalAmount": 103000,
+    "createdAt": "SERVER_TIMESTAMP",
+    "updatedAt": "SERVER_TIMESTAMP",
+    "periods": [
+      { "period": "Apr-25", "amount": 39500, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "May-25", "amount": 14000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" },
+      { "period": "Jul-25", "amount": 49500, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" }
+    ]
+  },
+  {
+    "vendorName": "SHRINATH ROTOPACK (MP) PRIVATE LIMITED",
+    "totalAmount": 12000,
+    "createdAt": "SERVER_TIMESTAMP",
+    "updatedAt": "SERVER_TIMESTAMP",
+    "periods": [
+      { "period": "Apr-25", "amount": 12000, "createdAt": "SERVER_TIMESTAMP", "updatedAt": "SERVER_TIMESTAMP" }
+    ]
+  }
+]
