@@ -57,6 +57,8 @@ export default function SupplierWiseMonthly() {
   const [saving, setSaving] = useState(false);
 
   const [newCompanyName, setNewCompanyName] = useState('');
+  const [bulkCompanyNames, setBulkCompanyNames] = useState('');
+  const [showBulkAdd, setShowBulkAdd] = useState(false);
 
   // Fetch suppliers
   useEffect(() => {
@@ -201,68 +203,137 @@ export default function SupplierWiseMonthly() {
     setSaving(true);
     try {
       const companyName = newCompanyName.trim();
-      const totalCombinations = periods.length * suppliers.length;
-      let successCount = 0;
-
-      // Generate all combinations: Company (1) × Periods × Suppliers
-      for (const period of periods) {
-        for (const supplier of suppliers) {
-          const type = vlookupType(companyName);
-
-          // Calculate values for this combination
-          const discounts = workingSheet
-            .filter(record => 
-              record.supplierName === supplier.supplierName &&
-              record.company.toLowerCase() === companyName.toLowerCase() &&
-              record.type === 'Discounts' &&
-              record.cnMonth === period.period
-            )
-            .reduce((sum, record) => sum + record.qty, 0);
-
-          const outrightWithDiscounts = workingSheet
-            .filter(record => 
-              record.supplierName === supplier.supplierName &&
-              record.company.toLowerCase() === companyName.toLowerCase() &&
-              record.type === 'Outright with Discounts' &&
-              record.cnMonth === period.period
-            )
-            .reduce((sum, record) => sum + record.qty, 0);
-
-          const outright = workingSheet
-            .filter(record => 
-              record.supplierName === supplier.supplierName &&
-              record.company.toLowerCase() === companyName.toLowerCase() &&
-              record.type === 'Outright' &&
-              record.cnMonth === period.period
-            )
-            .reduce((sum, record) => sum + record.qty, 0);
-
-          const total = discounts + outrightWithDiscounts + outright;
-
-          // Store each combination in Firestore
-          await addDoc(collection(db, 'supplierWiseMonthly'), {
-            month: period.period,
-            supplier: supplier.supplierName,
-            type: type,
-            company: companyName,
-            discounts: discounts,
-            outrightWithDiscounts: outrightWithDiscounts,
-            outright: outright,
-            total: total,
-            createdAt: new Date()
-          });
-
-          successCount++;
-        }
-      }
-
+      await generateCombinationsForCompany(companyName);
       setNewCompanyName('');
-      alert(`Company added successfully! Generated ${successCount} combinations (${periods.length} periods × ${suppliers.length} suppliers)`);
+      alert(`Company added successfully! Generated ${periods.length * suppliers.length} combinations`);
     } catch (error) {
       console.error('Error adding company:', error);
       alert('Failed to add company and generate combinations');
     }
     setSaving(false);
+  };
+
+  // Bulk add companies
+  const bulkAddCompanies = async () => {
+    if (!bulkCompanyNames.trim()) {
+      alert('Please enter company names (one per line)');
+      return;
+    }
+
+    const companyList = bulkCompanyNames
+      .split('\n')
+      .map(name => name.trim())
+      .filter(name => name.length > 0);
+
+    if (companyList.length === 0) {
+      alert('No valid company names found');
+      return;
+    }
+
+    // Check for existing companies
+    const existingCompanies = [];
+    for (const company of companyList) {
+      const q = query(
+        collection(db, 'supplierWiseMonthly'),
+        where('company', '==', company)
+      );
+      const existingDocs = await getDocs(q);
+      if (!existingDocs.empty) {
+        existingCompanies.push(company);
+      }
+    }
+
+    if (existingCompanies.length > 0) {
+      const proceed = confirm(
+        `The following companies already exist:\n${existingCompanies.join('\n')}\n\nDo you want to skip these and continue with the rest?`
+      );
+      if (!proceed) return;
+    }
+
+    setSaving(true);
+    let successCount = 0;
+    let failedCompanies = [];
+
+    try {
+      for (const companyName of companyList) {
+        // Skip if already exists
+        if (existingCompanies.includes(companyName)) continue;
+
+        try {
+          await generateCombinationsForCompany(companyName);
+          successCount++;
+        } catch (error) {
+          console.error(`Failed to add ${companyName}:`, error);
+          failedCompanies.push(companyName);
+        }
+      }
+
+      setBulkCompanyNames('');
+      setShowBulkAdd(false);
+
+      let message = `Successfully added ${successCount} companies! Generated ${successCount * periods.length * suppliers.length} total records.`;
+      if (failedCompanies.length > 0) {
+        message += `\n\nFailed to add: ${failedCompanies.join(', ')}`;
+      }
+      if (existingCompanies.length > 0) {
+        message += `\n\nSkipped existing: ${existingCompanies.join(', ')}`;
+      }
+      alert(message);
+    } catch (error) {
+      console.error('Error in bulk add:', error);
+      alert('Failed to complete bulk add operation');
+    }
+    setSaving(false);
+  };
+
+  // Helper function to generate combinations for a single company
+  const generateCombinationsForCompany = async (companyName: string) => {
+    for (const period of periods) {
+      for (const supplier of suppliers) {
+        const type = vlookupType(companyName);
+
+        const discounts = workingSheet
+          .filter(record => 
+            record.supplierName === supplier.supplierName &&
+            record.company.toLowerCase() === companyName.toLowerCase() &&
+            record.type === 'Discounts' &&
+            record.cnMonth === period.period
+          )
+          .reduce((sum, record) => sum + record.qty, 0);
+
+        const outrightWithDiscounts = workingSheet
+          .filter(record => 
+            record.supplierName === supplier.supplierName &&
+            record.company.toLowerCase() === companyName.toLowerCase() &&
+            record.type === 'Outright with Discounts' &&
+            record.cnMonth === period.period
+          )
+          .reduce((sum, record) => sum + record.qty, 0);
+
+        const outright = workingSheet
+          .filter(record => 
+            record.supplierName === supplier.supplierName &&
+            record.company.toLowerCase() === companyName.toLowerCase() &&
+            record.type === 'Outright' &&
+            record.cnMonth === period.period
+          )
+          .reduce((sum, record) => sum + record.qty, 0);
+
+        const total = discounts + outrightWithDiscounts + outright;
+
+        await addDoc(collection(db, 'supplierWiseMonthly'), {
+          month: period.period,
+          supplier: supplier.supplierName,
+          type: type,
+          company: companyName,
+          discounts: discounts,
+          outrightWithDiscounts: outrightWithDiscounts,
+          outright: outright,
+          total: total,
+          createdAt: new Date()
+        });
+      }
+    }
   };
 
   // Delete single record
@@ -339,27 +410,74 @@ export default function SupplierWiseMonthly() {
 
       {/* Add Company Section */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Add New Company</h2>
-        <p className="text-sm text-gray-600 mb-4">
-          Total combinations: <span className="font-bold text-blue-600">{periods.length} periods × {suppliers.length} suppliers = {periods.length * suppliers.length} records</span>
-        </p>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newCompanyName}
-            onChange={(e) => setNewCompanyName(e.target.value)}
-            placeholder="Enter company name"
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            onKeyPress={(e) => e.key === 'Enter' && addCompany()}
-          />
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold text-gray-800">Add Companies</h2>
           <button
-            onClick={addCompany}
-            disabled={saving}
-            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition disabled:bg-gray-400"
+            onClick={() => setShowBulkAdd(!showBulkAdd)}
+            className="px-4 py-2 bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700 transition"
           >
-            {saving ? 'Generating...' : '+ Add Company & Generate'}
+            {showBulkAdd ? 'Single Company Mode' : 'Bulk Add Mode'}
           </button>
         </div>
+        
+        <p className="text-sm text-gray-600 mb-4">
+          Total combinations per company: <span className="font-bold text-blue-600">{periods.length} periods × {suppliers.length} suppliers = {periods.length * suppliers.length} records</span>
+        </p>
+
+        {!showBulkAdd ? (
+          /* Single Company Add */
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newCompanyName}
+              onChange={(e) => setNewCompanyName(e.target.value)}
+              placeholder="Enter company name"
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              onKeyPress={(e) => e.key === 'Enter' && addCompany()}
+            />
+            <button
+              onClick={addCompany}
+              disabled={saving}
+              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition disabled:bg-gray-400"
+            >
+              {saving ? 'Generating...' : '+ Add Company'}
+            </button>
+          </div>
+        ) : (
+          /* Bulk Company Add */
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Enter company names (one per line):
+              </label>
+              <textarea
+                value={bulkCompanyNames}
+                onChange={(e) => setBulkCompanyNames(e.target.value)}
+                placeholder="Company 1&#10;Company 2&#10;Company 3&#10;..."
+                rows={10}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono text-sm"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                {bulkCompanyNames.split('\n').filter(name => name.trim().length > 0).length} companies entered
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={bulkAddCompanies}
+                disabled={saving}
+                className="flex-1 px-6 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition disabled:bg-gray-400"
+              >
+                {saving ? 'Processing...' : `+ Add All Companies (${bulkCompanyNames.split('\n').filter(name => name.trim().length > 0).length})`}
+              </button>
+              <button
+                onClick={() => setBulkCompanyNames('')}
+                className="px-6 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Filters */}
