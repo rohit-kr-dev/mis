@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { collection, addDoc, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export default function SupplierMasterPage() {
@@ -21,96 +21,13 @@ export default function SupplierMasterPage() {
   const [typeMessage, setTypeMessage] = useState('');
   const [typeLoading, setTypeLoading] = useState(false);
 
-  // Handler for Supplier Form
-  const handleSupplierSubmit = async () => {
-    if (!supplierName.trim() || !alias.trim()) {
-      setSupplierMessage('Please fill in all fields');
-      setTimeout(() => setSupplierMessage(''), 3000);
-      return;
-    }
-    
-    setSupplierLoading(true);
-    
-    try {
-      await addDoc(collection(db, 'suppliers'), {
-        supplierName: supplierName.trim(),
-        alias: alias.trim(),
-        createdAt: new Date(),
-      });
-      
-      setSupplierMessage('Supplier added successfully!');
-      setSupplierName('');
-      setAlias('');
-      setTimeout(() => setSupplierMessage(''), 3000);
-    } catch (error) {
-      console.error('Error adding supplier:', error);
-      setSupplierMessage('Error adding supplier. Please try again.');
-      setTimeout(() => setSupplierMessage(''), 3000);
-    } finally {
-      setSupplierLoading(false);
-    }
-  };
-
-  // Handler for Period Form
-  const handlePeriodSubmit = async () => {
-    if (!period.trim()) {
-      setPeriodMessage('Please fill in the period field');
-      setTimeout(() => setPeriodMessage(''), 3000);
-      return;
-    }
-    
-    setPeriodLoading(true);
-    
-    try {
-      await addDoc(collection(db, 'periods'), {
-        period: period.trim(),
-        createdAt: new Date(),
-      });
-      
-      setPeriodMessage('Period added successfully!');
-      setPeriod('');
-      setTimeout(() => setPeriodMessage(''), 3000);
-    } catch (error) {
-      console.error('Error adding period:', error);
-      setPeriodMessage('Error adding period. Please try again.');
-      setTimeout(() => setPeriodMessage(''), 3000);
-    } finally {
-      setPeriodLoading(false);
-    }
-  };
-
-  // Handler for Type Form
-  const handleTypeSubmit = async () => {
-    if (!type.trim()) {
-      setTypeMessage('Please fill in the type field');
-      setTimeout(() => setTypeMessage(''), 3000);
-      return;
-    }
-    
-    setTypeLoading(true);
-    
-    try {
-      await addDoc(collection(db, 'types'), {
-        type: type.trim(),
-        createdAt: new Date(),
-      });
-      
-      setTypeMessage('Type added successfully!');
-      setType('');
-      setTimeout(() => setTypeMessage(''), 3000);
-    } catch (error) {
-      console.error('Error adding type:', error);
-      setTypeMessage('Error adding type. Please try again.');
-      setTimeout(() => setTypeMessage(''), 3000);
-    } finally {
-      setTypeLoading(false);
-    }
-  };
-
   // Real-time data from Firestore
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [periods, setPeriods] = useState<any[]>([]);
   const [types, setTypes] = useState<any[]>([]);
+  const [items, setItems] = useState<any[]>([]);
+  const [workingSheet, setWorkingSheet] = useState<any[]>([]);
+  const [existingCompanies, setExistingCompanies] = useState<string[]>([]);
 
   // Subscribe to suppliers collection
   useEffect(() => {
@@ -160,10 +77,245 @@ export default function SupplierMasterPage() {
     return () => unsubscribe();
   }, []);
 
+  // Subscribe to items collection
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      collection(db, 'items'),
+      (snapshot) => {
+        const data: any[] = [];
+        snapshot.forEach((doc) => {
+          data.push({ id: doc.id, ...doc.data() });
+        });
+        setItems(data);
+      },
+      (error) => console.error('Error fetching items:', error)
+    );
+    return () => unsubscribe();
+  }, []);
+
+  // Subscribe to workingSheet collection
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      collection(db, 'workingSheet'),
+      (snapshot) => {
+        const data: any[] = [];
+        snapshot.forEach((doc) => {
+          data.push({ id: doc.id, ...doc.data() });
+        });
+        setWorkingSheet(data);
+      },
+      (error) => console.error('Error fetching workingSheet:', error)
+    );
+    return () => unsubscribe();
+  }, []);
+
+  // Get all existing companies
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      collection(db, 'supplierWiseMonthly'),
+      (snapshot) => {
+        const companies = new Set<string>();
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.company) {
+            companies.add(data.company);
+          }
+        });
+        setExistingCompanies(Array.from(companies));
+      },
+      (error) => console.error('Error fetching existing companies:', error)
+    );
+    return () => unsubscribe();
+  }, []);
+
+  // VLOOKUP function
+  const vlookupType = (company: string): string => {
+    if (!company.trim()) return '';
+    const item = items.find(i => i.company?.toLowerCase() === company.toLowerCase());
+    return item?.materialType || 'Unknown';
+  };
+
+  // Generate combination for a single company-period-supplier
+  const generateSingleCombination = async (companyName: string, periodValue: string, supplierData: any) => {
+    const type = vlookupType(companyName);
+
+    const discounts = workingSheet
+      .filter((record: any) => 
+        record.supplierName === supplierData.supplierName &&
+        record.company?.toLowerCase() === companyName.toLowerCase() &&
+        record.type === 'Discounts' &&
+        record.cnMonth === periodValue
+      )
+      .reduce((sum: number, record: any) => sum + (record.qty || 0), 0);
+
+    const outrightWithDiscounts = workingSheet
+      .filter((record: any) => 
+        record.supplierName === supplierData.supplierName &&
+        record.company?.toLowerCase() === companyName.toLowerCase() &&
+        record.type === 'Outright with Discounts' &&
+        record.cnMonth === periodValue
+      )
+      .reduce((sum: number, record: any) => sum + (record.qty || 0), 0);
+
+    const outright = workingSheet
+      .filter((record: any) => 
+        record.supplierName === supplierData.supplierName &&
+        record.company?.toLowerCase() === companyName.toLowerCase() &&
+        record.type === 'Outright' &&
+        record.cnMonth === periodValue
+      )
+      .reduce((sum: number, record: any) => sum + (record.qty || 0), 0);
+
+    const total = discounts + outrightWithDiscounts + outright;
+
+    await addDoc(collection(db, 'supplierWiseMonthly'), {
+      month: periodValue,
+      supplier: supplierData.supplierName,
+      type: type,
+      company: companyName,
+      discounts: discounts,
+      outrightWithDiscounts: outrightWithDiscounts,
+      outright: outright,
+      total: total,
+      createdAt: new Date()
+    });
+  };
+
+  // Handler for Supplier Form
+  const handleSupplierSubmit = async () => {
+    if (!supplierName.trim() || !alias.trim()) {
+      setSupplierMessage('Please fill in all fields');
+      setTimeout(() => setSupplierMessage(''), 3000);
+      return;
+    }
+    
+    setSupplierLoading(true);
+    
+    try {
+      // Add the supplier
+      const docRef = await addDoc(collection(db, 'suppliers'), {
+        supplierName: supplierName.trim(),
+        alias: alias.trim(),
+        createdAt: new Date(),
+      });
+
+      // Generate combinations for all existing companies with this new supplier
+      if (existingCompanies.length > 0 && periods.length > 0) {
+        const newSupplierData = {
+          id: docRef.id,
+          supplierName: supplierName.trim(),
+          alias: alias.trim()
+        };
+
+        let combinationsCreated = 0;
+        for (const company of existingCompanies) {
+          for (const periodData of periods) {
+            await generateSingleCombination(company, periodData.period, newSupplierData);
+            combinationsCreated++;
+          }
+        }
+
+        setSupplierMessage(`Supplier added! Generated ${combinationsCreated} combinations (${existingCompanies.length} companies × ${periods.length} periods)`);
+      } else {
+        setSupplierMessage('Supplier added successfully!');
+      }
+      
+      setSupplierName('');
+      setAlias('');
+      setTimeout(() => setSupplierMessage(''), 5000);
+    } catch (error) {
+      console.error('Error adding supplier:', error);
+      setSupplierMessage('Error adding supplier. Please try again.');
+      setTimeout(() => setSupplierMessage(''), 3000);
+    } finally {
+      setSupplierLoading(false);
+    }
+  };
+
+  // Handler for Period Form
+  const handlePeriodSubmit = async () => {
+    if (!period.trim()) {
+      setPeriodMessage('Please fill in the period field');
+      setTimeout(() => setPeriodMessage(''), 3000);
+      return;
+    }
+    
+    setPeriodLoading(true);
+    
+    try {
+      // Add the period
+      await addDoc(collection(db, 'periods'), {
+        period: period.trim(),
+        createdAt: new Date(),
+      });
+
+      // Generate combinations for all existing companies with this new period
+      if (existingCompanies.length > 0 && suppliers.length > 0) {
+        const newPeriod = period.trim();
+        
+        let combinationsCreated = 0;
+        for (const company of existingCompanies) {
+          for (const supplierData of suppliers) {
+            await generateSingleCombination(company, newPeriod, supplierData);
+            combinationsCreated++;
+          }
+        }
+
+        setPeriodMessage(`Period added! Generated ${combinationsCreated} combinations (${existingCompanies.length} companies × ${suppliers.length} suppliers)`);
+      } else {
+        setPeriodMessage('Period added successfully!');
+      }
+      
+      setPeriod('');
+      setTimeout(() => setPeriodMessage(''), 5000);
+    } catch (error) {
+      console.error('Error adding period:', error);
+      setPeriodMessage('Error adding period. Please try again.');
+      setTimeout(() => setPeriodMessage(''), 3000);
+    } finally {
+      setPeriodLoading(false);
+    }
+  };
+
+  // Handler for Type Form
+  const handleTypeSubmit = async () => {
+    if (!type.trim()) {
+      setTypeMessage('Please fill in the type field');
+      setTimeout(() => setTypeMessage(''), 3000);
+      return;
+    }
+    
+    setTypeLoading(true);
+    
+    try {
+      await addDoc(collection(db, 'types'), {
+        type: type.trim(),
+        createdAt: new Date(),
+      });
+      
+      setTypeMessage('Type added successfully!');
+      setType('');
+      setTimeout(() => setTypeMessage(''), 3000);
+    } catch (error) {
+      console.error('Error adding type:', error);
+      setTypeMessage('Error adding type. Please try again.');
+      setTimeout(() => setTypeMessage(''), 3000);
+    } finally {
+      setTypeLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto p-4">
       <h1 className="text-3xl font-bold text-gray-900 mb-2">Supplier Master</h1>
-      <p className="text-gray-600 mb-8">Manage suppliers, periods, and types independently</p>
+      <p className="text-gray-600 mb-2">Manage suppliers, periods, and types independently</p>
+      {existingCompanies.length > 0 && (
+        <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-blue-800">
+            <strong>Auto-Combination Enabled:</strong> When you add a new Supplier or Period, combinations will be automatically created for all {existingCompanies.length} existing companies.
+          </p>
+        </div>
+      )}
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Form 1 - Suppliers Collection */}
@@ -381,6 +533,22 @@ export default function SupplierMasterPage() {
           </div>
         </div>
       </div>
+
+      {/* Existing Companies Info */}
+      {existingCompanies.length > 0 && (
+        <div className="mt-8 bg-gray-50 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-3">
+            Existing Companies ({existingCompanies.length})
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+            {existingCompanies.map((company, index) => (
+              <div key={index} className="bg-white px-3 py-2 rounded border border-gray-200 text-sm text-gray-700">
+                {company}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
