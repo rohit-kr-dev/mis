@@ -21,6 +21,7 @@ interface Supplier {
 interface Period {
   id: string;
   period: string;
+  createdAt: any;
 }
 
 interface Item {
@@ -37,15 +38,13 @@ interface Type {
 }
 
 interface CalculatedRow {
-  month: string;
-  supplier: string;
-  type: string;
+  materialType: string;
   company: string;
-  values: { [typeName: string]: number };
+  supplierValues: { [supplierName: string]: number };
   total: number;
 }
 
-export default function SupplierWiseMonthly() {
+export default function AllSuppliersMonthly() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [periods, setPeriods] = useState<Period[]>([]);
   const [items, setItems] = useState<Item[]>([]);
@@ -53,8 +52,8 @@ export default function SupplierWiseMonthly() {
   const [workingSheet, setWorkingSheet] = useState<WorkingSheetRecord[]>([]);
   const [allCompanies, setAllCompanies] = useState<string[]>([]);
   
-  const [selectedSupplier, setSelectedSupplier] = useState<string>('');
   const [selectedMonth, setSelectedMonth] = useState<string>('');
+  const [selectedType, setSelectedType] = useState<string>('');
   const [selectedCompany, setSelectedCompany] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [showOnlyWithValues, setShowOnlyWithValues] = useState(true);
@@ -85,10 +84,11 @@ export default function SupplierWiseMonthly() {
       (snapshot) => {
         const data = snapshot.docs.map(doc => ({
           id: doc.id,
-          period: doc.data().period as string
+          period: doc.data().period as string,
+          createdAt: doc.data().createdAt
         }));
         
-        // Sort periods chronologically (e.g., "Apr-25", "May-25", etc.)
+        // Sort periods chronologically
         const sortedData = data.sort((a, b) => {
           const parseMonthYear = (period: string): { year: number; month: number } => {
             const [monthStr, yearStr] = period.split('-');
@@ -126,11 +126,9 @@ export default function SupplierWiseMonthly() {
         
         // Sort by createdAt (First In, First Out - oldest first)
         const sortedData = data.sort((a, b) => {
-          // Handle cases where createdAt might be missing
           if (!a.createdAt) return 1;
           if (!b.createdAt) return -1;
           
-          // Convert Firestore Timestamp to milliseconds for comparison
           const timeA = a.createdAt.toMillis ? a.createdAt.toMillis() : a.createdAt;
           const timeB = b.createdAt.toMillis ? b.createdAt.toMillis() : b.createdAt;
           
@@ -198,8 +196,8 @@ export default function SupplierWiseMonthly() {
   const calculatedRows = useMemo(() => {
     const results: CalculatedRow[] = [];
 
-    // VLOOKUP function (moved inside useMemo to fix dependency warning)
-    const vlookupType = (company: string): string => {
+    // VLOOKUP function
+    const vlookupMaterialType = (company: string): string => {
       if (!company.trim()) return '';
       const item = items.find(i => i.company.toLowerCase() === company.toLowerCase());
       return item?.materialType || 'Unknown';
@@ -211,9 +209,9 @@ export default function SupplierWiseMonthly() {
     workingSheet.forEach(record => {
       const key = [
         (record.cnMonth || '').trim().toLowerCase(),
-        (record.supplierName || '').trim().toLowerCase(),
         (record.company || '').trim().toLowerCase(),
-        (record.type || '').trim().toLowerCase()
+        (record.type || '').trim().toLowerCase(),
+        (record.supplierName || '').trim().toLowerCase()
       ].join('|');
       
       const qty = typeof record.qty === 'number' ? record.qty : parseFloat(String(record.qty || 0));
@@ -224,41 +222,39 @@ export default function SupplierWiseMonthly() {
 
     // Determine which combinations to calculate
     const monthsToProcess = selectedMonth ? [selectedMonth] : periods.map(p => p.period);
-    const suppliersToProcess = selectedSupplier ? [selectedSupplier] : suppliers.map(s => s.supplierName);
+    const typesToProcess = selectedType ? [selectedType] : types.map(t => t.type);
     const companiesToProcess = selectedCompany ? [selectedCompany] : allCompanies;
 
     // Generate all combinations
     for (const month of monthsToProcess) {
-      for (const supplier of suppliersToProcess) {
+      for (const type of typesToProcess) {
         for (const company of companiesToProcess) {
-          // Get the type for the company
-          const materialType = vlookupType(company);
+          // Get the material type for the company
+          const materialType = vlookupMaterialType(company);
 
-          // Calculate values for each type dynamically using the lookup map
-          const values: { [typeName: string]: number } = {};
+          // Calculate values for each supplier dynamically using the lookup map
+          const supplierValues: { [supplierName: string]: number } = {};
           let total = 0;
 
-          for (const typeObj of types) {
+          for (const supplier of suppliers) {
             const key = [
               month.trim().toLowerCase(),
-              supplier.trim().toLowerCase(),
               company.trim().toLowerCase(),
-              typeObj.type.trim().toLowerCase()
+              type.trim().toLowerCase(),
+              supplier.supplierName.trim().toLowerCase()
             ].join('|');
             
-            const typeValue = aggregatedData.get(key) || 0;
-            values[typeObj.type] = typeValue;
-            total += typeValue;
+            const supplierValue = aggregatedData.get(key) || 0;
+            supplierValues[supplier.supplierName] = supplierValue;
+            total += supplierValue;
           }
 
           // Add row based on filter setting
           if (!showOnlyWithValues || total > 0) {
             results.push({
-              month: month,
-              supplier: supplier,
-              type: materialType,
+              materialType: materialType,
               company: company,
-              values: values,
+              supplierValues: supplierValues,
               total: total
             });
           }
@@ -267,21 +263,21 @@ export default function SupplierWiseMonthly() {
     }
 
     return results;
-  }, [selectedMonth, selectedSupplier, selectedCompany, workingSheet, items, periods, suppliers, allCompanies, types, showOnlyWithValues]);
+  }, [selectedMonth, selectedType, selectedCompany, workingSheet, items, periods, suppliers, types, allCompanies, showOnlyWithValues]);
 
   // Calculate column totals
   const columnTotals = useMemo(() => {
-    const totals: { [typeName: string]: number } = {};
+    const totals: { [supplierName: string]: number } = {};
     
-    // Initialize totals for each type
-    types.forEach(typeObj => {
-      totals[typeObj.type] = 0;
+    // Initialize totals for each supplier
+    suppliers.forEach(supplier => {
+      totals[supplier.supplierName] = 0;
     });
     
     // Sum up values
     calculatedRows.forEach(row => {
-      types.forEach(typeObj => {
-        totals[typeObj.type] += row.values[typeObj.type] || 0;
+      suppliers.forEach(supplier => {
+        totals[supplier.supplierName] += row.supplierValues[supplier.supplierName] || 0;
       });
     });
     
@@ -289,7 +285,7 @@ export default function SupplierWiseMonthly() {
     const grandTotal = Object.values(totals).reduce((sum, val) => sum + val, 0);
     
     return { ...totals, total: grandTotal };
-  }, [calculatedRows, types]);
+  }, [calculatedRows, suppliers]);
 
   // Grand Total
   const grandTotal = useMemo(() => {
@@ -309,7 +305,7 @@ export default function SupplierWiseMonthly() {
   // Clear all filters
   const clearFilters = () => {
     setSelectedMonth('');
-    setSelectedSupplier('');
+    setSelectedType('');
     setSelectedCompany('');
   };
 
@@ -328,7 +324,7 @@ export default function SupplierWiseMonthly() {
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 py-4 px-2 sm:px-4 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-800 text-center">
-          📊 Supplier Wise Monthly Report
+          📊 All Suppliers Monthly Report
         </h1>
 
         {/* Filters */}
@@ -380,17 +376,17 @@ export default function SupplierWiseMonthly() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                🏢 Supplier
+                📋 Type
               </label>
               <select
-                value={selectedSupplier}
-                onChange={(e) => setSelectedSupplier(e.target.value)}
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
               >
-                <option value="">-- All Suppliers --</option>
-                {suppliers.map(supplier => (
-                  <option key={supplier.id} value={supplier.supplierName}>
-                    {supplier.supplierName}
+                <option value="">-- All Types --</option>
+                {types.map(type => (
+                  <option key={type.id} value={type.type}>
+                    {type.type}
                   </option>
                 ))}
               </select>
@@ -451,73 +447,82 @@ export default function SupplierWiseMonthly() {
               </div>
             </div>
 
-            <div className="bg-white shadow-lg overflow-hidden border-x border-gray-200">
+            <div className="bg-white shadow-lg overflow-hidden border border-gray-300">
               <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-linear-to-r from-gray-800 to-gray-900 text-white sticky top-0">
+                <table className="w-full border-collapse">
+                  <thead className="bg-linear-to-r from-blue-800 to-indigo-900 text-white sticky top-0">
                     <tr>
-                      <th className="px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold">Sl.No</th>
-                      <th className="px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold">Month</th>
-                      <th className="px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold">Supplier</th>
-                      <th className="px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold">Type</th>
-                      <th className="px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold">Company</th>
-                      {types.map(typeObj => (
-                        <th key={typeObj.id} className="px-2 sm:px-4 py-3 text-right text-xs sm:text-sm font-semibold">
-                          {typeObj.type}
+                      <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 w-16">Sl.No</th>
+                      <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[140px]">Type</th>
+                      <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[160px]">Company</th>
+                      {suppliers.map(supplier => (
+                        <th key={supplier.id} className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[120px]">
+                          {supplier.supplierName}
                         </th>
                       ))}
-                      <th className="px-2 sm:px-4 py-3 text-right text-xs sm:text-sm font-semibold">Total</th>
+                      <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[110px]">Total</th>
+                      <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 w-20">Qty</th>
                     </tr>
                   </thead>
                   <tbody>
                     {currentRows.map((row, index) => (
                       <tr
-                        key={`${row.month}-${row.supplier}-${row.company}-${index}`}
-                        className="border-b border-gray-200 hover:bg-blue-50 transition"
+                        key={`${row.materialType}-${row.company}-${index}`}
+                        className="border-b border-gray-300 hover:bg-blue-50 transition"
                       >
-                        <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700 font-medium">
+                        <td className="px-3 py-3 text-xs sm:text-sm text-center text-gray-700 font-medium border border-gray-300">
                           {startIndex + index + 1}
                         </td>
-                        <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700">{row.month}</td>
-                        <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700">{row.supplier}</td>
-                        <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700">
-                          <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">
-                            {row.type}
+                        <td className="px-3 py-3 text-xs sm:text-sm text-center border border-gray-300">
+                          <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs font-medium">
+                            {row.materialType}
                           </span>
                         </td>
-                        <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700 font-medium">{row.company}</td>
-                        {types.map(typeObj => (
-                          <td key={typeObj.id} className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-right text-gray-700">
-                            {(row.values[typeObj.type] || 0) === 0 ? '—' : (row.values[typeObj.type] || 0).toFixed(2)}
+                        <td className="px-3 py-3 text-xs sm:text-sm text-center text-gray-700 font-medium border border-gray-300">{row.company}</td>
+                        {suppliers.map(supplier => (
+                          <td key={supplier.id} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-700 border border-gray-300">
+                            {(row.supplierValues[supplier.supplierName] || 0) === 0 ? '—' : (row.supplierValues[supplier.supplierName] || 0).toFixed(2)}
                           </td>
                         ))}
-                        <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-right font-semibold text-blue-700">
+                        <td className="px-3 py-3 text-xs sm:text-sm text-center font-semibold text-blue-700 border border-gray-300">
                           {row.total.toFixed(2)}
+                        </td>
+                        <td className="px-3 py-3 text-xs sm:text-sm text-center border border-gray-300">
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            row.total > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {row.total > 0 ? 'Yes' : 'No'}
+                          </span>
                         </td>
                       </tr>
                     ))}
                     
                     {/* Column Totals Row */}
-                    <tr className="bg-linear-to-r from-blue-100 to-blue-200 border-t-4 border-blue-600 font-bold">
-                      <td colSpan={5} className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">
+                    <tr className="bg-linear-to-r from-blue-100 to-indigo-200 border-t-4 border-blue-600 font-bold">
+                      <td colSpan={3} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
                         📊 COLUMN TOTALS
                       </td>
-                      {types.map(typeObj => (
-                        <td key={typeObj.id} className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-right text-gray-900">
-                          {(columnTotals[typeObj.type] || 0) === 0 ? '—' : (columnTotals[typeObj.type] || 0).toFixed(2)}
+                      {suppliers.map(supplier => (
+                        <td key={supplier.id} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
+                          {(columnTotals[supplier.supplierName] || 0) === 0 ? '—' : (columnTotals[supplier.supplierName] || 0).toFixed(2)}
                         </td>
                       ))}
-                      <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-right text-blue-700 font-bold text-base">
+                      <td className="px-3 py-3 text-xs sm:text-sm text-center text-blue-700 font-bold text-base border border-gray-400">
                         {(columnTotals.total || 0).toFixed(2)}
+                      </td>
+                      <td className="px-3 py-3 text-xs sm:text-sm text-center border border-gray-400">
+                        <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                          —
+                        </span>
                       </td>
                     </tr>
 
                     {/* Grand Total Row */}
                     <tr className="bg-linear-to-r from-green-100 to-green-200 border-t-4 border-green-600 font-bold">
-                      <td colSpan={5} className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">
+                      <td colSpan={3} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
                         💰 GRAND TOTAL
                       </td>
-                      <td colSpan={types.length + 1} className="px-2 sm:px-4 py-3 text-sm sm:text-base text-right text-green-800 font-bold">
+                      <td colSpan={suppliers.length + 2} className="px-3 py-3 text-sm sm:text-base text-center text-green-800 font-bold border border-gray-400">
                         {grandTotal.toFixed(2)}
                       </td>
                     </tr>
@@ -527,7 +532,7 @@ export default function SupplierWiseMonthly() {
             </div>
 
             {/* Pagination */}
-            <div className="bg-white rounded-b-xl shadow-lg px-4 py-4 border border-t-0 border-gray-200">
+            <div className="bg-white rounded-b-xl shadow-lg px-4 py-4 border border-gray-200">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="text-xs sm:text-sm text-gray-600">
                   Page <span className="font-bold text-blue-600">{currentPage}</span> of <span className="font-bold">{totalPages}</span>

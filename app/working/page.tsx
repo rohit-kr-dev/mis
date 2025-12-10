@@ -536,7 +536,7 @@ export default function Working() {
               <input type="number" placeholder="Qty" value={formData.qty} onChange={(e) => handleFormChange('qty', Number(e.target.value))} className="px-3 py-2 border rounded" />
               
               <input type="text" placeholder="Grade" value={formData.grade} onChange={(e) => handleFormChange('grade', e.target.value)} className="px-3 py-2 border rounded" />
-              <input type="text" placeholder="Item Name (auto)" value={formData.itemName || ''} disabled className="px-3 py-2 border rounded bg-gray-100" />
+              {/* <input type="text" placeholder="Item Name (auto)" value={formData.itemName || ''} disabled className="px-3 py-2 border rounded bg-gray-100" /> */}
               <input type="text" placeholder="Company (auto)" value={formData.company || ''} disabled className="px-3 py-2 border rounded bg-gray-100" />
               <input type="text" placeholder="Product Category (auto)" value={formData.productCategory || ''} disabled className="px-3 py-2 border rounded bg-gray-100" />
               
@@ -710,19 +710,19 @@ export default function Working() {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-md p-6 text-white">
+          <div className="bg-linear-to-br from-blue-500 to-blue-600 rounded-lg shadow-md p-6 text-white">
             <h3 className="text-sm opacity-90">Total Transactions</h3>
             <p className="text-3xl font-bold">{summary.totalTransactions}</p>
           </div>
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-md p-6 text-white">
+          <div className="bg-linear-to-br from-green-500 to-green-600 rounded-lg shadow-md p-6 text-white">
             <h3 className="text-sm opacity-90">Purchase Amount</h3>
             <p className="text-2xl font-bold">{formatCurrency(summary.totalPurchaseAmount)}</p>
           </div>
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-md p-6 text-white">
+          <div className="bg-linear-to-br from-purple-500 to-purple-600 rounded-lg shadow-md p-6 text-white">
             <h3 className="text-sm opacity-90">Total of TOTAL</h3>
             <p className="text-2xl font-bold">{formatCurrency(summary.totalOfTotal)}</p>
           </div>
-          <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-md p-6 text-white">
+          <div className="bg-linear-to-br from-orange-500 to-orange-600 rounded-lg shadow-md p-6 text-white">
             <h3 className="text-sm opacity-90">Total DIFF</h3>
             <p className="text-2xl font-bold">{formatCurrency(summary.totalDiff)}</p>
           </div>
@@ -743,7 +743,7 @@ export default function Working() {
                   <th className="px-2 py-2 border text-xs">Buy Rate</th>
                   <th className="px-2 py-2 border text-xs">Qty</th>
                   <th className="px-2 py-2 border text-xs">Grade</th>
-                  <th className="px-2 py-2 border text-xs">Item Name</th>
+                  {/* <th className="px-2 py-2 border text-xs">Item Name</th> */}
                   <th className="px-2 py-2 border text-xs">Company</th>
                   <th className="px-2 py-2 border text-xs">Category</th>
                   <th className="px-2 py-2 border text-xs">Total</th>
@@ -764,7 +764,7 @@ export default function Working() {
                     <td className="px-2 py-2 border text-right">{formatCurrency(row.buyRate || 0)}</td>
                     <td className="px-2 py-2 border text-right">{row.qty || 0}</td>
                     <td className="px-2 py-2 border">{row.grade || ''}</td>
-                    <td className="px-2 py-2 border">{row.itemName || ''}</td>
+                    {/* <td className="px-2 py-2 border">{row.itemName || ''}</td> */}
                     <td className="px-2 py-2 border">{row.company || ''}</td>
                     <td className="px-2 py-2 border">{row.productCategory || ''}</td>
                     <td className="px-2 py-2 border text-right font-medium">{formatCurrency(row.total || 0)}</td>

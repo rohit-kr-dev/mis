@@ -7,7 +7,7 @@ const menuItems = [
   { name: 'Supplier Master', path: '/supplier-master' },
   { name: 'Items Master', path: '/items-master' },
   { name: 'As per Zoho', path: '/as-per-zoho' },
-  { name: 'Master Check', path: '/master-check' },
+  // { name: 'Master Check', path: '/master-check' },
   { name: 'Working', path: '/working' },
   { name: 'Supplier Wise Monthly', path: '/supplier-wise-monthly' },
   { name: 'Supplier Wise Yearly', path: '/supplier-wise-yearly' },
