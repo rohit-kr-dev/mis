@@ -1,30 +1,744 @@
 [
   {
-    "qty": 2500,
-    "company": "RIL",
-    "supplierName": "PARAGON RESIN LLP",
-    "type": "Outright",
-    "id": "8zLM6SCmJMQcVE5537uf"
+    "qty": 5000,
+    "company": "MRPL",
+    "supplierName": "KAMAKYA CHEMPLAST PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "0HW7pdncm9g916BacoS2"
+  },
+  {
+    "qty": 2000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "0KiPxzG77DXgReZw2Xc2"
   },
   {
     "qty": 5000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "0NQgOw4ouUm83N3805nM"
+  },
+  {
+    "qty": 2500,
+    "company": "HMEL",
+    "supplierName": "SRI VENKATESHWARA POLYMERS",
+    "type": "Discounts",
+    "id": "0h05ymPZR1aTgtZTcRC5"
+  },
+  {
+    "qty": 2500,
+    "company": "HMEL",
+    "supplierName": "SRI VENKATESHWARA POLYMERS",
+    "type": "Discounts",
+    "id": "0h2sVPlA07YQf5mZQN1r"
+  },
+  {
+    "qty": 10000,
+    "company": "MRPL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "1anc1SR1g6CnfUYvRfOu"
+  },
+  {
+    "qty": 5000,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "1kJQriy9s4nAgHO190Ok"
+  },
+  {
+    "qty": 8000,
+    "company": "HMEL",
+    "supplierName": "SRI VENKATESHWARA POLYMERS",
+    "type": "Discounts",
+    "id": "20mhNbiOdHCqvOD3ZhkF"
+  },
+  {
+    "qty": 3000,
+    "company": "BCPL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "29G7mFn1QWKqU6967fa4"
+  },
+  {
+    "qty": 1000,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "2GND5qB6pd77UXj4Rd7e"
+  },
+  {
+    "qty": 3000,
     "company": "RIL",
     "supplierName": "PARAGON RESIN LLP",
-    "type": "Outright",
-    "id": "F68BHxKUXsemDnbqHrNd"
+    "type": "Discounts",
+    "id": "2fsADiaxLHJyzseQ7ru1"
   },
   {
     "qty": 2500,
     "company": "RIL",
     "supplierName": "PARAGON RESIN LLP",
-    "type": "Outright",
-    "id": "kUuGYqBYyAnM5xuuTWRb"
+    "type": "Discounts",
+    "id": "2wdjHfsTtJ5qaNzCyobs"
+  },
+  {
+    "qty": 3000,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "3FGxftkF3DCjMojIBMXr"
+  },
+  {
+    "qty": 500,
+    "company": "RIL",
+    "supplierName": "PARAGON RESIN LLP",
+    "type": "Discounts",
+    "id": "3VjSnjgIsmEU4FDv3cQt"
+  },
+  {
+    "qty": 10000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "4sPYAp8d1Zye093UmbwV"
+  },
+  {
+    "qty": 12000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "5Jj5xaxNrRbO0MViilf0"
+  },
+  {
+    "qty": 2000,
+    "company": "RIL",
+    "supplierName": "PARAGON RESIN LLP",
+    "type": "Discounts",
+    "id": "5qXERy8VHcL8JfsGWivc"
+  },
+  {
+    "qty": 15000,
+    "company": "GAIL",
+    "supplierName": "INTIME VINCOM PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "63Z1y2z0Ne6togONKDak"
+  },
+  {
+    "qty": 10000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "664PHCJLIRQXfg3BPmoU"
+  },
+  {
+    "qty": 13000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "75uhm66ot44x6vCbuClx"
+  },
+  {
+    "qty": 2500,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "7LusVM55FZO3kqj1CMNa"
+  },
+  {
+    "qty": 500,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "7yVZhlTso69ZdKouCcWP"
+  },
+  {
+    "qty": 5000,
+    "company": "MRPL",
+    "supplierName": "KAMAKYA CHEMPLAST PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "81r1GiCUaV5h1TN3wWQq"
+  },
+  {
+    "qty": 2000,
+    "company": "RIL",
+    "supplierName": "PARAGON RESIN LLP",
+    "type": "Discounts",
+    "id": "8oTJUKqfE5XeQqeD4G4L"
+  },
+  {
+    "qty": 2000,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "AP9PgUJatu1HKYH1Pyxm"
+  },
+  {
+    "qty": 20000,
+    "company": "BCPL",
+    "supplierName": "INTIME VINCOM PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "B8Ac7kGBpGg3dCeJJ3Pd"
+  },
+  {
+    "qty": 2500,
+    "company": "RIL",
+    "supplierName": "PARAGON RESIN LLP",
+    "type": "Discounts",
+    "id": "BnHyAbb1FIEGbJHYs35m"
+  },
+  {
+    "qty": 3650,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "BpsixP9Y897MCg6AmAvw"
+  },
+  {
+    "qty": 12000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "C2rH7Z4JhwFiUvr1IJMB"
+  },
+  {
+    "qty": 6000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "CmM1yrGvCwA1unjMfcwI"
+  },
+  {
+    "qty": 10000,
+    "company": "MRPL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "DIBZ0bp9xY1Rm9VVlB73"
+  },
+  {
+    "qty": 1500,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "DLS2hUnOM7bQdrYjHiAn"
+  },
+  {
+    "qty": 5000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "DcOWmohWahTHrY6BQMow"
+  },
+  {
+    "qty": 5000,
+    "company": "HMEL",
+    "supplierName": "SRI VENKATESHWARA POLYMERS",
+    "type": "Discounts",
+    "id": "E3WZ4bfY0eDzuiwyr0Sa"
+  },
+  {
+    "qty": 5000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "FLyvpFZaEU2GUQghIDaJ"
+  },
+  {
+    "qty": 3000,
+    "company": "MRPL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "FNmECxF6cgxPdzsXeiUN"
+  },
+  {
+    "qty": 20000,
+    "company": "MRPL",
+    "supplierName": "KAMAKYA CHEMPLAST PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "FoXlzEgXsUsvD1EDwge2"
+  },
+  {
+    "qty": 10000,
+    "company": "MRPL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "GDXI2Rkk0XJ8hsnPqMtX"
+  },
+  {
+    "qty": 2500,
+    "company": "RIL",
+    "supplierName": "PARAGON RESIN LLP",
+    "type": "Discounts",
+    "id": "GeHkWKjLynwSQe5CXtb5"
+  },
+  {
+    "qty": 5000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "GxdOrZe1e3EZAgcChqKF"
+  },
+  {
+    "qty": 2500,
+    "company": "RIL",
+    "supplierName": "PARAGON RESIN LLP",
+    "type": "Discounts",
+    "id": "H7IEPYYlzE2IVyD6BLP7"
+  },
+  {
+    "qty": 3000,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "IJsSEc2qhfABzl0wdIGT"
+  },
+  {
+    "qty": 50,
+    "company": "RIL",
+    "supplierName": "PARAGON RESIN LLP",
+    "type": "Discounts",
+    "id": "ItDvxZiKwNGDWjWGMExZ"
+  },
+  {
+    "qty": 5000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "IxXXLehctSvTJzADQFeI"
+  },
+  {
+    "qty": 2500,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "JlKUcldudyyZJCV9RavH"
   },
   {
     "qty": 1000,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "L7h86tCyuyood8SOxuek"
+  },
+  {
+    "qty": 9000,
+    "company": "RIL",
+    "supplierName": "VALUE PACKAGING INDUSTRIES PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "LmfPGOakHAawIKKHXzjO"
+  },
+  {
+    "qty": 3000,
+    "company": "RIL",
+    "supplierName": "VALUE PACKAGING INDUSTRIES PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "LuEgbNo7NG6ut4od9G7T"
+  },
+  {
+    "qty": 15000,
+    "company": "GAIL",
+    "supplierName": "INTIME VINCOM PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "M4aPRnXZPnJrLksOTBG5"
+  },
+  {
+    "qty": 500,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "ML0VOI4BM2PPh0JA86u1"
+  },
+  {
+    "qty": 100,
     "company": "RIL",
     "supplierName": "PARAGON RESIN LLP",
-    "type": "Outright",
-    "id": "wjJrMUzz6Dcw3ChMK0xO"
+    "type": "Discounts",
+    "id": "Nqbs5fkD19Ch93lIKJAt"
+  },
+  {
+    "qty": 3000,
+    "company": "HMEL",
+    "supplierName": "SRI VENKATESHWARA POLYMERS",
+    "type": "Discounts",
+    "id": "Nv9Gwk7GkxxOgxOVfPUG"
+  },
+  {
+    "qty": 1500,
+    "company": "HMEL",
+    "supplierName": "SRI VENKATESHWARA POLYMERS",
+    "type": "Discounts",
+    "id": "P0UGfxoR0JIRQ2NnSJ74"
+  },
+  {
+    "qty": 13000,
+    "company": "BCPL",
+    "supplierName": "INTIME VINCOM PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "R2TS2EHD3JXyaaMb5IIH"
+  },
+  {
+    "qty": 13000,
+    "company": "BCPL",
+    "supplierName": "INTIME VINCOM PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "RNEDPibUExiOnE5wP1E4"
+  },
+  {
+    "qty": 2500,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "SaRs4tYxUN4jO3fre48u"
+  },
+  {
+    "qty": 12000,
+    "company": "HMEL",
+    "supplierName": "SRI VENKATESHWARA POLYMERS",
+    "type": "Discounts",
+    "id": "U3x5bnqzFiZjDdSpaApA"
+  },
+  {
+    "qty": 2500,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "UTGIEZUikvgCZguSrhWJ"
+  },
+  {
+    "qty": 12000,
+    "company": "BCPL",
+    "supplierName": "INTIME VINCOM PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "UWQ7yKhSUYrHr00Bky5D"
+  },
+  {
+    "qty": 10000,
+    "company": "MRPL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "UgLJzum2CQTeB8LD8PRZ"
+  },
+  {
+    "qty": 7000,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "VDiHy3QjNnndb7VjV4Jp"
+  },
+  {
+    "qty": 12000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "VPfznmiPAPmGrs6IM4pP"
+  },
+  {
+    "qty": 1000,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "WD8c2cjVOBaOOv7v0dmN"
+  },
+  {
+    "qty": 2500,
+    "company": "HMEL",
+    "supplierName": "SRI VENKATESHWARA POLYMERS",
+    "type": "Discounts",
+    "id": "X6twuEqHuIejuM6vAX4z"
+  },
+  {
+    "qty": 5000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "XUoPDVTwoADL7MIjw9Fr"
+  },
+  {
+    "qty": 3000,
+    "company": "RIL",
+    "supplierName": "PARAGON RESIN LLP",
+    "type": "Discounts",
+    "id": "Xb62cpwUmbflwRiqgPrf"
+  },
+  {
+    "qty": 3000,
+    "company": "RIL",
+    "supplierName": "PARAGON RESIN LLP",
+    "type": "Discounts",
+    "id": "Y2lLzyyjwyqmqrmGrrAW"
+  },
+  {
+    "qty": 3000,
+    "company": "OPAL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "Z553FxXyZO3VLGLuwypv"
+  },
+  {
+    "qty": 3000,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "ZyZklaxTpkTFBQbsEbYT"
+  },
+  {
+    "qty": 3000,
+    "company": "HMEL",
+    "supplierName": "SRI VENKATESHWARA POLYMERS",
+    "type": "Discounts",
+    "id": "aBLPC0LT9iJhdUzzK9Uj"
+  },
+  {
+    "qty": 5000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "aPPbkqWBOp9mYD1pde99"
+  },
+  {
+    "qty": 10000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "bApbUkWhpPNf9g3vigjU"
+  },
+  {
+    "qty": 1700,
+    "company": "HMEL",
+    "supplierName": "SRI VENKATESHWARA POLYMERS",
+    "type": "Discounts",
+    "id": "bGI3k3vHQpbrowpVx3sF"
+  },
+  {
+    "qty": 1500,
+    "company": "RIL",
+    "supplierName": "VALUE PACKAGING INDUSTRIES PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "cptb5lKkCIV3k1xjtIv4"
+  },
+  {
+    "qty": 12000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "cwESkF6KhAOouoK14CXU"
+  },
+  {
+    "qty": 2500,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "g9StJbei9PzQB1Yz4Fw2"
+  },
+  {
+    "qty": 3000,
+    "company": "HMEL",
+    "supplierName": "SRI VENKATESHWARA POLYMERS",
+    "type": "Discounts",
+    "id": "gFi9Me1V4xxNCAzedIz8"
+  },
+  {
+    "qty": 2500,
+    "company": "HMEL",
+    "supplierName": "SRI VENKATESHWARA POLYMERS",
+    "type": "Discounts",
+    "id": "gKL3GwXPyPUyocYRlRel"
+  },
+  {
+    "qty": 3000,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "gPUDeFZ9j9dyVd8NvQF2"
+  },
+  {
+    "qty": 4000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "i58HOMn3IEybCpOzMwcv"
+  },
+  {
+    "qty": 3000,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "jSUGiMeCfzP7UNRdDNdE"
+  },
+  {
+    "qty": 10000,
+    "company": "MRPL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "kDCh2mcGIqX2v6rLCGy1"
+  },
+  {
+    "qty": 2500,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "lRxQL2CGC6LLmomW70yI"
+  },
+  {
+    "qty": 4500,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "m2xC9bb7NjRRFYyxRTkS"
+  },
+  {
+    "qty": 3000,
+    "company": "HMEL",
+    "supplierName": "SRI VENKATESHWARA POLYMERS",
+    "type": "Discounts",
+    "id": "mdLHlJE8Qt1hz4LBAB6y"
+  },
+  {
+    "qty": 12000,
+    "company": "HMEL",
+    "supplierName": "ALLIED PLASTICS",
+    "type": "Discounts",
+    "id": "mhxbqvWtMA41u7lMzGZb"
+  },
+  {
+    "qty": 10000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "n469udMMs4s9F6xwVdIP"
+  },
+  {
+    "qty": 1500,
+    "company": "RIL",
+    "supplierName": "PARAGON RESIN LLP",
+    "type": "Discounts",
+    "id": "oU4R9hd94OVAM95ME18a"
+  },
+  {
+    "qty": 20000,
+    "company": "MRPL",
+    "supplierName": "KAMAKYA CHEMPLAST PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "oXteCw63TyOzilQ93ufX"
+  },
+  {
+    "qty": 5000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "ogtUPvEvhHVc9gWoNE9g"
+  },
+  {
+    "qty": 2500,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "p9g3xr0ZfT9oM3eR7V2e"
+  },
+  {
+    "qty": 10000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "pH1jpgvsPUpEvRe27kUv"
+  },
+  {
+    "qty": 2500,
+    "company": "HMEL",
+    "supplierName": "SRI VENKATESHWARA POLYMERS",
+    "type": "Discounts",
+    "id": "qEPEBqgFoI47ylaProFE"
+  },
+  {
+    "qty": 25,
+    "company": "RIL",
+    "supplierName": "PARAGON RESIN LLP",
+    "type": "Discounts",
+    "id": "qYIN7A8SZhvPnvCTpsyq"
+  },
+  {
+    "qty": 1000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "qwHpJLVLsEq9ACHQ71xn"
+  },
+  {
+    "qty": 12000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "snTeHs0b5av7DXc0bMo6"
+  },
+  {
+    "qty": 2500,
+    "company": "MRPL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "tLx4qYpGSsv3edRNM1nz"
+  },
+  {
+    "qty": 2000,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "uYU801xOYPNb1LbpJPlZ"
+  },
+  {
+    "qty": 4350,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "x0zo9zqc9Ms5l4814AU9"
+  },
+  {
+    "qty": 3000,
+    "company": "HMEL",
+    "supplierName": "SRI VENKATESHWARA POLYMERS",
+    "type": "Discounts",
+    "id": "x4af8PXKhbkb10C8TOeM"
+  },
+  {
+    "qty": 10000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "x8QKJhtHr5HiUe44YAR8"
+  },
+  {
+    "qty": 30000,
+    "company": "MRPL",
+    "supplierName": "KAMAKYA CHEMPLAST PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "xWpOzU00d8izUJQ49JXO"
+  },
+  {
+    "qty": 25000,
+    "company": "MRPL",
+    "supplierName": "KAMAKYA CHEMPLAST PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "ytPTarI9vNmNxuuJHiGt"
+  },
+  {
+    "qty": 10000,
+    "company": "OPAL",
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "zHEUuDaMyo8igD9fLPcf"
+  },
+  {
+    "qty": 2500,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "zU58zRclf0TmKVwSWHw7"
+  },
+  {
+    "qty": 2500,
+    "company": "GAIL",
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "type": "Discounts",
+    "id": "zyhZosRwVrGJYmns0kc3"
   }
 ]

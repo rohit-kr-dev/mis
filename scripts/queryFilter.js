@@ -69,10 +69,8 @@ async function queryCollection(collectionName, filters = [], fieldsToSelect = []
 // 🚀 Example usage:
 (async () => {
   const filters = [
-    { field: "cnMonth", op: "==", value: "Apr-25" },
-    { field: "supplierName", op: "==", value: "PARAGON RESIN LLP" },
-    { field: "company", op: "==", value: "RIL" },
-    { field: "type", op: "==", value: "Outright" }
+    { field: "cnMonth", op: "==", value: "Aug-25" },
+    { field: "type", op: "==", value: "Discounts" }
   ];
 
   // 👉 Select only these fields

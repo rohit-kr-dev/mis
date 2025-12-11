@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, AlertCircle } from 'lucide-react';
 
 interface WorkingSheetRecord {
   supplierName: string;
@@ -56,40 +56,38 @@ export default function AllSuppliersMonthly() {
   const [selectedType, setSelectedType] = useState<string>('');
   const [selectedCompany, setSelectedCompany] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [loadingData, setLoadingData] = useState(false);
+  const [dataFetched, setDataFetched] = useState(false);
   const [showOnlyWithValues, setShowOnlyWithValues] = useState(true);
+  const [requiredFilters, setRequiredFilters] = useState<number>(1);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // Fetch suppliers
+  // Fetch master data ONCE on mount using getDocs
   useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, 'suppliers'),
-      (snapshot) => {
-        const data = snapshot.docs.map(doc => ({
+    const fetchMasterData = async () => {
+      try {
+        setLoading(true);
+
+        // Fetch suppliers
+        const suppliersSnap = await getDocs(collection(db, 'suppliers'));
+        const suppliersData = suppliersSnap.docs.map(doc => ({
           id: doc.id,
           supplierName: doc.data().supplierName as string
         }));
-        setSuppliers(data);
-      }
-    );
-    return () => unsubscribe();
-  }, []);
+        setSuppliers(suppliersData);
 
-  // Fetch periods and sort them chronologically
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, 'periods'),
-      (snapshot) => {
-        const data = snapshot.docs.map(doc => ({
+        // Fetch periods
+        const periodsSnap = await getDocs(collection(db, 'periods'));
+        const periodsData = periodsSnap.docs.map(doc => ({
           id: doc.id,
           period: doc.data().period as string,
           createdAt: doc.data().createdAt
         }));
         
-        // Sort periods chronologically
-        const sortedData = data.sort((a, b) => {
+        const sortedPeriods = periodsData.sort((a, b) => {
           const parseMonthYear = (period: string): { year: number; month: number } => {
             const [monthStr, yearStr] = period.split('-');
             const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
@@ -106,47 +104,28 @@ export default function AllSuppliersMonthly() {
           }
           return dateA.month - dateB.month;
         });
-        
-        setPeriods(sortedData);
-      }
-    );
-    return () => unsubscribe();
-  }, []);
+        setPeriods(sortedPeriods);
 
-  // Fetch types and sort by createdAt (FIFO)
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, 'types'),
-      (snapshot) => {
-        const data = snapshot.docs.map(doc => ({
+        // Fetch types
+        const typesSnap = await getDocs(collection(db, 'types'));
+        const typesData = typesSnap.docs.map(doc => ({
           id: doc.id,
           type: doc.data().type as string,
           createdAt: doc.data().createdAt
         }));
         
-        // Sort by createdAt (First In, First Out - oldest first)
-        const sortedData = data.sort((a, b) => {
+        const sortedTypes = typesData.sort((a, b) => {
           if (!a.createdAt) return 1;
           if (!b.createdAt) return -1;
-          
           const timeA = a.createdAt.toMillis ? a.createdAt.toMillis() : a.createdAt;
           const timeB = b.createdAt.toMillis ? b.createdAt.toMillis() : b.createdAt;
-          
           return timeA - timeB;
         });
-        
-        setTypes(sortedData);
-      }
-    );
-    return () => unsubscribe();
-  }, []);
+        setTypes(sortedTypes);
 
-  // Fetch items and extract unique companies (excluding "NA")
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, 'items'),
-      (snapshot) => {
-        const data = snapshot.docs.map(doc => {
+        // Fetch items
+        const itemsSnap = await getDocs(collection(db, 'items'));
+        const itemsData = itemsSnap.docs.map(doc => {
           const docData = doc.data();
           return {
             id: doc.id,
@@ -155,45 +134,97 @@ export default function AllSuppliersMonthly() {
             materialType: (docData.materialType as string) || ''
           };
         });
-        setItems(data);
+        setItems(itemsData);
         
         // Extract unique companies, filter out "NA" and empty strings
         const companies = [...new Set(
-          data
+          itemsData
             .map(item => item.company.trim())
             .filter(company => company && company.toUpperCase() !== 'NA')
         )].sort();
         
         setAllCompanies(companies);
         setLoading(false);
+      } catch (error) {
+        console.error('Error fetching master data:', error);
+        setLoading(false);
       }
-    );
-    return () => unsubscribe();
+    };
+
+    fetchMasterData();
   }, []);
 
-  // Fetch workingSheet
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, 'workingSheet'),
-      (snapshot) => {
-        const data = snapshot.docs.map(doc => {
-          const docData = doc.data();
-          return {
-            supplierName: (docData.supplierName as string) || '',
-            company: (docData.company as string) || '',
-            type: (docData.type as string) || '',
-            qty: (docData.qty as number) || 0,
-            cnMonth: (docData.cnMonth as string) || ''
-          };
-        });
-        setWorkingSheet(data);
+  // Check if filter requirements are met
+  const appliedFiltersCount = useMemo(() => {
+    let count = 0;
+    if (selectedMonth) count++;
+    if (selectedType) count++;
+    if (selectedCompany) count++;
+    return count;
+  }, [selectedMonth, selectedType, selectedCompany]);
+
+  const filtersRequirementMet = useMemo(() => {
+    return appliedFiltersCount >= requiredFilters;
+  }, [appliedFiltersCount, requiredFilters]);
+
+  // Manual fetch function - ONLY called when user explicitly applies filters
+  const fetchWorkingSheetData = async () => {
+    if (!filtersRequirementMet) {
+      setWorkingSheet([]);
+      setDataFetched(false);
+      return;
+    }
+
+    setLoadingData(true);
+    setDataFetched(false);
+
+    try {
+      // Build query with where clauses based on selected filters
+      const constraints = [];
+
+      if (selectedMonth) {
+        constraints.push(where('cnMonth', '==', selectedMonth));
       }
-    );
-    return () => unsubscribe();
-  }, []);
+      if (selectedType) {
+        constraints.push(where('type', '==', selectedType));
+      }
+      if (selectedCompany) {
+        constraints.push(where('company', '==', selectedCompany));
+      }
+
+      // Create query with constraints
+      const workingSheetQuery = constraints.length > 0 
+        ? query(collection(db, 'workingSheet'), ...constraints)
+        : collection(db, 'workingSheet');
+
+      const snapshot = await getDocs(workingSheetQuery);
+      const data = snapshot.docs.map(doc => {
+        const docData = doc.data();
+        return {
+          supplierName: (docData.supplierName as string) || '',
+          company: (docData.company as string) || '',
+          type: (docData.type as string) || '',
+          qty: (docData.qty as number) || 0,
+          cnMonth: (docData.cnMonth as string) || ''
+        };
+      });
+      
+      setWorkingSheet(data);
+      setDataFetched(true);
+      setLoadingData(false);
+    } catch (error) {
+      console.error('Error fetching workingSheet:', error);
+      setLoadingData(false);
+      setDataFetched(false);
+    }
+  };
 
   // Calculate data dynamically based on filters
   const calculatedRows = useMemo(() => {
+    if (!dataFetched) {
+      return [];
+    }
+
     const results: CalculatedRow[] = [];
 
     // VLOOKUP function
@@ -263,7 +294,7 @@ export default function AllSuppliersMonthly() {
     }
 
     return results;
-  }, [selectedMonth, selectedType, selectedCompany, workingSheet, items, periods, suppliers, types, allCompanies, showOnlyWithValues]);
+  }, [selectedMonth, selectedType, selectedCompany, workingSheet, items, periods, suppliers, types, allCompanies, showOnlyWithValues, dataFetched]);
 
   // Calculate column totals
   const columnTotals = useMemo(() => {
@@ -307,21 +338,40 @@ export default function AllSuppliersMonthly() {
     setSelectedMonth('');
     setSelectedType('');
     setSelectedCompany('');
+    setWorkingSheet([]);
+    setDataFetched(false);
+  };
+
+  // Handle filter changes - mark data as stale
+  const handleFilterChange = (filterType: 'month' | 'type' | 'company', value: string) => {
+    setDataFetched(false); // Mark data as stale when filters change
+    
+    switch (filterType) {
+      case 'month':
+        setSelectedMonth(value);
+        break;
+      case 'type':
+        setSelectedType(value);
+        break;
+      case 'company':
+        setSelectedCompany(value);
+        break;
+    }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-          <div className="text-lg text-gray-700 font-medium">Loading data...</div>
+          <div className="text-lg text-gray-700 font-medium">Loading initial data...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 py-4 px-2 sm:px-4 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-4 px-2 sm:px-4 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-800 text-center">
           📊 All Suppliers Monthly Report
@@ -336,36 +386,107 @@ export default function AllSuppliersMonthly() {
                 onClick={() => setShowOnlyWithValues(!showOnlyWithValues)}
                 className={`w-full sm:w-auto px-4 py-2 text-sm rounded-lg transition shadow-md ${
                   showOnlyWithValues
-                    ? 'bg-linear-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800'
-                    : 'bg-linear-to-r from-orange-600 to-orange-700 text-white hover:from-orange-700 hover:to-orange-800'
+                    ? 'bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800'
+                    : 'bg-gradient-to-r from-orange-600 to-orange-700 text-white hover:from-orange-700 hover:to-orange-800'
                 }`}
               >
                 {showOnlyWithValues ? '✓ Show Only Values > 0' : '📊 Show All (Including 0)'}
               </button>
               <button
                 onClick={clearFilters}
-                className="w-full sm:w-auto px-4 py-2 text-sm bg-linear-to-r from-gray-500 to-gray-600 text-white rounded-lg hover:from-gray-600 hover:to-gray-700 transition shadow-md"
+                className="w-full sm:w-auto px-4 py-2 text-sm bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg hover:from-gray-600 hover:to-gray-700 transition shadow-md"
               >
                 ✖️ Clear Filters
               </button>
             </div>
           </div>
+
+          {/* Filter Requirement Selector */}
+          <div className="mb-4 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
+            <label className="block text-sm font-semibold text-gray-800 mb-3">
+              ⚙️ Minimum Filters Required:
+            </label>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => {
+                  setRequiredFilters(1);
+                  setDataFetched(false);
+                }}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition shadow-md ${
+                  requiredFilters === 1
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                }`}
+              >
+                At Least 1 Filter
+              </button>
+              <button
+                onClick={() => {
+                  setRequiredFilters(2);
+                  setDataFetched(false);
+                }}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition shadow-md ${
+                  requiredFilters === 2
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                }`}
+              >
+                At Least 2 Filters
+              </button>
+              <button
+                onClick={() => {
+                  setRequiredFilters(3);
+                  setDataFetched(false);
+                }}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition shadow-md ${
+                  requiredFilters === 3
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                }`}
+              >
+                All 3 Filters Required
+              </button>
+            </div>
+          </div>
+
+          {/* Filter Status Indicator */}
+          {!filtersRequirementMet && (
+            <div className="mb-4 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
+              <div className="flex items-start">
+                <AlertCircle className="w-5 h-5 text-yellow-600 mr-3 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-yellow-800 mb-1">
+                    Filters Required
+                  </p>
+                  <p className="text-xs text-yellow-700">
+                    You have applied {appliedFiltersCount} filter{appliedFiltersCount !== 1 ? 's' : ''}. 
+                    Please apply at least {requiredFilters} filter{requiredFilters !== 1 ? 's' : ''} and click "Load Data".
+                    <span className="block mt-1 font-medium">💡 Data is only fetched when you click the button - saving Firebase reads!</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           
           <p className="text-xs sm:text-sm text-gray-600 mb-4 bg-blue-50 p-3 rounded-lg border border-blue-200">
-            💡 <span className="font-semibold">Note:</span> You can select any combination of filters. Leave filters empty to show all combinations.
+            💡 <span className="font-semibold">Note:</span> Select filters and click "Load Data" to fetch from Firebase. 
+            {requiredFilters === 3 && ' All three filters must be selected.'}
+            {requiredFilters === 2 && ' At least two filters must be selected.'}
+            {requiredFilters === 1 && ' At least one filter must be selected.'}
+            <span className="block mt-1 text-green-700 font-medium">🔥 Zero Firebase reads until you click the button!</span>
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                📅 Month
+                📅 Month {selectedMonth && <span className="text-green-600">✓</span>}
               </label>
               <select
                 value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
+                onChange={(e) => handleFilterChange('month', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
               >
-                <option value="">-- All Months --</option>
+                <option value="">-- Select Month --</option>
                 {periods.map(period => (
                   <option key={period.id} value={period.period}>
                     {period.period}
@@ -376,14 +497,14 @@ export default function AllSuppliersMonthly() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                📋 Type
+                📋 Type {selectedType && <span className="text-green-600">✓</span>}
               </label>
               <select
                 value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value)}
+                onChange={(e) => handleFilterChange('type', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
               >
-                <option value="">-- All Types --</option>
+                <option value="">-- Select Type --</option>
                 {types.map(type => (
                   <option key={type.id} value={type.type}>
                     {type.type}
@@ -394,14 +515,14 @@ export default function AllSuppliersMonthly() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                🏭 Company
+                🏭 Company {selectedCompany && <span className="text-green-600">✓</span>}
               </label>
               <select
                 value={selectedCompany}
-                onChange={(e) => setSelectedCompany(e.target.value)}
+                onChange={(e) => handleFilterChange('company', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
               >
-                <option value="">-- All Companies --</option>
+                <option value="">-- Select Company --</option>
                 {allCompanies.map(company => (
                   <option key={company} value={company}>
                     {company}
@@ -410,16 +531,70 @@ export default function AllSuppliersMonthly() {
               </select>
             </div>
           </div>
+
+          {/* Load Data Button */}
+          <div className="flex justify-center">
+            <button
+              onClick={fetchWorkingSheetData}
+              disabled={!filtersRequirementMet || loadingData}
+              className={`px-6 py-3 rounded-lg font-semibold text-white transition shadow-lg transform hover:scale-105 ${
+                !filtersRequirementMet || loadingData
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
+              }`}
+            >
+              {loadingData ? (
+                <span className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  Loading Data...
+                </span>
+              ) : (
+                '🚀 Load Data from Firebase'
+              )}
+            </button>
+          </div>
+
+          {!dataFetched && filtersRequirementMet && !loadingData && (
+            <p className="text-center text-sm text-orange-600 mt-3 font-medium">
+              ⚠️ Click "Load Data" to fetch results
+            </p>
+          )}
         </div>
 
-        {/* Table */}
-        {calculatedRows.length === 0 ? (
+        {/* Table or Message */}
+        {!dataFetched && !loadingData ? (
+          <div className="bg-white rounded-xl shadow-lg p-8 sm:p-12 text-center border border-gray-200">
+            <div className="text-6xl mb-4">🔍</div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-3">
+              Ready to Load Data
+            </h3>
+            <p className="text-gray-600 text-base mb-4">
+              {!filtersRequirementMet 
+                ? `Please select at least ${requiredFilters} filter${requiredFilters !== 1 ? 's' : ''} and click "Load Data" to view the report.`
+                : 'Click the "Load Data" button above to fetch data from Firebase.'}
+            </p>
+            <div className="bg-green-50 p-4 rounded-lg inline-block">
+              <p className="text-sm text-green-800">
+                <span className="font-semibold">💰 Current Firebase Reads:</span> 0
+              </p>
+              <p className="text-xs text-green-600 mt-1">
+                No data fetched yet - your quota is safe!
+              </p>
+            </div>
+          </div>
+        ) : loadingData ? (
+          <div className="bg-white rounded-xl shadow-lg p-8 text-center border border-gray-200">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600 mx-auto mb-3"></div>
+            <p className="text-gray-600">Fetching filtered data from Firebase...</p>
+            <p className="text-xs text-gray-500 mt-2">This only happens when you click "Load Data"</p>
+          </div>
+        ) : calculatedRows.length === 0 ? (
           <div className="bg-white rounded-xl shadow-lg p-8 sm:p-12 text-center border border-gray-200">
             <div className="text-6xl mb-4">📊</div>
             <p className="text-gray-500 text-base sm:text-lg">
               {showOnlyWithValues 
                 ? '📭 No data with values greater than 0 found. Try toggling "Show All (Including 0)" or adjust your filters.'
-                : '📭 No data available. Please check your filters or data sources.'}
+                : '📭 No data available for the selected filters.'}
             </p>
           </div>
         ) : (
@@ -450,7 +625,7 @@ export default function AllSuppliersMonthly() {
             <div className="bg-white shadow-lg overflow-hidden border border-gray-300">
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
-                  <thead className="bg-linear-to-r from-blue-800 to-indigo-900 text-white sticky top-0">
+                  <thead className="bg-gradient-to-r from-blue-800 to-indigo-900 text-white sticky top-0">
                     <tr>
                       <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 w-16">Sl.No</th>
                       <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[140px]">Type</th>
@@ -498,7 +673,7 @@ export default function AllSuppliersMonthly() {
                     ))}
                     
                     {/* Column Totals Row */}
-                    <tr className="bg-linear-to-r from-blue-100 to-indigo-200 border-t-4 border-blue-600 font-bold">
+                    <tr className="bg-gradient-to-r from-blue-100 to-indigo-200 border-t-4 border-blue-600 font-bold">
                       <td colSpan={3} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
                         📊 COLUMN TOTALS
                       </td>
@@ -518,7 +693,7 @@ export default function AllSuppliersMonthly() {
                     </tr>
 
                     {/* Grand Total Row */}
-                    <tr className="bg-linear-to-r from-green-100 to-green-200 border-t-4 border-green-600 font-bold">
+                    <tr className="bg-gradient-to-r from-green-100 to-green-200 border-t-4 border-green-600 font-bold">
                       <td colSpan={3} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
                         💰 GRAND TOTAL
                       </td>
