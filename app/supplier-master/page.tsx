@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { useState } from 'react';
+import { collection, addDoc, deleteDoc, doc, updateDoc, getDocs, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Search, Edit2, Trash2, X, Check, Plus } from 'lucide-react';
+import { Search, Edit2, Trash2, X, Check, Plus, RefreshCw, AlertCircle } from 'lucide-react';
 
 export default function SupplierMasterPage() {
   // Form states
@@ -28,6 +28,18 @@ export default function SupplierMasterPage() {
   const [workingSheet, setWorkingSheet] = useState<any[]>([]);
   const [existingCompanies, setExistingCompanies] = useState<string[]>([]);
 
+  // Loading states for each section
+  const [suppliersLoaded, setSuppliersLoaded] = useState(false);
+  const [periodsLoaded, setPeriodsLoaded] = useState(false);
+  const [typesLoaded, setTypesLoaded] = useState(false);
+  const [itemsLoaded, setItemsLoaded] = useState(false);
+  const [workingSheetLoaded, setWorkingSheetLoaded] = useState(false);
+
+  // Refresh loading states
+  const [refreshingSuppliers, setRefreshingSuppliers] = useState(false);
+  const [refreshingPeriods, setRefreshingPeriods] = useState(false);
+  const [refreshingTypes, setRefreshingTypes] = useState(false);
+
   // Search states
   const [supplierSearch, setSupplierSearch] = useState('');
   const [periodSearch, setPeriodSearch] = useState('');
@@ -38,99 +50,105 @@ export default function SupplierMasterPage() {
   const [editingPeriod, setEditingPeriod] = useState<any>(null);
   const [editingType, setEditingType] = useState<any>(null);
 
-  // Subscribe to collections
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, 'suppliers'),
-      (snapshot) => {
-        const data: any[] = [];
-        snapshot.forEach((doc) => {
-          data.push({ id: doc.id, ...doc.data() });
-        });
-        setSuppliers(data);
-      },
-      (error) => console.error('Error fetching suppliers:', error)
-    );
-    return () => unsubscribe();
-  }, []);
+  // Fetch items first to get companies - only called when needed
+  const fetchItems = async () => {
+    try {
+      const q = query(collection(db, 'items'));
+      const snapshot = await getDocs(q);
+      const data: any[] = [];
+      const companies = new Set<string>();
+      
+      snapshot.forEach((doc) => {
+        const docData = doc.data();
+        data.push({ id: doc.id, ...docData });
+        
+        // Extract unique company names, excluding NA and null
+        const company = docData.company?.trim();
+        if (company && 
+            company !== '' && 
+            company.toLowerCase() !== 'na' && 
+            company.toLowerCase() !== 'null') {
+          companies.add(company);
+        }
+      });
+      
+      setItems(data);
+      setExistingCompanies(Array.from(companies).sort());
+      setItemsLoaded(true);
+    } catch (error) {
+      console.error('Error fetching items:', error);
+    }
+  };
 
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, 'periods'),
-      (snapshot) => {
-        const data: any[] = [];
-        snapshot.forEach((doc) => {
-          data.push({ id: doc.id, ...doc.data() });
-        });
-        setPeriods(data);
-      },
-      (error) => console.error('Error fetching periods:', error)
-    );
-    return () => unsubscribe();
-  }, []);
+  // Fetch functions - only called when needed
+  const fetchSuppliers = async () => {
+    setRefreshingSuppliers(true);
+    try {
+      const q = query(collection(db, 'suppliers'));
+      const snapshot = await getDocs(q);
+      const data: any[] = [];
+      snapshot.forEach((doc) => {
+        data.push({ id: doc.id, ...doc.data() });
+      });
+      setSuppliers(data);
+      setSuppliersLoaded(true);
+    } catch (error) {
+      console.error('Error fetching suppliers:', error);
+    } finally {
+      setRefreshingSuppliers(false);
+    }
+  };
 
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, 'types'),
-      (snapshot) => {
-        const data: any[] = [];
-        snapshot.forEach((doc) => {
-          data.push({ id: doc.id, ...doc.data() });
-        });
-        setTypes(data);
-      },
-      (error) => console.error('Error fetching types:', error)
-    );
-    return () => unsubscribe();
-  }, []);
+  const fetchPeriods = async () => {
+    setRefreshingPeriods(true);
+    try {
+      const q = query(collection(db, 'periods'));
+      const snapshot = await getDocs(q);
+      const data: any[] = [];
+      snapshot.forEach((doc) => {
+        data.push({ id: doc.id, ...doc.data() });
+      });
+      setPeriods(data);
+      setPeriodsLoaded(true);
+    } catch (error) {
+      console.error('Error fetching periods:', error);
+    } finally {
+      setRefreshingPeriods(false);
+    }
+  };
 
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, 'items'),
-      (snapshot) => {
-        const data: any[] = [];
-        snapshot.forEach((doc) => {
-          data.push({ id: doc.id, ...doc.data() });
-        });
-        setItems(data);
-      },
-      (error) => console.error('Error fetching items:', error)
-    );
-    return () => unsubscribe();
-  }, []);
+  const fetchTypes = async () => {
+    setRefreshingTypes(true);
+    try {
+      const q = query(collection(db, 'types'));
+      const snapshot = await getDocs(q);
+      const data: any[] = [];
+      snapshot.forEach((doc) => {
+        data.push({ id: doc.id, ...doc.data() });
+      });
+      setTypes(data);
+      setTypesLoaded(true);
+    } catch (error) {
+      console.error('Error fetching types:', error);
+    } finally {
+      setRefreshingTypes(false);
+    }
+  };
 
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, 'workingSheet'),
-      (snapshot) => {
-        const data: any[] = [];
-        snapshot.forEach((doc) => {
-          data.push({ id: doc.id, ...doc.data() });
-        });
-        setWorkingSheet(data);
-      },
-      (error) => console.error('Error fetching workingSheet:', error)
-    );
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, 'supplierWiseMonthly'),
-      (snapshot) => {
-        const companies = new Set<string>();
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          if (data.company) {
-            companies.add(data.company);
-          }
-        });
-        setExistingCompanies(Array.from(companies));
-      },
-      (error) => console.error('Error fetching existing companies:', error)
-    );
-    return () => unsubscribe();
-  }, []);
+  const fetchWorkingSheet = async () => {
+    try {
+      const q = query(collection(db, 'workingSheet'));
+      const snapshot = await getDocs(q);
+      const data: any[] = [];
+      snapshot.forEach((doc) => {
+        data.push({ id: doc.id, ...doc.data() });
+      });
+      setWorkingSheet(data);
+      setWorkingSheetLoaded(true);
+    } catch (error) {
+      console.error('Error fetching workingSheet:', error);
+    }
+  };
 
   const vlookupType = (company: string): string => {
     if (!company.trim()) return '';
@@ -193,23 +211,31 @@ export default function SupplierMasterPage() {
     setSupplierLoading(true);
     
     try {
+      // Ensure items and periods are loaded before generating combinations
+      if (!itemsLoaded) await fetchItems();
+      if (!periodsLoaded) await fetchPeriods();
+      if (!workingSheetLoaded) await fetchWorkingSheet();
+
       const docRef = await addDoc(collection(db, 'suppliers'), {
         supplierName: supplierName.trim(),
         alias: alias.trim(),
         createdAt: new Date(),
       });
 
-      if (existingCompanies.length > 0 && periods.length > 0) {
-        const newSupplierData = {
-          id: docRef.id,
-          supplierName: supplierName.trim(),
-          alias: alias.trim()
-        };
+      // Add to local state immediately
+      const newSupplier = {
+        id: docRef.id,
+        supplierName: supplierName.trim(),
+        alias: alias.trim(),
+        createdAt: new Date()
+      };
+      setSuppliers(prev => [...prev, newSupplier]);
 
+      if (existingCompanies.length > 0 && periods.length > 0) {
         let combinationsCreated = 0;
         for (const company of existingCompanies) {
           for (const periodData of periods) {
-            await generateSingleCombination(company, periodData.period, newSupplierData);
+            await generateSingleCombination(company, periodData.period, newSupplier);
             combinationsCreated++;
           }
         }
@@ -241,18 +267,29 @@ export default function SupplierMasterPage() {
     setPeriodLoading(true);
     
     try {
-      await addDoc(collection(db, 'periods'), {
+      // Ensure items and suppliers are loaded before generating combinations
+      if (!itemsLoaded) await fetchItems();
+      if (!suppliersLoaded) await fetchSuppliers();
+      if (!workingSheetLoaded) await fetchWorkingSheet();
+
+      const docRef = await addDoc(collection(db, 'periods'), {
         period: period.trim(),
         createdAt: new Date(),
       });
 
+      // Add to local state immediately
+      const newPeriod = {
+        id: docRef.id,
+        period: period.trim(),
+        createdAt: new Date()
+      };
+      setPeriods(prev => [...prev, newPeriod]);
+
       if (existingCompanies.length > 0 && suppliers.length > 0) {
-        const newPeriod = period.trim();
-        
         let combinationsCreated = 0;
         for (const company of existingCompanies) {
           for (const supplierData of suppliers) {
-            await generateSingleCombination(company, newPeriod, supplierData);
+            await generateSingleCombination(company, newPeriod.period, supplierData);
             combinationsCreated++;
           }
         }
@@ -283,10 +320,17 @@ export default function SupplierMasterPage() {
     setTypeLoading(true);
     
     try {
-      await addDoc(collection(db, 'types'), {
+      const docRef = await addDoc(collection(db, 'types'), {
         type: type.trim(),
         createdAt: new Date(),
       });
+
+      // Add to local state immediately
+      setTypes(prev => [...prev, {
+        id: docRef.id,
+        type: type.trim(),
+        createdAt: new Date()
+      }]);
       
       setTypeMessage('Type added successfully!');
       setType('');
@@ -300,11 +344,11 @@ export default function SupplierMasterPage() {
     }
   };
 
-  // Delete functions
   const handleDeleteSupplier = async (id: string) => {
     if (confirm('Are you sure you want to delete this supplier?')) {
       try {
         await deleteDoc(doc(db, 'suppliers', id));
+        setSuppliers(prev => prev.filter(s => s.id !== id));
       } catch (error) {
         console.error('Error deleting supplier:', error);
       }
@@ -315,6 +359,7 @@ export default function SupplierMasterPage() {
     if (confirm('Are you sure you want to delete this period?')) {
       try {
         await deleteDoc(doc(db, 'periods', id));
+        setPeriods(prev => prev.filter(p => p.id !== id));
       } catch (error) {
         console.error('Error deleting period:', error);
       }
@@ -325,13 +370,13 @@ export default function SupplierMasterPage() {
     if (confirm('Are you sure you want to delete this type?')) {
       try {
         await deleteDoc(doc(db, 'types', id));
+        setTypes(prev => prev.filter(t => t.id !== id));
       } catch (error) {
         console.error('Error deleting type:', error);
       }
     }
   };
 
-  // Update functions
   const handleUpdateSupplier = async () => {
     if (!editingSupplier) return;
     
@@ -339,7 +384,11 @@ export default function SupplierMasterPage() {
       await updateDoc(doc(db, 'suppliers', editingSupplier.id), {
         supplierName: editingSupplier.supplierName,
         alias: editingSupplier.alias,
+        updatedAt: new Date()
       });
+      setSuppliers(prev => prev.map(s => 
+        s.id === editingSupplier.id ? editingSupplier : s
+      ));
       setEditingSupplier(null);
     } catch (error) {
       console.error('Error updating supplier:', error);
@@ -352,7 +401,11 @@ export default function SupplierMasterPage() {
     try {
       await updateDoc(doc(db, 'periods', editingPeriod.id), {
         period: editingPeriod.period,
+        updatedAt: new Date()
       });
+      setPeriods(prev => prev.map(p => 
+        p.id === editingPeriod.id ? editingPeriod : p
+      ));
       setEditingPeriod(null);
     } catch (error) {
       console.error('Error updating period:', error);
@@ -365,14 +418,17 @@ export default function SupplierMasterPage() {
     try {
       await updateDoc(doc(db, 'types', editingType.id), {
         type: editingType.type,
+        updatedAt: new Date()
       });
+      setTypes(prev => prev.map(t => 
+        t.id === editingType.id ? editingType : t
+      ));
       setEditingType(null);
     } catch (error) {
       console.error('Error updating type:', error);
     }
   };
 
-  // Filter functions
   const filteredSuppliers = suppliers.filter(s => 
     s.supplierName?.toLowerCase().includes(supplierSearch.toLowerCase()) ||
     s.alias?.toLowerCase().includes(supplierSearch.toLowerCase())
@@ -389,22 +445,26 @@ export default function SupplierMasterPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
             Supplier Master
           </h1>
-          <p className="text-gray-600">Manage suppliers, periods, and types with ease</p>
+          <p className="text-gray-600">Manage suppliers, periods, and types with optimized Firebase reads</p>
         </div>
 
         {/* Info Banner */}
-        {existingCompanies.length > 0 && (
-          <div className="mb-8 p-4 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl shadow-lg">
-            <p className="text-sm text-white">
-              <strong>🚀 Auto-Combination Enabled:</strong> New suppliers or periods will auto-generate {existingCompanies.length} combinations
-            </p>
+        <div className="mb-8 p-4 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl shadow-lg">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-white mt-0.5" />
+            <div className="text-sm text-white">
+              <strong>💰 Firebase Quota Saver Active!</strong>
+              <p className="mt-1 opacity-90">Data loads only when you click "Load Data" buttons - No automatic reads on page load!</p>
+              {existingCompanies.length > 0 && (
+                <p className="mt-1 opacity-90">New suppliers/periods will auto-generate {existingCompanies.length} company combinations</p>
+              )}
+            </div>
           </div>
-        )}
+        </div>
         
         {/* Forms Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
@@ -540,314 +600,412 @@ export default function SupplierMasterPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Suppliers Table */}
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-blue-100">
-              <div className="px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600">
-                <h3 className="text-lg font-bold text-white">Suppliers ({suppliers.length})</h3>
+              <div className="px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600 flex justify-between items-center">
+                <h3 className="text-lg font-bold text-white">
+                  Suppliers {suppliersLoaded && `(${suppliers.length})`}
+                </h3>
+                <button
+                  onClick={fetchSuppliers}
+                  disabled={refreshingSuppliers}
+                  className="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors disabled:opacity-50"
+                  title="Load suppliers data"
+                >
+                  <RefreshCw className={`w-4 h-4 text-white ${refreshingSuppliers ? 'animate-spin' : ''}`} />
+                </button>
               </div>
               <div className="p-4">
-                <div className="relative mb-4">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    type="text"
-                    value={supplierSearch}
-                    onChange={(e) => setSupplierSearch(e.target.value)}
-                    placeholder="Search suppliers..."
-                    className="w-full pl-10 pr-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-                <div className="overflow-x-auto max-h-96 overflow-y-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 sticky top-0">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">SL</th>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Name</th>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Alias</th>
-                        <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {filteredSuppliers.length === 0 ? (
-                        <tr>
-                          <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
-                            No suppliers found
-                          </td>
-                        </tr>
-                      ) : (
-                        filteredSuppliers.map((supplier, idx) => (
-                          <tr key={supplier.id} className="hover:bg-blue-50 transition-colors">
-                            <td className="px-4 py-3 text-sm text-gray-600 font-medium">{idx + 1}</td>
-                            <td className="px-4 py-3 text-sm">
-                              {editingSupplier?.id === supplier.id ? (
-                                <input
-                                  type="text"
-                                  value={editingSupplier.supplierName}
-                                  onChange={(e) => setEditingSupplier({...editingSupplier, supplierName: e.target.value})}
-                                  className="w-full px-2 py-1 border rounded"
-                                />
-                              ) : (
-                                <span className="text-gray-900 font-medium">{supplier.supplierName}</span>
-                              )}
-                            </td>
-                            <td className="px-4 py-3 text-sm">
-                              {editingSupplier?.id === supplier.id ? (
-                                <input
-                                  type="text"
-                                  value={editingSupplier.alias}
-                                  onChange={(e) => setEditingSupplier({...editingSupplier, alias: e.target.value})}
-                                  className="w-full px-2 py-1 border rounded"
-                                />
-                              ) : (
-                                <span className="text-gray-700">{supplier.alias}</span>
-                              )}
-                            </td>
-                            <td className="px-4 py-3">
-                              <div className="flex items-center justify-center gap-2">
-                                {editingSupplier?.id === supplier.id ? (
-                                  <>
-                                    <button
-                                      onClick={handleUpdateSupplier}
-                                      className="p-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors"
-                                    >
-                                      <Check className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => setEditingSupplier(null)}
-                                      className="p-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
-                                    >
-                                      <X className="w-4 h-4" />
-                                    </button>
-                                  </>
-                                ) : (
-                                  <>
-                                    <button
-                                      onClick={() => setEditingSupplier(supplier)}
-                                      className="p-1.5 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
-                                    >
-                                      <Edit2 className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => handleDeleteSupplier(supplier.id)}
-                                      className="p-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            </td>
+                {!suppliersLoaded ? (
+                  <div className="text-center py-12">
+                    <p className="text-gray-500 mb-4">Click the refresh button to load suppliers</p>
+                    <button
+                      onClick={fetchSuppliers}
+                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Load Suppliers
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="relative mb-4">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <input
+                        type="text"
+                        value={supplierSearch}
+                        onChange={(e) => setSupplierSearch(e.target.value)}
+                        placeholder="Search suppliers..."
+                        className="w-full pl-10 pr-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500"
+                      />
+                    </div>
+                    <div className="overflow-x-auto max-h-96 overflow-y-auto">
+                      <table className="w-full">
+                        <thead className="bg-gray-50 sticky top-0">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">SL</th>
+                            <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Name</th>
+                            <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Alias</th>
+                            <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Actions</th>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {filteredSuppliers.length === 0 ? (
+                            <tr>
+                              <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                                No suppliers found
+                              </td>
+                            </tr>
+                          ) : (
+                            filteredSuppliers.map((supplier, idx) => (
+                              <tr key={supplier.id} className="hover:bg-blue-50 transition-colors">
+                                <td className="px-4 py-3 text-sm text-gray-600 font-medium">{idx + 1}</td>
+                                <td className="px-4 py-3 text-sm">
+                                  {editingSupplier?.id === supplier.id ? (
+                                    <input
+                                      type="text"
+                                      value={editingSupplier.supplierName}
+                                      onChange={(e) => setEditingSupplier({...editingSupplier, supplierName: e.target.value})}
+                                      className="w-full px-2 py-1 border rounded"
+                                    />
+                                  ) : (
+                                    <span className="text-gray-900 font-medium">{supplier.supplierName}</span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  {editingSupplier?.id === supplier.id ? (
+                                    <input
+                                      type="text"
+                                      value={editingSupplier.alias}
+                                      onChange={(e) => setEditingSupplier({...editingSupplier, alias: e.target.value})}
+                                      className="w-full px-2 py-1 border rounded"
+                                    />
+                                  ) : (
+                                    <span className="text-gray-700">{supplier.alias}</span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center justify-center gap-2">
+                                    {editingSupplier?.id === supplier.id ? (
+                                      <>
+                                        <button
+                                          onClick={handleUpdateSupplier}
+                                          className="p-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors"
+                                        >
+                                          <Check className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                          onClick={() => setEditingSupplier(null)}
+                                          className="p-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
+                                        >
+                                          <X className="w-4 h-4" />
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <button
+                                          onClick={() => setEditingSupplier(supplier)}
+                                          className="p-1.5 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
+                                        >
+                                          <Edit2 className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                          onClick={() => handleDeleteSupplier(supplier.id)}
+                                          className="p-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
             {/* Periods Table */}
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-green-100">
-              <div className="px-6 py-4 bg-gradient-to-r from-green-500 to-green-600">
-                <h3 className="text-lg font-bold text-white">Periods ({periods.length})</h3>
+              <div className="px-6 py-4 bg-gradient-to-r from-green-500 to-green-600 flex justify-between items-center">
+                <h3 className="text-lg font-bold text-white">
+                  Periods {periodsLoaded && `(${periods.length})`}
+                </h3>
+                <button
+                  onClick={fetchPeriods}
+                  disabled={refreshingPeriods}
+                  className="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors disabled:opacity-50"
+                  title="Load periods data"
+                >
+                  <RefreshCw className={`w-4 h-4 text-white ${refreshingPeriods ? 'animate-spin' : ''}`} />
+                </button>
               </div>
               <div className="p-4">
-                <div className="relative mb-4">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    type="text"
-                    value={periodSearch}
-                    onChange={(e) => setPeriodSearch(e.target.value)}
-                    placeholder="Search periods..."
-                    className="w-full pl-10 pr-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
-                  />
-                </div>
-                <div className="overflow-x-auto max-h-96 overflow-y-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 sticky top-0">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">SL</th>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Period</th>
-                        <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {filteredPeriods.length === 0 ? (
-                        <tr>
-                          <td colSpan={3} className="px-4 py-8 text-center text-gray-500">
-                            No periods found
-                          </td>
-                        </tr>
-                      ) : (
-                        filteredPeriods.map((period, idx) => (
-                          <tr key={period.id} className="hover:bg-green-50 transition-colors">
-                            <td className="px-4 py-3 text-sm text-gray-600 font-medium">{idx + 1}</td>
-                            <td className="px-4 py-3 text-sm">
-                              {editingPeriod?.id === period.id ? (
-                                <input
-                                  type="text"
-                                  value={editingPeriod.period}
-                                  onChange={(e) => setEditingPeriod({...editingPeriod, period: e.target.value})}
-                                  className="w-full px-2 py-1 border rounded"
-                                />
-                              ) : (
-                                <span className="text-gray-900 font-medium">{period.period}</span>
-                              )}
-                            </td>
-                            <td className="px-4 py-3">
-                              <div className="flex items-center justify-center gap-2">
-                                {editingPeriod?.id === period.id ? (
-                                  <>
-                                    <button
-                                      onClick={handleUpdatePeriod}
-                                      className="p-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors"
-                                    >
-                                      <Check className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => setEditingPeriod(null)}
-                                      className="p-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
-                                    >
-                                      <X className="w-4 h-4" />
-                                    </button>
-                                  </>
-                                ) : (
-                                  <>
-                                    <button
-                                      onClick={() => setEditingPeriod(period)}
-                                      className="p-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors"
-                                    >
-                                      <Edit2 className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => handleDeletePeriod(period.id)}
-                                      className="p-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            </td>
+                {!periodsLoaded ? (
+                  <div className="text-center py-12">
+                    <p className="text-gray-500 mb-4">Click the refresh button to load periods</p>
+                    <button
+                      onClick={fetchPeriods}
+                      className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      Load Periods
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="relative mb-4">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <input
+                        type="text"
+                        value={periodSearch}
+                        onChange={(e) => setPeriodSearch(e.target.value)}
+                        placeholder="Search periods..."
+                        className="w-full pl-10 pr-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
+                      />
+                    </div>
+                    <div className="overflow-x-auto max-h-96 overflow-y-auto">
+                      <table className="w-full">
+                        <thead className="bg-gray-50 sticky top-0">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">SL</th>
+                            <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Period</th>
+                            <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Actions</th>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {filteredPeriods.length === 0 ? (
+                            <tr>
+                              <td colSpan={3} className="px-4 py-8 text-center text-gray-500">
+                                No periods found
+                              </td>
+                            </tr>
+                          ) : (
+                            filteredPeriods.map((period, idx) => (
+                              <tr key={period.id} className="hover:bg-green-50 transition-colors">
+                                <td className="px-4 py-3 text-sm text-gray-600 font-medium">{idx + 1}</td>
+                                <td className="px-4 py-3 text-sm">
+                                  {editingPeriod?.id === period.id ? (
+                                    <input
+                                      type="text"
+                                      value={editingPeriod.period}
+                                      onChange={(e) => setEditingPeriod({...editingPeriod, period: e.target.value})}
+                                      className="w-full px-2 py-1 border rounded"
+                                    />
+                                  ) : (
+                                    <span className="text-gray-900 font-medium">{period.period}</span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center justify-center gap-2">
+                                    {editingPeriod?.id === period.id ? (
+                                      <>
+                                        <button
+                                          onClick={handleUpdatePeriod}
+                                          className="p-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors"
+                                        >
+                                          <Check className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                          onClick={() => setEditingPeriod(null)}
+                                          className="p-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
+                                        >
+                                          <X className="w-4 h-4" />
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <button
+                                          onClick={() => setEditingPeriod(period)}
+                                          className="p-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors"
+                                        >
+                                          <Edit2 className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                          onClick={() => handleDeletePeriod(period.id)}
+                                          className="p-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
             {/* Types Table */}
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-purple-100">
-              <div className="px-6 py-4 bg-gradient-to-r from-purple-500 to-purple-600">
-                <h3 className="text-lg font-bold text-white">Types ({types.length})</h3>
+              <div className="px-6 py-4 bg-gradient-to-r from-purple-500 to-purple-600 flex justify-between items-center">
+                <h3 className="text-lg font-bold text-white">
+                  Types {typesLoaded && `(${types.length})`}
+                </h3>
+                <button
+                  onClick={fetchTypes}
+                  disabled={refreshingTypes}
+                  className="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors disabled:opacity-50"
+                  title="Load types data"
+                >
+                  <RefreshCw className={`w-4 h-4 text-white ${refreshingTypes ? 'animate-spin' : ''}`} />
+                </button>
               </div>
               <div className="p-4">
-                <div className="relative mb-4">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    type="text"
-                    value={typeSearch}
-                    onChange={(e) => setTypeSearch(e.target.value)}
-                    placeholder="Search types..."
-                    className="w-full pl-10 pr-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-purple-500"
-                  />
-                </div>
-                <div className="overflow-x-auto max-h-96 overflow-y-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 sticky top-0">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">SL</th>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Type</th>
-                        <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {filteredTypes.length === 0 ? (
-                        <tr>
-                          <td colSpan={3} className="px-4 py-8 text-center text-gray-500">
-                            No types found
-                          </td>
-                        </tr>
-                      ) : (
-                        filteredTypes.map((type, idx) => (
-                          <tr key={type.id} className="hover:bg-purple-50 transition-colors">
-                            <td className="px-4 py-3 text-sm text-gray-600 font-medium">{idx + 1}</td>
-                            <td className="px-4 py-3 text-sm">
-                              {editingType?.id === type.id ? (
-                                <input
-                                  type="text"
-                                  value={editingType.type}
-                                  onChange={(e) => setEditingType({...editingType, type: e.target.value})}
-                                  className="w-full px-2 py-1 border rounded"
-                                />
-                              ) : (
-                                <span className="text-gray-900 font-medium">{type.type}</span>
-                              )}
-                            </td>
-                            <td className="px-4 py-3">
-                              <div className="flex items-center justify-center gap-2">
-                                {editingType?.id === type.id ? (
-                                  <>
-                                    <button
-                                      onClick={handleUpdateType}
-                                      className="p-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors"
-                                    >
-                                      <Check className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => setEditingType(null)}
-                                      className="p-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
-                                    >
-                                      <X className="w-4 h-4" />
-                                    </button>
-                                  </>
-                                ) : (
-                                  <>
-                                    <button
-                                      onClick={() => setEditingType(type)}
-                                      className="p-1.5 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 transition-colors"
-                                    >
-                                      <Edit2 className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => handleDeleteType(type.id)}
-                                      className="p-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            </td>
+                {!typesLoaded ? (
+                  <div className="text-center py-12">
+                    <p className="text-gray-500 mb-4">Click the refresh button to load types</p>
+                    <button
+                      onClick={fetchTypes}
+                      className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    >
+                      Load Types
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="relative mb-4">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <input
+                        type="text"
+                        value={typeSearch}
+                        onChange={(e) => setTypeSearch(e.target.value)}
+                        placeholder="Search types..."
+                        className="w-full pl-10 pr-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-purple-500"
+                      />
+                    </div>
+                    <div className="overflow-x-auto max-h-96 overflow-y-auto">
+                      <table className="w-full">
+                        <thead className="bg-gray-50 sticky top-0">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">SL</th>
+                            <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Type</th>
+                            <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Actions</th>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {filteredTypes.length === 0 ? (
+                            <tr>
+                              <td colSpan={3} className="px-4 py-8 text-center text-gray-500">
+                                No types found
+                              </td>
+                            </tr>
+                          ) : (
+                            filteredTypes.map((type, idx) => (
+                              <tr key={type.id} className="hover:bg-purple-50 transition-colors">
+                                <td className="px-4 py-3 text-sm text-gray-600 font-medium">{idx + 1}</td>
+                                <td className="px-4 py-3 text-sm">
+                                  {editingType?.id === type.id ? (
+                                    <input
+                                      type="text"
+                                      value={editingType.type}
+                                      onChange={(e) => setEditingType({...editingType, type: e.target.value})}
+                                      className="w-full px-2 py-1 border rounded"
+                                    />
+                                  ) : (
+                                    <span className="text-gray-900 font-medium">{type.type}</span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center justify-center gap-2">
+                                    {editingType?.id === type.id ? (
+                                      <>
+                                        <button
+                                          onClick={handleUpdateType}
+                                          className="p-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors"
+                                        >
+                                          <Check className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                          onClick={() => setEditingType(null)}
+                                          className="p-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
+                                        >
+                                          <X className="w-4 h-4" />
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <button
+                                          onClick={() => setEditingType(type)}
+                                          className="p-1.5 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 transition-colors"
+                                        >
+                                          <Edit2 className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                          onClick={() => handleDeleteType(type.id)}
+                                          className="p-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
         </div>
 
         {/* Existing Companies Section */}
-        {existingCompanies.length > 0 && (
-          <div className="mt-8 bg-white rounded-2xl shadow-xl p-6 border border-gray-200">
-            <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+        <div className="mt-8 bg-white rounded-2xl shadow-xl p-6 border border-gray-200">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              Existing Companies ({existingCompanies.length})
+              Existing Companies {itemsLoaded && `(${existingCompanies.length})`}
             </h3>
+            <button
+              onClick={fetchItems}
+              disabled={!itemsLoaded ? false : true}
+              className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:from-indigo-700 hover:to-indigo-800 transition-all font-semibold shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              {itemsLoaded ? 'Refresh Companies' : 'Load Companies'}
+            </button>
+          </div>
+          
+          {!itemsLoaded ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500 mb-4">Click the button above to load companies from items collection</p>
+              <button
+                onClick={fetchItems}
+                className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-semibold"
+              >
+                Load Companies
+              </button>
+            </div>
+          ) : existingCompanies.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {existingCompanies.map((company, index) => (
-                <div 
-                  key={index} 
-                  className="bg-gradient-to-br from-gray-50 to-gray-100 px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-700 font-medium hover:shadow-md transition-shadow"
-                >
-                  {company}
-                </div>
+                <div key={index} className="bg-gradient-to-br from-gray-50 to-gray-100 px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-700 font-medium hover:shadow-md transition-shadow flex items-center gap-2">
+  <span className="w-6 h-6 flex items-center justify-center bg-indigo-600 text-white rounded-full text-xs font-bold">
+    {index + 1}
+  </span>
+  {company}
+</div>
+
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              No valid companies found in items collection
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

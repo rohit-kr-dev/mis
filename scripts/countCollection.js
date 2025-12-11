@@ -25,4 +25,4 @@ async function countDocs(collectionName) {
   }
 }
 
-countDocs("workingSheet");
+countDocs("items");

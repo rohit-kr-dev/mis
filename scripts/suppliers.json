@@ -1,38 +1,42 @@
 [
   {
-    "supplierName": "PARAGON RESIN LLP",
-    "alias": "Paragon"
+    "supplierName": "ALLIED PLASTICS",
+    "alias": "Allied"
   },
   {
-    "supplierName": "KAMAKYA CHEMPLAST PRIVATE LIMITED",
-    "alias": "Kamakya"
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "alias": "CVPL"
   },
   {
     "supplierName": "INTIME VINCOM PRIVATE LIMITED",
     "alias": "Intime"
   },
   {
-    "supplierName": "TREENITY PLY DECOR",
-    "alias": "Treenity"
+    "supplierName": "KAMAKYA CHEMPLAST PRIVATE LIMITED",
+    "alias": "Kamakya"
   },
   {
-    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
-    "alias": "Purav"
+    "supplierName": "PARAGON RESIN LLP",
+    "alias": "Paragon"
   },
   {
     "supplierName": "PRESTINE VENTURES PRIVATE LIMITED",
     "alias": "Prestine"
   },
   {
-    "supplierName": "VALUE PACKAGING INDUSTRIES PRIVATE LIMITED",
-    "alias": "Value"
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "alias": "Purav"
   },
   {
     "supplierName": "SRI VENKATESHWARA POLYMERS",
     "alias": "SVP"
   },
   {
-    "supplierName": "ALLIED PLASTICS",
-    "alias": "Allied"
+    "supplierName": "TREENITY PLY DECOR",
+    "alias": "Treenity"
+  },
+  {
+    "supplierName": "VALUE PACKAGING INDUSTRIES PRIVATE LIMITED",
+    "alias": "Value"
   }
 ]

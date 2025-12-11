@@ -259,6 +259,7 @@ export default function SupplierWiseMonthly() {
       return item?.materialType || 'Unknown';
     };
 
+    // First, aggregate the data by unique combinations
     const aggregatedData = new Map<string, number>();
     
     workingSheet.forEach(record => {
@@ -275,47 +276,72 @@ export default function SupplierWiseMonthly() {
       aggregatedData.set(key, (aggregatedData.get(key) || 0) + validQty);
     });
 
-    const monthsToProcess = selectedMonth ? [selectedMonth] : periods.map(p => p.period);
-    const suppliersToProcess = selectedSupplier ? [selectedSupplier] : suppliers.map(s => s.supplierName);
-    const companiesToProcess = selectedCompany ? [selectedCompany] : allCompanies;
+    // Extract unique combinations from the actual data
+    const uniqueCombinations = new Set<string>();
+    workingSheet.forEach(record => {
+      const combo = [
+        (record.cnMonth || '').trim().toLowerCase(),
+        (record.supplierName || '').trim().toLowerCase(),
+        (record.company || '').trim().toLowerCase()
+      ].join('|');
+      uniqueCombinations.add(combo);
+    });
 
-    for (const month of monthsToProcess) {
-      for (const supplier of suppliersToProcess) {
-        for (const company of companiesToProcess) {
-          const materialType = vlookupType(company);
+    // Process only the unique combinations that exist in the data
+    uniqueCombinations.forEach(combo => {
+      const [month, supplier, company] = combo.split('|');
+      const materialType = vlookupType(company);
 
-          const values: { [typeName: string]: number } = {};
-          let total = 0;
+      const values: { [typeName: string]: number } = {};
+      let total = 0;
 
-          for (const typeObj of types) {
-            const key = [
-              month.trim().toLowerCase(),
-              supplier.trim().toLowerCase(),
-              company.trim().toLowerCase(),
-              typeObj.type.trim().toLowerCase()
-            ].join('|');
-            
-            const typeValue = aggregatedData.get(key) || 0;
-            values[typeObj.type] = typeValue;
-            total += typeValue;
-          }
-
-          if (!showOnlyWithValues || total > 0) {
-            results.push({
-              month: month,
-              supplier: supplier,
-              type: materialType,
-              company: company,
-              values: values,
-              total: total
-            });
-          }
-        }
+      for (const typeObj of types) {
+        const key = [
+          month,
+          supplier,
+          company,
+          typeObj.type.trim().toLowerCase()
+        ].join('|');
+        
+        const typeValue = aggregatedData.get(key) || 0;
+        values[typeObj.type] = typeValue;
+        total += typeValue;
       }
-    }
+
+      if (!showOnlyWithValues || total > 0) {
+        // Convert back to original case for display
+        const originalMonth = workingSheet.find(r => 
+          r.cnMonth?.trim().toLowerCase() === month
+        )?.cnMonth || month;
+        
+        const originalSupplier = workingSheet.find(r => 
+          r.supplierName?.trim().toLowerCase() === supplier
+        )?.supplierName || supplier;
+        
+        const originalCompany = workingSheet.find(r => 
+          r.company?.trim().toLowerCase() === company
+        )?.company || company;
+
+        results.push({
+          month: originalMonth,
+          supplier: originalSupplier,
+          type: materialType,
+          company: originalCompany,
+          values: values,
+          total: total
+        });
+      }
+    });
+
+    // Sort results for consistent display
+    results.sort((a, b) => {
+      if (a.month !== b.month) return a.month.localeCompare(b.month);
+      if (a.supplier !== b.supplier) return a.supplier.localeCompare(b.supplier);
+      return a.company.localeCompare(b.company);
+    });
 
     return results;
-  }, [workingSheet, items, periods, suppliers, allCompanies, types, showOnlyWithValues, dataFetched, selectedMonth, selectedSupplier, selectedCompany]);
+  }, [workingSheet, items, types, showOnlyWithValues, dataFetched]);
 
   // Calculate column totals
   const columnTotals = useMemo(() => {

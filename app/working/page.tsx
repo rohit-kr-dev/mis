@@ -38,7 +38,7 @@ interface Period {
 
 interface WorkingSheetData {
   id: string;
-  slNo: number;
+  slNo: number | '';           // allow empty input
   category: string;
   branch: string;
   supplierName: string;
@@ -47,8 +47,8 @@ interface WorkingSheetData {
   billMonth: string;
   period: string;
   billNo: string;
-  buyRate: number;
-  qty: number;
+  buyRate: number | '';        // allow empty input
+  qty: number | '';            // allow empty input
   grade: string;
   itemName: string;
   company: string;
@@ -58,31 +58,39 @@ interface WorkingSheetData {
   dateForCN: string;
   cnMonth: string;
   ebiStatus: string;
-  pp: number | null;
+
+  pp: number | '' | null;
   source: string | null;
-  rateAsPerConfirmation: number | null;
-  rateAsPerPriceList: number | null;
+
+  rateAsPerConfirmation: number | '' | null;
+  rateAsPerPriceList: number | '' | null;
+
   priceType: string | null;
   location: string | null;
-  mou: number | null;
-  qd: number | null;
-  ebiValue: number | null;
-  gsi: number | null;
-  scheme: number | null;
-  extra: number | null;
-  loading: number | null;
-  tpt: number | null;
-  insurance: number | null;
-  roundOff: number | null;
-  commission: number | null;
-  gstCn: number | null;
+
+  mou: number | '' | null;
+  qd: number | '' | null;
+  ebiValue: number | '' | null;
+  gsi: number | '' | null;
+  scheme: number | '' | null;
+  extra: number | '' | null;
+  loading: number | '' | null;
+  tpt: number | '' | null;
+  insurance: number | '' | null;
+  roundOff: number | '' | null;
+  commission: number | '' | null;
+  gstCn: number | '' | null;
+
   total: number;
   diff: number;
+
   status: string;
   remarks: string;
+
   createdAt: any;
   updatedAt: any;
 }
+
 
 export default function Working() {
   // Master data states
@@ -113,24 +121,47 @@ export default function Working() {
 
   // Form states
   const [showAddForm, setShowAddForm] = useState(false);
-  const [formData, setFormData] = useState<Partial<WorkingSheetData>>({
-    slNo: 0,
-    category: '',
-    branch: '',
-    supplierName: '',
-    purchaseDate: '',
-    billNo: '',
-    buyRate: 0,
-    qty: 0,
-    grade: '',
-    itemName: '',
-    type: '',
-    buyingTerms: '',
-    dateForCN: '',
-    ebiStatus: 'No',
-    status: 'Pending',
-    remarks: ''
-  });
+ const [formData, setFormData] = useState<Partial<WorkingSheetData>>({
+  slNo: '',
+  category: '',
+  branch: '',
+  supplierName: '',
+  purchaseDate: '',
+  billNo: '',
+  buyRate: '',
+  qty: '',
+  grade: '',
+  itemName: '',
+  company: '',
+  productCategory: '',
+  type: '',
+  buyingTerms: '',
+  dateForCN: '',
+  ebiStatus: 'No',
+  status: 'Pending',
+  remarks: '',
+  pp: null,
+  source: null,
+  rateAsPerConfirmation: null,
+  rateAsPerPriceList: null,
+  priceType: null,
+  location: null,
+  mou: null,
+  qd: null,
+  ebiValue: null,
+  gsi: null,
+  scheme: null,
+  extra: null,
+  loading: null,
+  tpt: null,
+  insurance: null,
+  roundOff: null,
+  commission: null,
+  gstCn: null,
+  total: 0,
+  diff: 0,
+});
+
 
   // Edit state
   const [editingRow, setEditingRow] = useState<string | null>(null);
@@ -658,9 +689,39 @@ export default function Working() {
           <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200">
             <h2 className="text-xl font-semibold mb-4">Add New Transaction</h2>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <input type="number" placeholder="Sl No" value={formData.slNo} onChange={(e) => handleFormChange('slNo', Number(e.target.value))} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
-              <input type="text" placeholder="Category" value={formData.category} onChange={(e) => handleFormChange('category', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
-              <input type="text" placeholder="Branch" value={formData.branch} onChange={(e) => handleFormChange('branch', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+           <input
+  type="number"
+  min="0"
+  placeholder="Sl No"
+  value={formData.slNo}
+  onChange={(e) => {
+    const value = e.target.value;
+    handleFormChange('slNo', value === '' ? '' : Number(value));
+  }}
+  className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+/>
+
+<select
+  value={formData.category || ''}
+  onChange={(e) => handleFormChange('category', e.target.value)}
+  className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+>
+  <option value="">Select Category</option>
+  <option value="Purchase">Purchase</option>
+  <option value="Purchase Return">Purchase Return</option>
+</select>
+              <select
+  value={formData.branch || ''}
+  onChange={(e) => handleFormChange('branch', e.target.value)}
+  className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+>
+  <option value="">Select Branch</option>
+  <option value="Bangalore WH">Bangalore WH</option>
+  <option value="Chennai Office">Chennai Office</option>
+  <option value="Head Office">Head Office</option>
+  <option value="Chennai WH">Chennai WH</option>
+</select>
+
               
               <select 
                 value={formData.supplierName || ''} 
@@ -673,23 +734,60 @@ export default function Working() {
                 ))}
               </select>
 
-              <input type="text" placeholder="Alias (auto)" value={formData.alias || ''} disabled className="px-3 py-2 border rounded-lg bg-gray-100" />
+              <input type="text" placeholder="Alias  " value={formData.alias || ''} disabled className="px-3 py-2 border rounded-lg bg-gray-100" />
               <input type="date" placeholder="Purchase Date" value={formData.purchaseDate} onChange={(e) => handleFormChange('purchaseDate', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
-              <input type="text" placeholder="Bill Month (auto)" value={formData.billMonth || ''} disabled className="px-3 py-2 border rounded-lg bg-gray-100" />
+              <input type="text" placeholder="Bill Month  " value={formData.billMonth || ''} disabled className="px-3 py-2 border rounded-lg bg-gray-100" />
               <input type="text" placeholder="Bill No" value={formData.billNo} onChange={(e) => handleFormChange('billNo', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
               
-              <input type="number" placeholder="Buy Rate" value={formData.buyRate} onChange={(e) => handleFormChange('buyRate', Number(e.target.value))} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
-              <input type="number" placeholder="Qty" value={formData.qty} onChange={(e) => handleFormChange('qty', Number(e.target.value))} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+              <input
+  type="number"
+  min="0"
+  placeholder="Buy Rate"
+  value={formData.buyRate}
+  onChange={(e) => {
+    const value = e.target.value;
+    handleFormChange('buyRate', value === '' ? '' : Number(value));
+  }}
+  className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+/>
+
+<input
+  type="number"
+  min="0"
+  placeholder="Qty"
+  value={formData.qty}
+  onChange={(e) => {
+    const value = e.target.value;
+    handleFormChange('qty', value === '' ? '' : Number(value));
+  }}
+  className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+/>
+
               
               <input type="text" placeholder="Grade" value={formData.grade} onChange={(e) => handleFormChange('grade', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
-              <input type="text" placeholder="Company (auto)" value={formData.company || ''} disabled className="px-3 py-2 border rounded-lg bg-gray-100" />
-              <input type="text" placeholder="Product Category (auto)" value={formData.productCategory || ''} disabled className="px-3 py-2 border rounded-lg bg-gray-100" />
+              <input type="text" placeholder="Company  " value={formData.company || ''} disabled className="px-3 py-2 border rounded-lg bg-gray-100" />
+              <select
+  value={formData.productCategory || ''}
+  onChange={(e) => handleFormChange('productCategory', e.target.value)}
+  className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+>
+  <option value="">Select Product Category</option>
+  <option value="Purchase">Purchase</option>
+  <option value="Purchase Return">Purchase Return</option>
+</select>
+
               
-              <input type="text" placeholder="Type" value={formData.type} onChange={(e) => handleFormChange('type', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+              <select value={formData.type} onChange={(e) => handleFormChange('type', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+              <option value="">Select Type</option>
+              <option value="Discounts">Discounts</option>
+              <option value="Outright with Discounts">Outright with Discounts</option>
+              <option value="Outright">Outright</option>
+                 </select>
+
               <input type="text" placeholder="Buying Terms" value={formData.buyingTerms} onChange={(e) => handleFormChange('buyingTerms', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
               
               <input type="date" placeholder="Date for CN" value={formData.dateForCN} onChange={(e) => handleFormChange('dateForCN', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
-              <input type="text" placeholder="CN Month (auto)" value={formData.cnMonth || ''} disabled className="px-3 py-2 border rounded-lg bg-gray-100" />
+              <input type="text" placeholder="CN Month  " value={formData.cnMonth || ''} disabled className="px-3 py-2 border rounded-lg bg-gray-100" />
               
               <select value={formData.ebiStatus || 'No'} onChange={(e) => handleFormChange('ebiStatus', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white">
                 <option value="No">EBI: No</option>
@@ -744,8 +842,26 @@ export default function Working() {
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <input type="number" placeholder="Sl No" value={editData.slNo} onChange={(e) => handleEditChange('slNo', Number(e.target.value))} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
-                  <input type="text" placeholder="Category" value={editData.category} onChange={(e) => handleEditChange('category', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
-                  <input type="text" placeholder="Branch" value={editData.branch} onChange={(e) => handleEditChange('branch', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+<select
+  value={editData.category || ''}
+  onChange={(e) => handleEditChange('category', e.target.value)}
+  className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+>
+  <option value="">Select Product Category</option>
+  <option value="Purchase">Purchase</option>
+  <option value="Purchase Return">Purchase Return</option>
+</select>
+                      <select
+                        value={editData.branch || ''}
+                        onChange={(e) => handleEditChange('branch', e.target.value)}
+                        className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                      >
+                        <option value="">Select Branch</option>
+                        <option value="Bangalore WH">Bangalore WH</option>
+                        <option value="Chennai Office">Chennai Office</option>
+                        <option value="Head Office">Head Office</option>
+                        <option value="Chennai WH">Chennai WH</option>
+                      </select>
                   
                   <select 
                     value={editData.supplierName || ''} 
@@ -758,24 +874,24 @@ export default function Working() {
                     ))}
                   </select>
 
-                  <input type="text" placeholder="Alias (auto)" value={editData.alias || ''} disabled className="px-3 py-2 border rounded-lg bg-gray-100" />
+                  <input type="text" placeholder="Alias  " value={editData.alias || ''} disabled className="px-3 py-2 border rounded-lg bg-gray-100" />
                   <input type="date" placeholder="Purchase Date" value={editData.purchaseDate} onChange={(e) => handleEditChange('purchaseDate', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
-                  <input type="text" placeholder="Bill Month (auto)" value={editData.billMonth || ''} disabled className="px-3 py-2 border rounded-lg bg-gray-100" />
+                  <input type="text" placeholder="Bill Month  " value={editData.billMonth || ''} disabled className="px-3 py-2 border rounded-lg bg-gray-100" />
                   <input type="text" placeholder="Bill No" value={editData.billNo} onChange={(e) => handleEditChange('billNo', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
                   
                   <input type="number" placeholder="Buy Rate" value={editData.buyRate} onChange={(e) => handleEditChange('buyRate', Number(e.target.value))} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
                   <input type="number" placeholder="Qty" value={editData.qty} onChange={(e) => handleEditChange('qty', Number(e.target.value))} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
                   
                   <input type="text" placeholder="Grade" value={editData.grade} onChange={(e) => handleEditChange('grade', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
-                  <input type="text" placeholder="Item Name (auto)" value={editData.itemName || ''} disabled className="px-3 py-2 border rounded-lg bg-gray-100" />
-                  <input type="text" placeholder="Company (auto)" value={editData.company || ''} disabled className="px-3 py-2 border rounded-lg bg-gray-100" />
-                  <input type="text" placeholder="Product Category (auto)" value={editData.productCategory || ''} disabled className="px-3 py-2 border rounded-lg bg-gray-100" />
+                  <input type="text" placeholder="Item Name  " value={editData.itemName || ''} disabled className="px-3 py-2 border rounded-lg bg-gray-100" />
+                  <input type="text" placeholder="Company  " value={editData.company || ''} disabled className="px-3 py-2 border rounded-lg bg-gray-100" />
+                  <input type="text" placeholder="Product Category  " value={editData.productCategory || ''} disabled className="px-3 py-2 border rounded-lg bg-gray-100" />
                   
                   <input type="text" placeholder="Type" value={editData.type} onChange={(e) => handleEditChange('type', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
                   <input type="text" placeholder="Buying Terms" value={editData.buyingTerms} onChange={(e) => handleEditChange('buyingTerms', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
                   
                   <input type="date" placeholder="Date for CN" value={editData.dateForCN} onChange={(e) => handleEditChange('dateForCN', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
-                  <input type="text" placeholder="CN Month (auto)" value={editData.cnMonth || ''} disabled className="px-3 py-2 border rounded-lg bg-gray-100" />
+                  <input type="text" placeholder="CN Month  " value={editData.cnMonth || ''} disabled className="px-3 py-2 border rounded-lg bg-gray-100" />
                   
                   <select value={editData.ebiStatus || 'No'} onChange={(e) => handleEditChange('ebiStatus', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white">
                     <option value="No">EBI: No</option>
