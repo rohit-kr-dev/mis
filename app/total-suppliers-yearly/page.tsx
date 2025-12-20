@@ -294,7 +294,7 @@ export default function TotalSuppliersYearly() {
   }, [selectedSupplier, selectedType, selectedCompany, workingSheet, items, periods, suppliers, types, allCompanies, showOnlyWithValues, dataFetched]);
 
   // Calculate column totals
-  const columnTotals = useMemo(() => {
+  const columnTotals: Record<string, number> & { total: number } = useMemo(() => {
     const totals: { [monthName: string]: number } = {};
     
     // Initialize totals for each month

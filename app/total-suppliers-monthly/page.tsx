@@ -392,7 +392,7 @@ export default function TotalSuppliersMonthly() {
   }, [workingSheet, items, types, showOnlyWithValues, dataFetched, selectedSupplier, searchTerm]);
 
   // Calculate column totals
-  const columnTotals = useMemo(() => {
+  const columnTotals: Record<string, number> & { total: number } = useMemo(() => {
     const totals: { [typeName: string]: number } = {};
     
     types.forEach(typeObj => {

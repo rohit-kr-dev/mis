@@ -364,7 +364,7 @@ export default function SupplierWiseMonthly() {
   }, [workingSheet, items, types, showOnlyWithValues, dataFetched]);
 
   // Calculate column totals
-  const columnTotals = useMemo(() => {
+  const columnTotals: Record<string, number> & { total: number } = useMemo(() => {
     const totals: { [typeName: string]: number } = {};
     
     types.forEach(typeObj => {
