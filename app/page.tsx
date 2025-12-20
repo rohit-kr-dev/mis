@@ -1,6 +1,12 @@
+import ExcelUpload from "@/components/ExcelUpload";
+
 export default function HomePage() {
   return (
     <div className="max-w-7xl mx-auto">
+      <div className="mb-8">
+        <ExcelUpload />
+      </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Stats Cards */}
         <div className="bg-white rounded-lg shadow-md p-6">
