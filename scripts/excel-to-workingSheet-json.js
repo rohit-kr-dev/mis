@@ -10,6 +10,10 @@
  * - Adds createdAt / updatedAt as ISO datetimes
  * - Omits fields that are empty / null / 0 (except 'total' always included)
  *
+ * NOTE: For a more scalable solution that handles large datasets (1300+ rows) and can be 
+ *       rerun easily when new rows are added, consider using the Python alternative:
+ *       python scripts/excel_to_json.py
+ *
  * Usage:
  *   node scripts/excel-to-workingSheet-json.mjs
  *

@@ -11,6 +11,7 @@ interface WorkingSheetRecord {
   type: string;
   qty: number;
   cnMonth: string;
+  status: string;
 }
 
 interface Supplier {
@@ -56,6 +57,7 @@ export default function SupplierWiseMonthly() {
   const [selectedSupplier, setSelectedSupplier] = useState<string>('');
   const [selectedMonth, setSelectedMonth] = useState<string>('');
   const [selectedCompany, setSelectedCompany] = useState<string>('');
+  const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [loadingData, setLoadingData] = useState(false);
   const [showOnlyWithValues, setShowOnlyWithValues] = useState(true);
@@ -186,8 +188,9 @@ export default function SupplierWiseMonthly() {
     if (selectedMonth) count++;
     if (selectedSupplier) count++;
     if (selectedCompany) count++;
+    if (selectedStatus) count++;
     return count;
-  }, [selectedMonth, selectedSupplier, selectedCompany]);
+  }, [selectedMonth, selectedSupplier, selectedCompany, selectedStatus]);
 
   const filtersRequirementMet = useMemo(() => {
     return appliedFiltersCount >= requiredFilters;
@@ -217,6 +220,13 @@ export default function SupplierWiseMonthly() {
       if (selectedCompany) {
         constraints.push(where('company', '==', selectedCompany));
       }
+      // Handle status filter separately since we need to group Verified and Closed
+      let statusFilterApplied = false;
+      let statusFilterValue = '';
+      if (selectedStatus) {
+        statusFilterApplied = true;
+        statusFilterValue = selectedStatus;
+      }
 
       // Create query with constraints
       const workingSheetQuery = constraints.length > 0 
@@ -224,16 +234,26 @@ export default function SupplierWiseMonthly() {
         : collection(db, 'workingSheet');
 
       const snapshot = await getDocs(workingSheetQuery);
-      const data = snapshot.docs.map(doc => {
+      let data = snapshot.docs.map(doc => {
         const docData = doc.data();
         return {
           supplierName: (docData.supplierName as string) || '',
           company: (docData.company as string) || '',
           type: (docData.type as string) || '',
           qty: (docData.qty as number) || 0,
-          cnMonth: (docData.cnMonth as string) || ''
+          cnMonth: (docData.cnMonth as string) || '',
+          status: (docData.status as string) || 'Open'
         };
       });
+      
+      // Apply status filter in-memory
+      if (statusFilterApplied) {
+        if (statusFilterValue === 'open') {
+          data = data.filter(record => record.status.toLowerCase() === 'open');
+        } else if (statusFilterValue === 'verified_closed') {
+          data = data.filter(record => record.status.toLowerCase() === 'verified' || record.status.toLowerCase() === 'closed');
+        }
+      }
       
       setWorkingSheet(data);
       setDataFetched(true);
@@ -376,17 +396,27 @@ export default function SupplierWiseMonthly() {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
 
+  // Format currency in Indian numbering system
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
   // Clear all filters
   const clearFilters = () => {
     setSelectedMonth('');
     setSelectedSupplier('');
     setSelectedCompany('');
+    setSelectedStatus('');
     setWorkingSheet([]);
     setDataFetched(false);
   };
 
   // Handle filter changes - mark data as stale
-  const handleFilterChange = (filterType: 'month' | 'supplier' | 'company', value: string) => {
+  const handleFilterChange = (filterType: 'month' | 'supplier' | 'company' | 'status', value: string) => {
     setDataFetched(false); // Mark data as stale when filters change
     
     switch (filterType) {
@@ -398,6 +428,9 @@ export default function SupplierWiseMonthly() {
         break;
       case 'company':
         setSelectedCompany(value);
+        break;
+      case 'status':
+        setSelectedStatus(value);
         break;
     }
   };
@@ -519,7 +552,7 @@ export default function SupplierWiseMonthly() {
             <span className="block mt-1 text-green-700 font-medium">🔥 Zero Firebase reads until you click the button!</span>
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 📅 Month {selectedMonth && <span className="text-green-600">✓</span>}
@@ -571,6 +604,21 @@ export default function SupplierWiseMonthly() {
                     {company}
                   </option>
                 ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                📋 Status {selectedStatus && <span className="text-green-600">✓</span>}
+              </label>
+              <select
+                value={selectedStatus}
+                onChange={(e) => handleFilterChange('status', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+              >
+                <option value="">-- All Statuses --</option>
+                <option value="open">Open</option>
+                <option value="verified_closed">Verified & Closed</option>
               </select>
             </div>
           </div>
@@ -702,11 +750,11 @@ export default function SupplierWiseMonthly() {
                         <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700 font-medium">{row.company}</td>
                         {types.map(typeObj => (
                           <td key={typeObj.id} className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-right text-gray-700">
-                            {(row.values[typeObj.type] || 0) === 0 ? '—' : (row.values[typeObj.type] || 0).toFixed(2)}
+                            {(row.values[typeObj.type] || 0) === 0 ? '—' : formatCurrency(row.values[typeObj.type] || 0)}
                           </td>
                         ))}
                         <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-right font-semibold text-blue-700">
-                          {row.total.toFixed(2)}
+                          {formatCurrency(row.total)}
                         </td>
                       </tr>
                     ))}
@@ -718,11 +766,11 @@ export default function SupplierWiseMonthly() {
                       </td>
                       {types.map(typeObj => (
                         <td key={typeObj.id} className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-right text-gray-900">
-                          {(columnTotals[typeObj.type] || 0) === 0 ? '—' : (columnTotals[typeObj.type] || 0).toFixed(2)}
+                          {(columnTotals[typeObj.type] || 0) === 0 ? '—' : formatCurrency(columnTotals[typeObj.type] || 0)}
                         </td>
                       ))}
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-right text-blue-700 font-bold text-base">
-                        {(columnTotals.total || 0).toFixed(2)}
+                        {formatCurrency(columnTotals.total || 0)}
                       </td>
                     </tr>
 
@@ -732,7 +780,7 @@ export default function SupplierWiseMonthly() {
                         💰 GRAND TOTAL
                       </td>
                       <td colSpan={types.length + 1} className="px-2 sm:px-4 py-3 text-sm sm:text-base text-right text-green-800 font-bold">
-                        {grandTotal.toFixed(2)}
+                        {formatCurrency(grandTotal)}
                       </td>
                     </tr>
                   </tbody>

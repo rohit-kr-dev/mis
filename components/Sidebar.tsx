@@ -12,6 +12,8 @@ const menuItems = [
   { name: 'Supplier Wise Monthly', path: '/supplier-wise-monthly' },
   { name: 'Supplier Wise Yearly', path: '/supplier-wise-yearly' },
   { name: 'All Suppliers Monthly', path: '/all-suppliers-monthly' },
+  { name: 'Total Suppliers Monthly', path: '/total-suppliers-monthly' },
+  { name: 'Total Suppliers Yearly', path: '/total-suppliers-yearly' },
 ];
 
 export default function Sidebar() {

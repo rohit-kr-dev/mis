@@ -12,6 +12,8 @@ const pageNames: Record<string, string> = {
   '/supplier-wise-monthly': 'Supplier Wise Monthly',
   '/supplier-wise-yearly': 'Supplier Wise Yearly',
   '/all-suppliers-monthly': 'All Suppliers Monthly',
+  '/total-suppliers-monthly': 'Total Suppliers Monthly',
+  '/total-suppliers-yearly': 'Total Suppliers Yearly',
 };
 
 export default function Header() {

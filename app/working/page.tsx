@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { db } from '@/lib/firebase';
 import {
   collection,
@@ -9,12 +9,12 @@ import {
   updateDoc,
   deleteDoc,
   doc,
-  serverTimestamp,
   query,
   where,
   orderBy
 } from 'firebase/firestore';
-import { AlertCircle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { AlertCircle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Upload } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 // Interfaces
 interface Supplier {
@@ -107,6 +107,12 @@ export default function Working() {
   const [loading, setLoading] = useState(true);
   const [loadingData, setLoadingData] = useState(false);
   const [dataFetched, setDataFetched] = useState(false);
+  
+  // File upload states
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadMessage, setUploadMessage] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Filter states
   const [filterSupplier, setFilterSupplier] = useState('');
@@ -138,7 +144,7 @@ export default function Working() {
   buyingTerms: '',
   dateForCN: '',
   ebiStatus: 'No',
-  status: 'Pending',
+  status: 'Open',
   remarks: '',
   pp: null,
   source: null,
@@ -520,8 +526,8 @@ export default function Working() {
         dateForCN: convertToTimestamp(formData.dateForCN || ''),
         total: calculateTotal(formData),
         diff: calculateDiff(formData),
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
 
       await addDoc(collection(db, 'workingSheet'), dataToSave);
@@ -545,8 +551,8 @@ export default function Working() {
         buyingTerms: '',
         dateForCN: '',
         ebiStatus: 'No',
-        status: 'Pending',
-        remarks: ''
+        status: 'Open',
+        remarks: '',
       });
       setShowAddForm(false);
     } catch (error) {
@@ -598,7 +604,7 @@ export default function Working() {
         ...dataToUpdate,
         purchaseDate: convertToTimestamp(dataToUpdate.purchaseDate),
         dateForCN: convertToTimestamp(dataToUpdate.dateForCN),
-        updatedAt: serverTimestamp()
+        updatedAt: new Date().toISOString()
       });
       
       // Mark data as stale
@@ -656,6 +662,74 @@ export default function Working() {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
 
+  // Handle Excel file upload
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setUploadProgress(0);
+    setUploadMessage('Starting upload...');
+
+    try {
+      // Check file type
+      if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+        throw new Error('Please upload a valid Excel file (.xlsx or .xls)');
+      }
+
+      setUploadMessage('Preparing file for upload...');
+      setUploadProgress(10);
+
+      // Create FormData to send file to API
+      const formData = new FormData();
+      formData.append('file', file);
+
+      setUploadMessage('Uploading file to server...');
+      setUploadProgress(30);
+
+      // Send to API route
+      const response = await fetch('/api/upload-excel', {
+        method: 'POST',
+        body: formData,
+      });
+
+      setUploadProgress(60);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to upload file');
+      }
+
+      const result = await response.json();
+      
+      setUploadProgress(100);
+      setUploadMessage(result.message);
+      
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      
+      // Refresh data
+      setDataFetched(false);
+      
+      // Hide success message after 3 seconds
+      setTimeout(() => {
+        setIsUploading(false);
+      }, 3000);
+      
+    } catch (error) {
+      console.error('Upload error:', error);
+      setUploadMessage(`Error: ${(error as Error).message}`);
+      setIsUploading(false);
+      
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -671,18 +745,59 @@ export default function Working() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-6 px-4">
       <div className="max-w-full mx-auto">
         {/* Header */}
-        <div className="mb-6 flex justify-between items-center">
+        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">📊 Working Sheet</h1>
             <p className="text-gray-600 mt-2">Transaction management with auto-calculations</p>
           </div>
-          <button
-            onClick={() => setShowAddForm(!showAddForm)}
-            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 shadow-lg transition transform hover:scale-105"
-          >
-            {showAddForm ? '✕ Close Form' : '+ Add Transaction'}
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className={`px-4 py-3 flex items-center gap-2 font-medium rounded-lg shadow-lg transition transform hover:scale-105 ${
+                isUploading
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700'
+              }`}
+            >
+              <Upload size={20} />
+              {isUploading ? 'Uploading...' : 'Upload Excel'}
+            </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept=".xlsx,.xls"
+              onChange={handleFileUpload}
+              className="hidden"
+              disabled={isUploading}
+            />
+            <button
+              onClick={() => setShowAddForm(!showAddForm)}
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 shadow-lg transition transform hover:scale-105"
+            >
+              {showAddForm ? '✕ Close Form' : '+ Add Transaction'}
+            </button>
+          </div>
         </div>
+        
+        {/* Upload Progress */}
+        {isUploading && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700">Uploading and processing Excel file...</span>
+              <span className="text-sm font-medium text-gray-700">{uploadProgress}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div
+                className="bg-gradient-to-r from-green-500 to-emerald-500 h-2.5 rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
+            </div>
+            {uploadMessage && (
+              <p className="mt-2 text-sm text-gray-600">{uploadMessage}</p>
+            )}
+          </div>
+        )}
 
         {/* Add Form */}
         {showAddForm && (
@@ -815,7 +930,12 @@ export default function Working() {
               <input type="number" placeholder="Commission" value={formData.commission || ''} onChange={(e) => handleFormChange('commission', e.target.value ? Number(e.target.value) : null)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
               <input type="number" placeholder="GST CN" value={formData.gstCn || ''} onChange={(e) => handleFormChange('gstCn', e.target.value ? Number(e.target.value) : null)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
               
-              <input type="text" placeholder="Status" value={formData.status} onChange={(e) => handleFormChange('status', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+              <select value={formData.status} onChange={(e) => handleFormChange('status', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white">
+                <option value="">Select Status</option>
+                <option value="Open">Open</option>
+                <option value="Verified">Verified</option>
+                <option value="Closed">Closed</option>
+              </select>
               <input type="text" placeholder="Remarks" value={formData.remarks} onChange={(e) => handleFormChange('remarks', e.target.value)} className="px-3 py-2 border rounded-lg md:col-span-2 focus:ring-2 focus:ring-blue-500" />
               
               <div className="md:col-span-2 p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
@@ -919,7 +1039,12 @@ export default function Working() {
                   <input type="number" placeholder="Commission" value={editData.commission || ''} onChange={(e) => handleEditChange('commission', e.target.value ? Number(e.target.value) : null)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
                   <input type="number" placeholder="GST CN" value={editData.gstCn || ''} onChange={(e) => handleEditChange('gstCn', e.target.value ? Number(e.target.value) : null)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
                   
-                  <input type="text" placeholder="Status" value={editData.status} onChange={(e) => handleEditChange('status', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+                  <select value={editData.status} onChange={(e) => handleEditChange('status', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="">Select Status</option>
+                    <option value="Open">Open</option>
+                    <option value="Verified">Verified</option>
+                    <option value="Closed">Closed</option>
+                  </select>
                   <input type="text" placeholder="Remarks" value={editData.remarks} onChange={(e) => handleEditChange('remarks', e.target.value)} className="px-3 py-2 border rounded-lg md:col-span-2 focus:ring-2 focus:ring-blue-500" />
                   
                   <div className="md:col-span-2 p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">

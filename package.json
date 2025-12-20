@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "convert-excel": "cd scripts && python excel_to_json.py"
   },
   "dependencies": {
     "dayjs": "^1.11.19",

@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, AlertCircle, CheckCircle, Database } from 'lucide-react';
 
 interface WorkingSheetRecord {
   supplierName: string;
@@ -38,13 +38,14 @@ interface Type {
 }
 
 interface CalculatedRow {
+  supplier: string;
   materialType: string;
   company: string;
-  supplierValues: { [supplierName: string]: number };
+  values: { [monthName: string]: number };
   total: number;
 }
 
-export default function AllSuppliersMonthly() {
+export default function TotalSuppliersYearly() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [periods, setPeriods] = useState<Period[]>([]);
   const [items, setItems] = useState<Item[]>([]);
@@ -52,7 +53,6 @@ export default function AllSuppliersMonthly() {
   const [workingSheet, setWorkingSheet] = useState<WorkingSheetRecord[]>([]);
   const [allCompanies, setAllCompanies] = useState<string[]>([]);
   
-  const [selectedMonth, setSelectedMonth] = useState<string>('');
   const [selectedType, setSelectedType] = useState<string>('');
   const [selectedCompany, setSelectedCompany] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -157,11 +157,10 @@ export default function AllSuppliersMonthly() {
   // Check if filter requirements are met
   const appliedFiltersCount = useMemo(() => {
     let count = 0;
-    if (selectedMonth) count++;
     if (selectedType) count++;
     if (selectedCompany) count++;
     return count;
-  }, [selectedMonth, selectedType, selectedCompany]);
+  }, [selectedType, selectedCompany]);
 
   const filtersRequirementMet = useMemo(() => {
     return appliedFiltersCount >= requiredFilters;
@@ -182,9 +181,6 @@ export default function AllSuppliersMonthly() {
       // Build query with where clauses based on selected filters
       const constraints = [];
 
-      if (selectedMonth) {
-        constraints.push(where('cnMonth', '==', selectedMonth));
-      }
       if (selectedType) {
         constraints.push(where('type', '==', selectedType));
       }
@@ -239,10 +235,10 @@ export default function AllSuppliersMonthly() {
     
     workingSheet.forEach(record => {
       const key = [
-        (record.cnMonth || '').trim().toLowerCase(),
+        (record.supplierName || '').trim().toLowerCase(),
         (record.company || '').trim().toLowerCase(),
         (record.type || '').trim().toLowerCase(),
-        (record.supplierName || '').trim().toLowerCase()
+        (record.cnMonth || '').trim().toLowerCase()
       ].join('|');
       
       const qty = typeof record.qty === 'number' ? record.qty : parseFloat(String(record.qty || 0));
@@ -252,40 +248,41 @@ export default function AllSuppliersMonthly() {
     });
 
     // Determine which combinations to calculate
-    const monthsToProcess = selectedMonth ? [selectedMonth] : periods.map(p => p.period);
+    const suppliersToProcess = selectedSupplier ? [selectedSupplier] : suppliers.map(s => s.supplierName);
     const typesToProcess = selectedType ? [selectedType] : types.map(t => t.type);
     const companiesToProcess = selectedCompany ? [selectedCompany] : allCompanies;
 
     // Generate all combinations
-    for (const month of monthsToProcess) {
+    for (const supplier of suppliersToProcess) {
       for (const type of typesToProcess) {
         for (const company of companiesToProcess) {
           // Get the material type for the company
           const materialType = vlookupMaterialType(company);
 
-          // Calculate values for each supplier dynamically using the lookup map
-          const supplierValues: { [supplierName: string]: number } = {};
+          // Calculate values for each month dynamically using the lookup map
+          const values: { [monthName: string]: number } = {};
           let total = 0;
 
-          for (const supplier of suppliers) {
+          for (const period of periods) {
             const key = [
-              month.trim().toLowerCase(),
+              supplier.trim().toLowerCase(),
               company.trim().toLowerCase(),
               type.trim().toLowerCase(),
-              supplier.supplierName.trim().toLowerCase()
+              period.period.trim().toLowerCase()
             ].join('|');
             
-            const supplierValue = aggregatedData.get(key) || 0;
-            supplierValues[supplier.supplierName] = supplierValue;
-            total += supplierValue;
+            const monthValue = aggregatedData.get(key) || 0;
+            values[period.period] = monthValue;
+            total += monthValue;
           }
 
           // Add row based on filter setting
           if (!showOnlyWithValues || total > 0) {
             results.push({
+              supplier: supplier,
               materialType: materialType,
               company: company,
-              supplierValues: supplierValues,
+              values: values,
               total: total
             });
           }
@@ -294,21 +291,21 @@ export default function AllSuppliersMonthly() {
     }
 
     return results;
-  }, [selectedMonth, selectedType, selectedCompany, workingSheet, items, periods, suppliers, types, allCompanies, showOnlyWithValues, dataFetched]);
+  }, [selectedSupplier, selectedType, selectedCompany, workingSheet, items, periods, suppliers, types, allCompanies, showOnlyWithValues, dataFetched]);
 
   // Calculate column totals
   const columnTotals = useMemo(() => {
-    const totals: { [supplierName: string]: number } = {};
+    const totals: { [monthName: string]: number } = {};
     
-    // Initialize totals for each supplier
-    suppliers.forEach(supplier => {
-      totals[supplier.supplierName] = 0;
+    // Initialize totals for each month
+    periods.forEach(period => {
+      totals[period.period] = 0;
     });
     
     // Sum up values
     calculatedRows.forEach(row => {
-      suppliers.forEach(supplier => {
-        totals[supplier.supplierName] += row.supplierValues[supplier.supplierName] || 0;
+      periods.forEach(period => {
+        totals[period.period] += row.values[period.period] || 0;
       });
     });
     
@@ -316,7 +313,7 @@ export default function AllSuppliersMonthly() {
     const grandTotal = Object.values(totals).reduce((sum, val) => sum + val, 0);
     
     return { ...totals, total: grandTotal };
-  }, [calculatedRows, suppliers]);
+  }, [calculatedRows, periods]);
 
   // Grand Total
   const grandTotal = useMemo(() => {
@@ -333,18 +330,8 @@ export default function AllSuppliersMonthly() {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
 
-  // Format currency in Indian numbering system
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
   // Clear all filters
   const clearFilters = () => {
-    setSelectedMonth('');
     setSelectedType('');
     setSelectedCompany('');
     setWorkingSheet([]);
@@ -352,13 +339,10 @@ export default function AllSuppliersMonthly() {
   };
 
   // Handle filter changes - mark data as stale
-  const handleFilterChange = (filterType: 'month' | 'type' | 'company', value: string) => {
+  const handleFilterChange = (filterType: 'type' | 'company', value: string) => {
     setDataFetched(false); // Mark data as stale when filters change
     
     switch (filterType) {
-      case 'month':
-        setSelectedMonth(value);
-        break;
       case 'type':
         setSelectedType(value);
         break;
@@ -370,9 +354,9 @@ export default function AllSuppliersMonthly() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-50 to-pink-100">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto mb-4"></div>
           <div className="text-lg text-gray-700 font-medium">Loading initial data...</div>
         </div>
       </div>
@@ -380,10 +364,10 @@ export default function AllSuppliersMonthly() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-4 px-2 sm:px-4 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 py-4 px-2 sm:px-4 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-800 text-center">
-          📊 All Suppliers Monthly Report
+          📅 Total Suppliers Yearly Report
         </h1>
 
         {/* Filters */}
@@ -411,7 +395,7 @@ export default function AllSuppliersMonthly() {
           </div>
 
           {/* Filter Requirement Selector */}
-          <div className="mb-4 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
+          <div className="mb-4 bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg border border-purple-200">
             <label className="block text-sm font-semibold text-gray-800 mb-3">
               ⚙️ Minimum Filters Required:
             </label>
@@ -423,7 +407,7 @@ export default function AllSuppliersMonthly() {
                 }}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition shadow-md ${
                   requiredFilters === 1
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
+                    ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
                 }`}
               >
@@ -436,7 +420,7 @@ export default function AllSuppliersMonthly() {
                 }}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition shadow-md ${
                   requiredFilters === 2
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
+                    ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
                 }`}
               >
@@ -449,7 +433,7 @@ export default function AllSuppliersMonthly() {
                 }}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition shadow-md ${
                   requiredFilters === 3
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
+                    ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
                 }`}
               >
@@ -477,7 +461,7 @@ export default function AllSuppliersMonthly() {
             </div>
           )}
           
-          <p className="text-xs sm:text-sm text-gray-600 mb-4 bg-blue-50 p-3 rounded-lg border border-blue-200">
+          <p className="text-xs sm:text-sm text-gray-600 mb-4 bg-purple-50 p-3 rounded-lg border border-purple-200">
             💡 <span className="font-semibold">Note:</span> Select filters and click "Load Data" to fetch from Firebase. 
             {requiredFilters === 3 && ' All three filters must be selected.'}
             {requiredFilters === 2 && ' At least two filters must be selected.'}
@@ -485,25 +469,7 @@ export default function AllSuppliersMonthly() {
             <span className="block mt-1 text-green-700 font-medium">🔥 Zero Firebase reads until you click the button!</span>
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                📅 Month {selectedMonth && <span className="text-green-600">✓</span>}
-              </label>
-              <select
-                value={selectedMonth}
-                onChange={(e) => handleFilterChange('month', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
-              >
-                <option value="">-- Select Month --</option>
-                {periods.map(period => (
-                  <option key={period.id} value={period.period}>
-                    {period.period}
-                  </option>
-                ))}
-              </select>
-            </div>
-
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 📋 Type {selectedType && <span className="text-green-600">✓</span>}
@@ -511,7 +477,7 @@ export default function AllSuppliersMonthly() {
               <select
                 value={selectedType}
                 onChange={(e) => handleFilterChange('type', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm bg-white"
               >
                 <option value="">-- Select Type --</option>
                 {types.map(type => (
@@ -529,7 +495,7 @@ export default function AllSuppliersMonthly() {
               <select
                 value={selectedCompany}
                 onChange={(e) => handleFilterChange('company', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm bg-white"
               >
                 <option value="">-- Select Company --</option>
                 {allCompanies.map(company => (
@@ -549,7 +515,7 @@ export default function AllSuppliersMonthly() {
               className={`px-6 py-3 rounded-lg font-semibold text-white transition shadow-lg transform hover:scale-105 ${
                 !filtersRequirementMet || loadingData
                   ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
+                  : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
               }`}
             >
               {loadingData ? (
@@ -593,13 +559,13 @@ export default function AllSuppliersMonthly() {
           </div>
         ) : loadingData ? (
           <div className="bg-white rounded-xl shadow-lg p-8 text-center border border-gray-200">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600 mx-auto mb-3"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-purple-600 mx-auto mb-3"></div>
             <p className="text-gray-600">Fetching filtered data from Firebase...</p>
             <p className="text-xs text-gray-500 mt-2">This only happens when you click "Load Data"</p>
           </div>
         ) : calculatedRows.length === 0 ? (
           <div className="bg-white rounded-xl shadow-lg p-8 sm:p-12 text-center border border-gray-200">
-            <div className="text-6xl mb-4">📊</div>
+            <div className="text-6xl mb-4">📅</div>
             <p className="text-gray-500 text-base sm:text-lg">
               {showOnlyWithValues 
                 ? '📭 No data with values greater than 0 found. Try toggling "Show All (Including 0)" or adjust your filters.'
@@ -618,7 +584,7 @@ export default function AllSuppliersMonthly() {
                     setRowsPerPage(Number(e.target.value));
                     setCurrentPage(1);
                   }}
-                  className="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-sm"
+                  className="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white text-sm"
                 >
                   <option value={10}>10</option>
                   <option value={25}>25</option>
@@ -626,7 +592,7 @@ export default function AllSuppliersMonthly() {
                   <option value={100}>100</option>
                 </select>
               </div>
-              <div className="text-sm text-gray-600 bg-blue-50 px-3 py-1 rounded-lg border border-blue-200">
+              <div className="text-sm text-gray-600 bg-purple-50 px-3 py-1 rounded-lg border border-purple-200">
                 📊 Showing {startIndex + 1}-{Math.min(endIndex, calculatedRows.length)} of {calculatedRows.length} records
               </div>
             </div>
@@ -634,14 +600,15 @@ export default function AllSuppliersMonthly() {
             <div className="bg-white shadow-lg overflow-hidden border border-gray-300">
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
-                  <thead className="bg-gradient-to-r from-blue-800 to-indigo-900 text-white sticky top-0">
+                  <thead className="bg-gradient-to-r from-purple-800 to-pink-900 text-white sticky top-0">
                     <tr>
                       <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 w-16">Sl.No</th>
+                      <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[180px]">Supplier</th>
                       <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[140px]">Type</th>
                       <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[160px]">Company</th>
-                      {suppliers.map(supplier => (
-                        <th key={supplier.id} className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[120px]">
-                          {supplier.supplierName}
+                      {periods.map(period => (
+                        <th key={period.id} className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[100px]">
+                          {period.period}
                         </th>
                       ))}
                       <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[110px]">Total</th>
@@ -651,25 +618,26 @@ export default function AllSuppliersMonthly() {
                   <tbody>
                     {currentRows.map((row, index) => (
                       <tr
-                        key={`${row.materialType}-${row.company}-${index}`}
-                        className="border-b border-gray-300 hover:bg-blue-50 transition"
+                        key={`${row.supplier}-${row.materialType}-${row.company}-${index}`}
+                        className="border-b border-gray-300 hover:bg-purple-50 transition"
                       >
                         <td className="px-3 py-3 text-xs sm:text-sm text-center text-gray-700 font-medium border border-gray-300">
                           {startIndex + index + 1}
                         </td>
+                        <td className="px-3 py-3 text-xs sm:text-sm text-center text-gray-700 border border-gray-300">{row.supplier}</td>
                         <td className="px-3 py-3 text-xs sm:text-sm text-center border border-gray-300">
-                          <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs font-medium">
+                          <span className="bg-pink-100 text-pink-800 px-2 py-1 rounded-full text-xs font-medium">
                             {row.materialType}
                           </span>
                         </td>
                         <td className="px-3 py-3 text-xs sm:text-sm text-center text-gray-700 font-medium border border-gray-300">{row.company}</td>
-                        {suppliers.map(supplier => (
-                          <td key={supplier.id} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-700 border border-gray-300">
-                            {(row.supplierValues[supplier.supplierName] || 0) === 0 ? '—' : formatCurrency(row.supplierValues[supplier.supplierName] || 0)}
+                        {periods.map(period => (
+                          <td key={period.id} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-700 border border-gray-300">
+                            {(row.values[period.period] || 0) === 0 ? '—' : (row.values[period.period] || 0).toFixed(2)}
                           </td>
                         ))}
-                        <td className="px-3 py-3 text-xs sm:text-sm text-center font-semibold text-blue-700 border border-gray-300">
-                          {formatCurrency(row.total)}
+                        <td className="px-3 py-3 text-xs sm:text-sm text-center font-semibold text-purple-700 border border-gray-300">
+                          {row.total.toFixed(2)}
                         </td>
                         <td className="px-3 py-3 text-xs sm:text-sm text-center border border-gray-300">
                           <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
@@ -682,16 +650,16 @@ export default function AllSuppliersMonthly() {
                     ))}
                     
                     {/* Column Totals Row */}
-                    <tr className="bg-gradient-to-r from-blue-100 to-indigo-200 border-t-4 border-blue-600 font-bold">
-                      <td colSpan={3} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
+                    <tr className="bg-gradient-to-r from-purple-100 to-pink-200 border-t-4 border-purple-600 font-bold">
+                      <td colSpan={4} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
                         📊 COLUMN TOTALS
                       </td>
-                      {suppliers.map(supplier => (
-                        <td key={supplier.id} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
-                          {(columnTotals[supplier.supplierName] || 0) === 0 ? '—' : (columnTotals[supplier.supplierName] || 0).toFixed(2)}
+                      {periods.map(period => (
+                        <td key={period.id} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
+                          {(columnTotals[period.period] || 0) === 0 ? '—' : (columnTotals[period.period] || 0).toFixed(2)}
                         </td>
                       ))}
-                      <td className="px-3 py-3 text-xs sm:text-sm text-center text-blue-700 font-bold text-base border border-gray-400">
+                      <td className="px-3 py-3 text-xs sm:text-sm text-center text-purple-700 font-bold text-base border border-gray-400">
                         {(columnTotals.total || 0).toFixed(2)}
                       </td>
                       <td className="px-3 py-3 text-xs sm:text-sm text-center border border-gray-400">
@@ -703,11 +671,11 @@ export default function AllSuppliersMonthly() {
 
                     {/* Grand Total Row */}
                     <tr className="bg-gradient-to-r from-green-100 to-green-200 border-t-4 border-green-600 font-bold">
-                      <td colSpan={3} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
+                      <td colSpan={4} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
                         💰 GRAND TOTAL
                       </td>
-                      <td colSpan={suppliers.length + 2} className="px-3 py-3 text-sm sm:text-base text-center text-green-800 font-bold border border-gray-400">
-                        {formatCurrency(grandTotal)}
+                      <td colSpan={periods.length + 2} className="px-3 py-3 text-sm sm:text-base text-center text-green-800 font-bold border border-gray-400">
+                        {grandTotal.toFixed(2)}
                       </td>
                     </tr>
                   </tbody>
@@ -719,7 +687,7 @@ export default function AllSuppliersMonthly() {
             <div className="bg-white rounded-b-xl shadow-lg px-4 py-4 border border-gray-200">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="text-xs sm:text-sm text-gray-600">
-                  Page <span className="font-bold text-blue-600">{currentPage}</span> of <span className="font-bold">{totalPages}</span>
+                  Page <span className="font-bold text-purple-600">{currentPage}</span> of <span className="font-bold">{totalPages}</span>
                 </div>
                 
                 <div className="flex items-center gap-2">
@@ -760,7 +728,7 @@ export default function AllSuppliersMonthly() {
                           onClick={() => goToPage(pageNum)}
                           className={`px-3 py-1 rounded-lg text-sm font-medium transition ${
                             currentPage === pageNum
-                              ? 'bg-blue-600 text-white shadow-md'
+                              ? 'bg-purple-600 text-white shadow-md'
                               : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
                           }`}
                         >
@@ -802,7 +770,7 @@ export default function AllSuppliersMonthly() {
                         goToPage(page);
                       }
                     }}
-                    className="w-16 px-2 py-1 border border-gray-300 rounded-lg text-center text-sm focus:ring-2 focus:ring-blue-500"
+                    className="w-16 px-2 py-1 border border-gray-300 rounded-lg text-center text-sm focus:ring-2 focus:ring-purple-500"
                   />
                 </div>
               </div>
@@ -813,5 +781,3 @@ export default function AllSuppliersMonthly() {
     </div>
   );
 }
-
-
