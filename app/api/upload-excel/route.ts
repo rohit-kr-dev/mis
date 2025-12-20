@@ -28,9 +28,15 @@ export async function POST(request: NextRequest) {
     // Convert to JSON
     const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet, { defval: null });
     
+    // DEBUG: Log the first row to see actual column names
+    if (jsonData.length > 0) {
+      console.log('First row keys:', Object.keys(jsonData[0]));
+      console.log('First row data:', jsonData[0]);
+    }
+    
     // Process data and prepare for Firestore
     const processedData = jsonData.map((row, index) => {
-      return {
+      const processedRow = {
         slNo: row['Sr. No.'] || row['Sl No'] || index + 1,
         category: row['Category'] || '',
         branch: row['Branch'] || row['PSPL Branch'] || '',
@@ -76,6 +82,11 @@ export async function POST(request: NextRequest) {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
+      
+      // DEBUG: Log the processed row
+      console.log('Processed row:', processedRow);
+      
+      return processedRow;
     });
 
     // Save to Firestore in batches
