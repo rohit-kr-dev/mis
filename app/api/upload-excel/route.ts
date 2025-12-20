@@ -28,18 +28,12 @@ export async function POST(request: NextRequest) {
     // Convert to JSON
     const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet, { defval: null });
     
-    // DEBUG: Log the first row to see actual column names
-    if (jsonData.length > 0) {
-      console.log('First row keys:', Object.keys(jsonData[0]));
-      console.log('First row data:', jsonData[0]);
-    }
-    
     // Process data and prepare for Firestore
     const processedData = jsonData.map((row, index) => {
       const processedRow = {
         slNo: row['Sr. No.'] || row['Sl No'] || index + 1,
         category: row['Category'] || '',
-        branch: row['Branch'] || row['PSPL Branch'] || '',
+        branch: row['PSPL Branch'] || row['Branch'] || '',
         supplierName: row['Supplier'] || '',
         alias: row['Alias'] || '',
         purchaseDate: row['Purchase Date'] || '',
@@ -47,20 +41,20 @@ export async function POST(request: NextRequest) {
         period: row['Bill Month'] || '',
         billNo: row['Bill No'] || '',
         buyRate: parseFloat(row['Buy Rate']) || 0,
-        qty: parseFloat(row['Qty']) || 0,
+        qty: parseFloat(row['QTY']) || 0,
         grade: row['Grade'] || '',
         itemName: row['Grade'] || '',
         company: row['Company'] || '',
         productCategory: row['Product Cat'] || '',
         type: row['Type'] || '',
-        buyingTerms: row['Buying Terms'] || '',
+        buyingTerms: row['Buying Terms (If Outright with Disc)'] || row['Buying Terms'] || '',
         dateForCN: row['Date for CN'] || '',
         cnMonth: row['CN Month'] || '',
         ebiStatus: row['EBI'] || 'No',
         pp: parseFloat(row['PP']) || null,
         source: row['Source'] || null,
-        rateAsPerConfirmation: parseFloat(row['Rate, as per confirmation']) || null,
-        rateAsPerPriceList: parseFloat(row['Rate, as per price list']) || null,
+        rateAsPerConfirmation: parseFloat(row['Rate, As per Confirmation']) || null,
+        rateAsPerPriceList: parseFloat(row['Rate, As per Price List']) || null,
         priceType: row['Price Type'] || null,
         location: row['Location'] || null,
         mou: parseFloat(row['MOU']) || null,
@@ -78,13 +72,10 @@ export async function POST(request: NextRequest) {
         total: parseFloat(row['Total']) || 0,
         diff: parseFloat(row['Diff']) || 0,
         status: row['Status'] || 'Pending',
-        remarks: row['Remarks'] || '',
+        remarks: row['Remarks, if any diff'] || row['Remarks'] || '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
-      
-      // DEBUG: Log the processed row
-      console.log('Processed row:', processedRow);
       
       return processedRow;
     });
