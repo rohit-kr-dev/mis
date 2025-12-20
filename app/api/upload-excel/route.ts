@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
         pp: parseFloat(row['PP']) || null,
         source: row['Source'] || null,
         rateAsPerConfirmation: parseFloat(row[' Rate, As per Confirmation ']) || null,
-        rateAsPerPriceList: parseFloat(row[' Rate, As per Price List ']) || null,
+        rateAsPerPriceList: parseFloat(row[' Rate, as per Price List ']) || null,
         priceType: row[' Price Type '] || null,
         location: row[' Location '] || null,
         mou: parseFloat(row[' MOU ']) || null,
