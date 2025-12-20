@@ -364,7 +364,7 @@ export default function SupplierWiseMonthly() {
   }, [workingSheet, items, types, showOnlyWithValues, dataFetched]);
 
   // Calculate column totals
-  const columnTotals: Record<string, number> & { total: number } = useMemo(() => {
+  const columnTotals = useMemo<Record<string, number>>(() => {
     const totals: { [typeName: string]: number } = {};
     
     types.forEach(typeObj => {
@@ -377,13 +377,11 @@ export default function SupplierWiseMonthly() {
       });
     });
     
-    const grandTotal = Object.values(totals).reduce((sum, val) => sum + val, 0);
-    
-    return { ...totals, total: grandTotal };
+    return totals;
   }, [calculatedRows, types]);
 
   const grandTotal = useMemo(() => {
-    return columnTotals.total || 0;
+    return Object.values(columnTotals).reduce((sum, val) => sum + val, 0);
   }, [columnTotals]);
 
   // Pagination calculations
@@ -770,7 +768,7 @@ export default function SupplierWiseMonthly() {
                         </td>
                       ))}
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-right text-blue-700 font-bold text-base">
-                        {formatCurrency(columnTotals.total || 0)}
+                        {formatCurrency(grandTotal || 0)}
                       </td>
                     </tr>
 
