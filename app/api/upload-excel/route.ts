@@ -31,9 +31,9 @@ export async function POST(request: NextRequest) {
     // Process data and prepare for Firestore
     const processedData = jsonData.map((row, index) => {
       const processedRow = {
-        slNo: row['Sr. No.'] || row['Sl No'] || index + 1,
+        slNo: row['Sr. No.'] || index + 1,
         category: row['Category'] || '',
-        branch: row['PSPL Branch'] || row['Branch'] || '',
+        branch: row['PSPL Branch'] || '',
         supplierName: row['Supplier'] || '',
         alias: row['Alias'] || '',
         purchaseDate: row['Purchase Date'] || '',
@@ -47,14 +47,14 @@ export async function POST(request: NextRequest) {
         company: row[' Company '] || '',
         productCategory: row[' Product Cat '] || '',
         type: row['Type'] || '',
-        buyingTerms: row['Buying Terms (If Outright with Disc)'] || row['Buying Terms'] || '',
+        buyingTerms: row['Buying Terms (If Outright with Disc)'] || '',
         dateForCN: row['Date for CN'] || '',
         cnMonth: row['CN Month'] || '',
         ebiStatus: row['EBI'] || 'No',
         pp: parseFloat(row['PP']) || null,
         source: row['Source'] || null,
         rateAsPerConfirmation: parseFloat(row[' Rate, As per Confirmation ']) || null,
-        rateAsPerPriceList: parseFloat(row[' Rate, as per Price List ']) || null,
+        rateAsPerPriceList: parseFloat(row[' Rate, As per Price List ']) || null,
         priceType: row[' Price Type '] || null,
         location: row[' Location '] || null,
         mou: parseFloat(row[' MOU ']) || null,
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
         total: parseFloat(row[' Total ']) || 0,
         diff: parseFloat(row[' Diff ']) || 0,
         status: row[' Status '] || 'Pending',
-        remarks: row[' Remarks, if any diff '] || row[' Remarks '] || '',
+        remarks: row[' Remarks, if any diff '] || '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
