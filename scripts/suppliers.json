@@ -1,42 +1,282 @@
 [
   {
-    "supplierName": "ALLIED PLASTICS",
-    "alias": "Allied"
+    "supplierName": "PARAGON RESIN LLP",
+    "alias": "Paragon"
   },
   {
-    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
-    "alias": "CVPL"
-  },
-  {
-    "supplierName": "INTIME VINCOM PRIVATE LIMITED",
-    "alias": "Intime"
+    "supplierName": "HARISHREE POLYMERS PRIVATE LIMITED",
+    "alias": "Harishree"
   },
   {
     "supplierName": "KAMAKYA CHEMPLAST PRIVATE LIMITED",
     "alias": "Kamakya"
   },
   {
-    "supplierName": "PARAGON RESIN LLP",
-    "alias": "Paragon"
+    "supplierName": "RAGHUSHARAN OVERSEAS PRIVATE LIMITED",
+    "alias": "Raghusharan"
   },
   {
-    "supplierName": "PRESTINE VENTURES PRIVATE LIMITED",
-    "alias": "Prestine"
+    "supplierName": "SHUBHAM INTERNATIONAL PRIVATE LIMITED",
+    "alias": "Shubham"
   },
   {
-    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
-    "alias": "Purav"
+    "supplierName": "CHAKRAPANI VYAPAR PRIVATE LIMITED",
+    "alias": "Chakrapani"
   },
   {
-    "supplierName": "SRI VENKATESHWARA POLYMERS",
-    "alias": "SVP"
+    "supplierName": "NAGASHREE INDUSTRIES",
+    "alias": "Nagashree"
+  },
+  {
+    "supplierName": "BULK LIQUID SOLUTIONS PVT LTD",
+    "alias": "Bulk Liquid"
+  },
+  {
+    "supplierName": "TRIMURTI POLYCHEM PRIVATE LIMITED",
+    "alias": "Trimurti"
+  },
+  {
+    "supplierName": "AMBIKA PETROCHEM PRIVATE LIMITED",
+    "alias": "Ambika"
+  },
+  {
+    "supplierName": "SQUAREFLEX PACKAGING PRIVATE LIMITED",
+    "alias": "Squareflex"
+  },
+  {
+    "supplierName": "D R POLYMERS PRIVATE LIMITED",
+    "alias": "DR Polymers"
+  },
+  {
+    "supplierName": "IVORY POLYMERS",
+    "alias": "Ivory"
+  },
+  {
+    "supplierName": "INTIME VINCOM PRIVATE LIMITED",
+    "alias": "Intime"
+  },
+  {
+    "supplierName": "SYNTHETIC PACKERS LIMITED",
+    "alias": "Synthetic"
   },
   {
     "supplierName": "TREENITY PLY DECOR",
     "alias": "Treenity"
   },
   {
+    "supplierName": "PRESTINE VENTURES PRIVATE LIMITED",
+    "alias": "Prestine"
+  },
+  {
+    "supplierName": "LPB Plastic Private Limited",
+    "alias": "LPB"
+  },
+  {
+    "supplierName": "SHRINATH ROTOPACK (MP) PRIVATE LIMITED",
+    "alias": "Shrinath"
+  },
+  {
+    "supplierName": "VISHAL POLYCHEM",
+    "alias": "Vishal"
+  },
+  {
+    "supplierName": "SIGMA CHEMTRADE PRIVATE LIMITED",
+    "alias": "Sigma"
+  },
+  {
+    "supplierName": "APEX TECHNO POLYMER PRIVATE LIMITED",
+    "alias": "Apex"
+  },
+  {
+    "supplierName": "SIM POLYMERS LLP",
+    "alias": "Sim"
+  },
+  {
+    "supplierName": "SIDDHARTH POLYMERS PRIVATE LIMITED",
+    "alias": "Siddharth"
+  },
+  {
+    "supplierName": "K V N IMPEX PVT LTD",
+    "alias": "KVN"
+  },
+  {
+    "supplierName": "ASHOKA ENTERPRISE",
+    "alias": "Ashoka"
+  },
+  {
+    "supplierName": "SERVO PACKAGING LIMITED",
+    "alias": "Servo"
+  },
+  {
+    "supplierName": "SUN POLYTRADE LLP",
+    "alias": "Sun"
+  },
+  {
+    "supplierName": "GUJARAT PETROSYNTHESE LIMITED",
+    "alias": "Gujarat Petro"
+  },
+  {
+    "supplierName": "ADITHYA PLASTIC INDUSTRIES",
+    "alias": "Adithya"
+  },
+  {
+    "supplierName": "ZETWERK MANUFACTURING BUSINESSES PRIVATE LIMITED",
+    "alias": "Zetwerk"
+  },
+  {
+    "supplierName": "GOTAWAT INDUSTRIES",
+    "alias": "Gotawat"
+  },
+  {
+    "supplierName": "TEGRAL INDIA PRIVATE LIMITED",
+    "alias": "Tegral"
+  },
+  {
+    "supplierName": "SRI LAKOSHA POLYMER PRIVATE LTD",
+    "alias": "Sri Lakosha"
+  },
+  {
+    "supplierName": "PURAV POLYMERS PRIVATE LIMITED",
+    "alias": "Purav"
+  },
+  {
+    "supplierName": "PRISHA POLYTECH LLP",
+    "alias": "Prisha"
+  },
+  {
+    "supplierName": "SPRING POLYMERS",
+    "alias": "Spring"
+  },
+  {
+    "supplierName": "VINAY PLASTICS",
+    "alias": "Vinay"
+  },
+  {
+    "supplierName": "SADGURU INDUSTRIES",
+    "alias": "Sadguru"
+  },
+  {
+    "supplierName": "STAVIAN CHEMICAL JOINT STOCK COMPANY",
+    "alias": "Stavian"
+  },
+  {
+    "supplierName": "SAMYUKTA POLYMERS",
+    "alias": "Samyukta"
+  },
+  {
+    "supplierName": "SRI VENKATESHWARA POLYMERS",
+    "alias": "Sri Venkateshwara"
+  },
+  {
+    "supplierName": "UNITED RAW MATERIAL PTE LTD",
+    "alias": "United Raw"
+  },
+  {
+    "supplierName": "KLENE PAKS LIMITED",
+    "alias": "Klene"
+  },
+  {
+    "supplierName": "RISHABH TRIEXIM LLP",
+    "alias": "Rishabh"
+  },
+  {
+    "supplierName": "TUBE PRODUCTS",
+    "alias": "Tube"
+  },
+  {
+    "supplierName": "MARVEL POLYEXIM LLP",
+    "alias": "Marvel"
+  },
+  {
+    "supplierName": "LAXMI POLYCHEM INDIA LTD",
+    "alias": "Laxmi"
+  },
+  {
+    "supplierName": "JD POLYMERS PACKAGING SOLUTIONS PRIVATE LIMITED",
+    "alias": "JD Polymers"
+  },
+  {
     "supplierName": "VALUE PACKAGING INDUSTRIES PRIVATE LIMITED",
     "alias": "Value"
+  },
+  {
+    "supplierName": "POLY PIPES INDIA PRIVATE LIMITED",
+    "alias": "Poly Pipes"
+  },
+  {
+    "supplierName": "RAJATH CONSUMABLES",
+    "alias": "Rajath"
+  },
+  {
+    "supplierName": "RAVAGO SHAH POLYMERS PRIVATE LIMITED",
+    "alias": "Ravago"
+  },
+  {
+    "supplierName": "TARAJYOT POLYMERS LIMITED",
+    "alias": "Tarajyot"
+  },
+  {
+    "supplierName": "DVK POLYMERS",
+    "alias": "DVK"
+  },
+  {
+    "supplierName": "OFB TECH PRIVATE LIMITED",
+    "alias": "OFB"
+  },
+  {
+    "supplierName": "RAM-NATH AND COMPANY PRIVATE LIMITED",
+    "alias": "Ram-Nath"
+  },
+  {
+    "supplierName": "ORGANIC INDUSTRIES  PRIVATE LIMITED",
+    "alias": "Organic"
+  },
+  {
+    "supplierName": "APSARA POLYMERS PVT LTD",
+    "alias": "Apsara"
+  },
+  {
+    "supplierName": "KARNATAKA PETROTECH",
+    "alias": "Karnataka"
+  },
+  {
+    "supplierName": "VIDHI PETRO PRODUCTS PRIVATE LIMITED",
+    "alias": "Vidhi"
+  },
+  {
+    "supplierName": "M.M.POLYMERS,",
+    "alias": "MM Polymers"
+  },
+  {
+    "supplierName": "ALLIED PLASTICS",
+    "alias": "Allied"
+  },
+  {
+    "supplierName": "PARASHAVANATH FILAMENTS",
+    "alias": "Parashavanath"
+  },
+  {
+    "supplierName": "J  P  POLYMERS PRIVATE LIMITED",
+    "alias": "JP Polymers"
+  },
+  {
+    "supplierName": "SHREE SHYAM POLYMERS",
+    "alias": "Shree Shyam"
+  },
+  {
+    "supplierName": "MAYUR PLASTIC",
+    "alias": "Mayur"
+  },
+  {
+    "supplierName": "MADHU PLASTICS (P)LTD",
+    "alias": "Madhu"
+  },
+  {
+    "supplierName": "NAVKAR CHEMICALS",
+    "alias": "Navkar"
+  },
+  {
+    "supplierName": "KULODAY TECHNOPACK PVT.LTD",
+    "alias": "Kuloday"
   }
 ]

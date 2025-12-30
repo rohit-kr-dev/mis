@@ -55,6 +55,7 @@ export default function TotalSuppliersYearly() {
   
   const [selectedType, setSelectedType] = useState<string>('');
   const [selectedCompany, setSelectedCompany] = useState<string>('');
+  const [selectedType2, setSelectedType2] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [loadingData, setLoadingData] = useState(false);
   const [dataFetched, setDataFetched] = useState(false);
@@ -159,8 +160,9 @@ export default function TotalSuppliersYearly() {
     let count = 0;
     if (selectedType) count++;
     if (selectedCompany) count++;
+    if (selectedType2) count++;
     return count;
-  }, [selectedType, selectedCompany]);
+  }, [selectedType, selectedCompany, selectedType2]);
 
   const filtersRequirementMet = useMemo(() => {
     return appliedFiltersCount >= requiredFilters;
@@ -248,7 +250,7 @@ export default function TotalSuppliersYearly() {
     });
 
     // Determine which combinations to calculate
-    const suppliersToProcess = selectedSupplier ? [selectedSupplier] : suppliers.map(s => s.supplierName);
+    const suppliersToProcess = suppliers.map(s => s.supplierName);
     const typesToProcess = selectedType ? [selectedType] : types.map(t => t.type);
     const companiesToProcess = selectedCompany ? [selectedCompany] : allCompanies;
 
@@ -276,8 +278,11 @@ export default function TotalSuppliersYearly() {
             total += monthValue;
           }
 
-          // Add row based on filter setting
-          if (!showOnlyWithValues || total > 0) {
+          // Apply filters after data retrieval
+          const matchesShowOnlyWithValues = !showOnlyWithValues || total > 0;
+          const matchesType2Filter = !selectedType2 || materialType === selectedType2;
+          
+          if (matchesShowOnlyWithValues && matchesType2Filter) {
             results.push({
               supplier: supplier,
               materialType: materialType,
@@ -291,7 +296,7 @@ export default function TotalSuppliersYearly() {
     }
 
     return results;
-  }, [selectedSupplier, selectedType, selectedCompany, workingSheet, items, periods, suppliers, types, allCompanies, showOnlyWithValues, dataFetched]);
+  }, [selectedType, selectedCompany, selectedType2, workingSheet, items, periods, suppliers, types, allCompanies, showOnlyWithValues, dataFetched]);
 
   // Calculate column totals
   const columnTotals: Record<string, number> & { total: number } = useMemo(() => {
@@ -334,12 +339,13 @@ export default function TotalSuppliersYearly() {
   const clearFilters = () => {
     setSelectedType('');
     setSelectedCompany('');
+    setSelectedType2('');
     setWorkingSheet([]);
     setDataFetched(false);
   };
 
   // Handle filter changes - mark data as stale
-  const handleFilterChange = (filterType: 'type' | 'company', value: string) => {
+  const handleFilterChange = (filterType: 'type' | 'company' | 'type2', value: string) => {
     setDataFetched(false); // Mark data as stale when filters change
     
     switch (filterType) {
@@ -348,6 +354,9 @@ export default function TotalSuppliersYearly() {
         break;
       case 'company':
         setSelectedCompany(value);
+        break;
+      case 'type2':
+        setSelectedType2(value);
         break;
     }
   };
@@ -437,7 +446,20 @@ export default function TotalSuppliersYearly() {
                     : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
                 }`}
               >
-                All 3 Filters Required
+                At Least 3 Filters
+              </button>
+              <button
+                onClick={() => {
+                  setRequiredFilters(4);
+                  setDataFetched(false);
+                }}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition shadow-md ${
+                  requiredFilters === 4
+                    ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                }`}
+              >
+                All 4 Filters Required
               </button>
             </div>
           </div>
@@ -463,13 +485,14 @@ export default function TotalSuppliersYearly() {
           
           <p className="text-xs sm:text-sm text-gray-600 mb-4 bg-purple-50 p-3 rounded-lg border border-purple-200">
             💡 <span className="font-semibold">Note:</span> Select filters and click "Load Data" to fetch from Firebase. 
+            {requiredFilters === 4 && ' All four filters must be selected.'}
             {requiredFilters === 3 && ' All three filters must be selected.'}
             {requiredFilters === 2 && ' At least two filters must be selected.'}
             {requiredFilters === 1 && ' At least one filter must be selected.'}
             <span className="block mt-1 text-green-700 font-medium">🔥 Zero Firebase reads until you click the button!</span>
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 📋 Type {selectedType && <span className="text-green-600">✓</span>}
@@ -503,6 +526,21 @@ export default function TotalSuppliersYearly() {
                     {company}
                   </option>
                 ))}
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                🏢 Type 2 {selectedType2 && <span className="text-green-600">✓</span>}
+              </label>
+              <select
+                value={selectedType2}
+                onChange={(e) => handleFilterChange('type2', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm bg-white"
+              >
+                <option value="">-- All Type 2 --</option>
+                <option value="Domestic">Domestic</option>
+                <option value="Import">Import</option>
               </select>
             </div>
           </div>

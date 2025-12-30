@@ -379,8 +379,7 @@ export default function EnhancedVendorManagement() {
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
+      style: 'decimal',
       minimumFractionDigits: 0,
     }).format(amount);
   };

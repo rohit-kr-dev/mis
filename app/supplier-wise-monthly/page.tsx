@@ -57,6 +57,8 @@ export default function SupplierWiseMonthly() {
   const [selectedSupplier, setSelectedSupplier] = useState<string>('');
   const [selectedMonth, setSelectedMonth] = useState<string>('');
   const [selectedCompany, setSelectedCompany] = useState<string>('');
+  const [selectedType, setSelectedType] = useState<string>('');
+  const [selectedType2, setSelectedType2] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [loadingData, setLoadingData] = useState(false);
@@ -188,9 +190,11 @@ export default function SupplierWiseMonthly() {
     if (selectedMonth) count++;
     if (selectedSupplier) count++;
     if (selectedCompany) count++;
+    if (selectedType) count++;
+    if (selectedType2) count++;
     if (selectedStatus) count++;
     return count;
-  }, [selectedMonth, selectedSupplier, selectedCompany, selectedStatus]);
+  }, [selectedMonth, selectedSupplier, selectedCompany, selectedType, selectedType2, selectedStatus]);
 
   const filtersRequirementMet = useMemo(() => {
     return appliedFiltersCount >= requiredFilters;
@@ -220,6 +224,11 @@ export default function SupplierWiseMonthly() {
       if (selectedCompany) {
         constraints.push(where('company', '==', selectedCompany));
       }
+      if (selectedType) {
+        constraints.push(where('type', '==', selectedType));
+      }
+      // Note: Type2 (Domestic/Import) filter is applied after data retrieval
+      // since it requires vlookup from items collection, not direct field in workingSheet
       // Handle status filter separately since we need to group Verified and Closed
       let statusFilterApplied = false;
       let statusFilterValue = '';
@@ -328,7 +337,11 @@ export default function SupplierWiseMonthly() {
         total += typeValue;
       }
 
-      if (!showOnlyWithValues || total > 0) {
+      // Apply filters after data retrieval
+      const matchesShowOnlyWithValues = !showOnlyWithValues || total > 0;
+      const matchesType2Filter = !selectedType2 || materialType === selectedType2;
+      
+      if (matchesShowOnlyWithValues && matchesType2Filter) {
         // Convert back to original case for display
         const originalMonth = workingSheet.find(r => 
           r.cnMonth?.trim().toLowerCase() === month
@@ -361,7 +374,7 @@ export default function SupplierWiseMonthly() {
     });
 
     return results;
-  }, [workingSheet, items, types, showOnlyWithValues, dataFetched]);
+  }, [workingSheet, items, types, showOnlyWithValues, dataFetched, selectedType2]);
 
   // Calculate column totals
   const columnTotals = useMemo<Record<string, number>>(() => {
@@ -394,11 +407,10 @@ export default function SupplierWiseMonthly() {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
 
-  // Format currency in Indian numbering system
+  // Format number in Indian numbering system without currency symbol
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
+      style: 'decimal',
       minimumFractionDigits: 0,
     }).format(amount);
   };
@@ -408,13 +420,15 @@ export default function SupplierWiseMonthly() {
     setSelectedMonth('');
     setSelectedSupplier('');
     setSelectedCompany('');
+    setSelectedType('');
+    setSelectedType2('');
     setSelectedStatus('');
     setWorkingSheet([]);
     setDataFetched(false);
   };
 
   // Handle filter changes - mark data as stale
-  const handleFilterChange = (filterType: 'month' | 'supplier' | 'company' | 'status', value: string) => {
+  const handleFilterChange = (filterType: 'month' | 'supplier' | 'company' | 'type' | 'status' | 'type2', value: string) => {
     setDataFetched(false); // Mark data as stale when filters change
     
     switch (filterType) {
@@ -427,8 +441,14 @@ export default function SupplierWiseMonthly() {
       case 'company':
         setSelectedCompany(value);
         break;
+      case 'type':
+        setSelectedType(value);
+        break;
       case 'status':
         setSelectedStatus(value);
+        break;
+      case 'type2':
+        setSelectedType2(value);
         break;
     }
   };
@@ -518,7 +538,33 @@ export default function SupplierWiseMonthly() {
                     : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
                 }`}
               >
-                All 3 Filters Required
+                At Least 3 Filters
+              </button>
+              <button
+                onClick={() => {
+                  setRequiredFilters(4);
+                  setDataFetched(false);
+                }}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition shadow-md ${
+                  requiredFilters === 4
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                }`}
+              >
+                At Least 4 Filters
+              </button>
+              <button
+                onClick={() => {
+                  setRequiredFilters(5);
+                  setDataFetched(false);
+                }}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition shadow-md ${
+                  requiredFilters === 5
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                }`}
+              >
+                At Least 5 Filters
               </button>
             </div>
           </div>
@@ -544,13 +590,15 @@ export default function SupplierWiseMonthly() {
           
           <p className="text-xs sm:text-sm text-gray-600 mb-4 bg-blue-50 p-3 rounded-lg border border-blue-200">
             💡 <span className="font-semibold">Note:</span> Select filters and click "Load Data" to fetch from Firebase. 
-            {requiredFilters === 3 && ' All three filters must be selected.'}
+            {requiredFilters === 5 && ' All five filters must be selected.'}
+            {requiredFilters === 4 && ' All four filters must be selected.'}
+            {requiredFilters === 3 && ' At least three filters must be selected.'}
             {requiredFilters === 2 && ' At least two filters must be selected.'}
             {requiredFilters === 1 && ' At least one filter must be selected.'}
             <span className="block mt-1 text-green-700 font-medium">🔥 Zero Firebase reads until you click the button!</span>
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 📅 Month {selectedMonth && <span className="text-green-600">✓</span>}
@@ -602,6 +650,39 @@ export default function SupplierWiseMonthly() {
                     {company}
                   </option>
                 ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                📦 Type {selectedType && <span className="text-green-600">✓</span>}
+              </label>
+              <select
+                value={selectedType}
+                onChange={(e) => handleFilterChange('type', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+              >
+                <option value="">-- All Types --</option>
+                {types.map(typeObj => (
+                  <option key={typeObj.id} value={typeObj.type}>
+                    {typeObj.type}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                🏢 Type 2 {selectedType2 && <span className="text-green-600">✓</span>}
+              </label>
+              <select
+                value={selectedType2}
+                onChange={(e) => handleFilterChange('type2', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+              >
+                <option value="">-- All Type 2 --</option>
+                <option value="Domestic">Domestic</option>
+                <option value="Import">Import</option>
               </select>
             </div>
 

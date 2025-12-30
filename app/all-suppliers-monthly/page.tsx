@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, AlertCircle } from 'lucide-react';
+import SearchableDropdown from '@/components/SearchableDropdown';
 
 interface WorkingSheetRecord {
   supplierName: string;
@@ -55,6 +56,7 @@ export default function AllSuppliersMonthly() {
   const [selectedMonth, setSelectedMonth] = useState<string>('');
   const [selectedType, setSelectedType] = useState<string>('');
   const [selectedCompany, setSelectedCompany] = useState<string>('');
+  const [selectedSupplier, setSelectedSupplier] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [loadingData, setLoadingData] = useState(false);
   const [dataFetched, setDataFetched] = useState(false);
@@ -160,8 +162,9 @@ export default function AllSuppliersMonthly() {
     if (selectedMonth) count++;
     if (selectedType) count++;
     if (selectedCompany) count++;
+    if (selectedSupplier) count++;
     return count;
-  }, [selectedMonth, selectedType, selectedCompany]);
+  }, [selectedMonth, selectedType, selectedCompany, selectedSupplier]);
 
   const filtersRequirementMet = useMemo(() => {
     return appliedFiltersCount >= requiredFilters;
@@ -190,6 +193,9 @@ export default function AllSuppliersMonthly() {
       }
       if (selectedCompany) {
         constraints.push(where('company', '==', selectedCompany));
+      }
+      if (selectedSupplier) {
+        constraints.push(where('supplierName', '==', selectedSupplier));
       }
 
       // Create query with constraints
@@ -333,11 +339,10 @@ export default function AllSuppliersMonthly() {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
 
-  // Format currency in Indian numbering system
+  // Format number in Indian numbering system without currency symbol
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
+      style: 'decimal',
       minimumFractionDigits: 0,
     }).format(amount);
   };
@@ -347,12 +352,13 @@ export default function AllSuppliersMonthly() {
     setSelectedMonth('');
     setSelectedType('');
     setSelectedCompany('');
+    setSelectedSupplier('');
     setWorkingSheet([]);
     setDataFetched(false);
   };
 
   // Handle filter changes - mark data as stale
-  const handleFilterChange = (filterType: 'month' | 'type' | 'company', value: string) => {
+  const handleFilterChange = (filterType: 'month' | 'type' | 'company' | 'supplier', value: string) => {
     setDataFetched(false); // Mark data as stale when filters change
     
     switch (filterType) {
@@ -364,6 +370,9 @@ export default function AllSuppliersMonthly() {
         break;
       case 'company':
         setSelectedCompany(value);
+        break;
+      case 'supplier':
+        setSelectedSupplier(value);
         break;
     }
   };
@@ -485,7 +494,7 @@ export default function AllSuppliersMonthly() {
             <span className="block mt-1 text-green-700 font-medium">🔥 Zero Firebase reads until you click the button!</span>
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 📅 Month {selectedMonth && <span className="text-green-600">✓</span>}
@@ -502,6 +511,16 @@ export default function AllSuppliersMonthly() {
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <SearchableDropdown
+                options={suppliers.map(supplier => ({ id: supplier.supplierName, name: supplier.supplierName }))}
+                value={selectedSupplier}
+                onChange={(value) => handleFilterChange('supplier', value)}
+                placeholder="-- Select Supplier --"
+                label="🏢 Supplier"
+              />
             </div>
 
             <div>
@@ -813,5 +832,3 @@ export default function AllSuppliersMonthly() {
     </div>
   );
 }
-
-

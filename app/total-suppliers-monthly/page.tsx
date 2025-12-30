@@ -56,7 +56,9 @@ export default function TotalSuppliersMonthly() {
   
   const [selectedMonth, setSelectedMonth] = useState<string>('');
   const [selectedCompany, setSelectedCompany] = useState<string>('');
+  const [selectedType, setSelectedType] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
+  const [selectedType2, setSelectedType2] = useState<string>('');
   const [selectedSupplier, setSelectedSupplier] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [showSearchDropdown, setShowSearchDropdown] = useState<boolean>(false);
@@ -190,11 +192,13 @@ export default function TotalSuppliersMonthly() {
     let count = 0;
     if (selectedMonth) count++;
     if (selectedCompany) count++;
+    if (selectedType) count++;
     if (selectedStatus) count++;
+    if (selectedType2) count++;
     // Count supplier filter (either selected supplier or search term)
-    if (selectedSupplier || searchTerm) count++;
+    if (selectedSupplier || (searchTerm && searchTerm.length >= 3)) count++; // Only count search term if at least 3 chars
     return count;
-  }, [selectedMonth, selectedCompany, selectedStatus, selectedSupplier, searchTerm]);
+  }, [selectedMonth, selectedCompany, selectedType, selectedStatus, selectedType2, selectedSupplier, searchTerm]);
 
   const filtersRequirementMet = useMemo(() => {
     return appliedFiltersCount >= requiredFilters;
@@ -221,6 +225,14 @@ export default function TotalSuppliersMonthly() {
       if (selectedCompany) {
         constraints.push(where('company', '==', selectedCompany));
       }
+      if (selectedType) {
+        constraints.push(where('type', '==', selectedType));
+      }
+      if (selectedSupplier) {
+        constraints.push(where('supplierName', '==', selectedSupplier));
+      }
+      // Note: Type2 (Domestic/Import) filter is applied after data retrieval
+      // since it requires vlookup from items collection, not direct field in workingSheet
       // Handle status filter separately since we need to group Verified and Closed
       let statusFilterApplied = false;
       let statusFilterValue = '';
@@ -349,7 +361,11 @@ export default function TotalSuppliersMonthly() {
         total += typeValue;
       }
 
-      if (!showOnlyWithValues || total > 0) {
+      // Apply filters after data retrieval
+      const matchesShowOnlyWithValues = !showOnlyWithValues || total > 0;
+      const matchesType2Filter = !selectedType2 || materialType === selectedType2;
+      
+      if (matchesShowOnlyWithValues && matchesType2Filter) {
         // Convert back to original case for display
         const originalMonth = workingSheet.find(r => 
           r.cnMonth?.trim().toLowerCase() === month
@@ -366,7 +382,7 @@ export default function TotalSuppliersMonthly() {
         // Apply supplier filter if selectedSupplier or searchTerm is provided
         const shouldShowSupplier = !selectedSupplier && !searchTerm || 
           selectedSupplier === originalSupplier || 
-          (searchTerm && originalSupplier.toLowerCase().includes(searchTerm.toLowerCase()));
+          (searchTerm && originalSupplier.toLowerCase().startsWith(searchTerm.toLowerCase()));
         
         if (shouldShowSupplier) {
           results.push({
@@ -389,7 +405,7 @@ export default function TotalSuppliersMonthly() {
     });
 
     return results;
-  }, [workingSheet, items, types, showOnlyWithValues, dataFetched, selectedSupplier, searchTerm]);
+  }, [workingSheet, items, types, showOnlyWithValues, dataFetched, selectedSupplier, searchTerm, selectedType2]);
 
   // Calculate column totals
   const columnTotals: Record<string, number> & { total: number } = useMemo(() => {
@@ -424,11 +440,10 @@ export default function TotalSuppliersMonthly() {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
 
-  // Format currency in Indian numbering system
+  // Format number in Indian numbering system without currency symbol
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
+      style: 'decimal',
       minimumFractionDigits: 0,
     }).format(amount);
   };
@@ -437,13 +452,17 @@ export default function TotalSuppliersMonthly() {
   const clearFilters = () => {
     setSelectedMonth('');
     setSelectedCompany('');
+    setSelectedType('');
     setSelectedStatus('');
+    setSelectedType2('');
+    setSelectedSupplier('');
+    setSearchTerm('');
     setWorkingSheet([]);
     setDataFetched(false);
   };
 
   // Handle filter changes - mark data as stale
-  const handleFilterChange = (filterType: 'month' | 'company' | 'status', value: string) => {
+  const handleFilterChange = (filterType: 'month' | 'company' | 'type' | 'status' | 'type2' | 'supplier', value: string) => {
     setDataFetched(false); // Mark data as stale when filters change
     
     switch (filterType) {
@@ -453,8 +472,17 @@ export default function TotalSuppliersMonthly() {
       case 'company':
         setSelectedCompany(value);
         break;
+      case 'type':
+        setSelectedType(value);
+        break;
       case 'status':
         setSelectedStatus(value);
+        break;
+      case 'type2':
+        setSelectedType2(value);
+        break;
+      case 'supplier':
+        setSelectedSupplier(value);
         break;
     }
   };
@@ -544,7 +572,33 @@ export default function TotalSuppliersMonthly() {
                     : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
                 }`}
               >
-                All 3 Filters Required
+                At Least 3 Filters
+              </button>
+              <button
+                onClick={() => {
+                  setRequiredFilters(4);
+                  setDataFetched(false);
+                }}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition shadow-md ${
+                  requiredFilters === 4
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                }`}
+              >
+                At Least 4 Filters
+              </button>
+              <button
+                onClick={() => {
+                  setRequiredFilters(5);
+                  setDataFetched(false);
+                }}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition shadow-md ${
+                  requiredFilters === 5
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                }`}
+              >
+                At Least 5 Filters
               </button>
             </div>
           </div>
@@ -570,13 +624,16 @@ export default function TotalSuppliersMonthly() {
           
           <p className="text-xs sm:text-sm text-gray-600 mb-4 bg-blue-50 p-3 rounded-lg border border-blue-200">
             💡 <span className="font-semibold">Note:</span> Select filters and click "Load Data" to fetch from Firebase. 
-            
+            {requiredFilters === 5 && ' All five filters must be selected.'}
+            {requiredFilters === 4 && ' All four filters must be selected.'}
+            {requiredFilters === 3 && ' At least three filters must be selected.'}
+            {requiredFilters === 2 && ' At least two filters must be selected.'}
             {requiredFilters === 1 && ' At least one filter must be selected.'}
-            <span class="block mt-1">📅 Selecting a month is recommended for monthly reports.</span>
+            <span className="block mt-1">📅 Selecting a month is recommended for monthly reports.</span>
             <span className="block mt-1 text-green-700 font-medium">🔥 Zero Firebase reads until you click the button!</span>
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 📅 Month {selectedMonth && <span className="text-green-600">✓</span>}
@@ -615,6 +672,39 @@ export default function TotalSuppliersMonthly() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
+                📦 Type {selectedType && <span className="text-green-600">✓</span>}
+              </label>
+              <select
+                value={selectedType}
+                onChange={(e) => handleFilterChange('type', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+              >
+                <option value="">-- All Types --</option>
+                {types.map(type => (
+                  <option key={type.id} value={type.type}>
+                    {type.type}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                🏢 Type 2 {selectedType2 && <span className="text-green-600">✓</span>}
+              </label>
+              <select
+                value={selectedType2}
+                onChange={(e) => handleFilterChange('type2', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+              >
+                <option value="">-- All Type 2 --</option>
+                <option value="Domestic">Domestic</option>
+                <option value="Import">Import</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 📋 Status {selectedStatus && <span className="text-green-600">✓</span>}
               </label>
               <select
@@ -628,7 +718,7 @@ export default function TotalSuppliersMonthly() {
               </select>
             </div>
 
-            <div className="relative">
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 🔍 Select Supplier
               </label>
@@ -662,10 +752,10 @@ export default function TotalSuppliersMonthly() {
                           setSearchTerm(value);
                           
                           if (value) {
-                            // Filter suppliers that contain the typed value (case insensitive)
+                            // Filter suppliers that start with the typed value (case insensitive)
                             const filtered = suppliers
                               .map(s => s.supplierName)
-                              .filter(name => name.toLowerCase().includes(value.toLowerCase()))
+                              .filter(name => name.toLowerCase().startsWith(value.toLowerCase()))
                               .slice(0, 50); // Limit to 50 suggestions
                             setFilteredSuppliers(filtered);
                           } else {
@@ -673,7 +763,7 @@ export default function TotalSuppliersMonthly() {
                             setFilteredSuppliers(suppliers.map(s => s.supplierName));
                           }
                         }}
-                        placeholder="Search suppliers..."
+                        placeholder="Search suppliers (3+ chars)..."
                         className="w-full px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                         autoFocus
                       />
