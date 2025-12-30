@@ -640,6 +640,7 @@ export default function SupplierWiseMonthly() {
                     'SRI VENKATESHWARA POLYMERS',
                     'ALLIED PLASTICS'
                   ].includes(supplier.supplierName))
+
                   .map(supplier => (
                     <option key={supplier.id} value={supplier.supplierName}>
                       {supplier.supplierName}
