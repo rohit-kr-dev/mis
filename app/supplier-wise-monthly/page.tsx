@@ -627,11 +627,24 @@ export default function SupplierWiseMonthly() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
               >
                 <option value="">-- Select Supplier --</option>
-                {suppliers.map(supplier => (
-                  <option key={supplier.id} value={supplier.supplierName}>
-                    {supplier.supplierName}
-                  </option>
-                ))}
+                {suppliers
+                  .filter(supplier => [
+                    'CHAKRAPANI VYAPAR PRIVATE LIMITED',
+                    'PARAGON RESIN LLP',
+                    'KAMAKYA CHEMPLAST PRIVATE LIMITED',
+                    'INTIME VINCOM PRIVATE LIMITED',
+                    'TREENITY PLY DECOR',
+                    'PURAV POLYMERS PRIVATE LIMITED',
+                    'PRESTINE VENTURES PRIVATE LIMITED',
+                    'VALUE PACKAGING INDUSTRIES PRIVATE LIMITED',
+                    'SRI VENKATESHWARA POLYMERS',
+                    'ALLIED PLASTICS'
+                  ].includes(supplier.supplierName))
+                  .map(supplier => (
+                    <option key={supplier.id} value={supplier.supplierName}>
+                      {supplier.supplierName}
+                    </option>
+                  ))}
               </select>
             </div>
 
