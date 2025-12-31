@@ -200,14 +200,33 @@ export default function Working() {
         setItems(itemsData);
 
         // Fetch periods
-        const periodsSnapshot = await getDocs(
-          query(collection(db, 'periods'), orderBy('period', 'asc'))
-        );
+        const periodsSnapshot = await getDocs(collection(db, 'periods'));
         const periodsData: Period[] = [];
         periodsSnapshot.forEach((docSnap) => {
           periodsData.push({ id: docSnap.id, ...docSnap.data() } as Period);
         });
-        setPeriods(periodsData);
+        
+        // Sort periods chronologically
+        const sortedPeriods = periodsData.sort((a, b) => {
+          const parsePeriod = (period: string): { year: number; month: number } => {
+            if (!period) return { year: 0, month: 0 };
+            const [monthStr, yearStr] = period.split('-');
+            const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+            const monthIndex = months.indexOf(monthStr.toLowerCase());
+            const year = parseInt('20' + yearStr);
+            return { year, month: monthIndex };
+          };
+          
+          const dateA = parsePeriod(a.period);
+          const dateB = parsePeriod(b.period);
+          
+          if (dateA.year !== dateB.year) {
+            return dateA.year - dateB.year;
+          }
+          return dateA.month - dateB.month;
+        });
+        
+        setPeriods(sortedPeriods);
 
         // Fetch unique branches and types from workingSheet
         const workingSheetSnapshot = await getDocs(collection(db, 'workingSheet'));
