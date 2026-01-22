@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, AlertCircle, CheckCircle, Database } from 'lucide-react';
+import SearchableDropdown from '@/components/SearchableDropdown';
 
 interface WorkingSheetRecord {
   supplierName: string;
@@ -515,18 +516,13 @@ export default function TotalSuppliersYearly() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 🏭 Company {selectedCompany && <span className="text-green-600">✓</span>}
               </label>
-              <select
+              <SearchableDropdown
+                options={allCompanies.map(company => ({ id: company, name: company }))}
                 value={selectedCompany}
-                onChange={(e) => handleFilterChange('company', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm bg-white"
-              >
-                <option value="">-- Select Company --</option>
-                {allCompanies.map(company => (
-                  <option key={company} value={company}>
-                    {company}
-                  </option>
-                ))}
-              </select>
+                onChange={(value) => handleFilterChange('company', value)}
+                placeholder="-- Select Company --"
+                label="Company"
+              />
             </div>
             
             <div>

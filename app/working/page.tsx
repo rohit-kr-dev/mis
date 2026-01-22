@@ -13,8 +13,12 @@ import {
   where,
   orderBy
 } from 'firebase/firestore';
-import { AlertCircle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Upload } from 'lucide-react';
+import { AlertCircle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Upload, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+import SearchableDropdown from '@/components/SearchableDropdown';
 
 // Interfaces
 interface Supplier {
@@ -99,6 +103,7 @@ export default function Working() {
   const [periods, setPeriods] = useState<Period[]>([]);
   const [branches, setBranches] = useState<string[]>([]);
   const [types, setTypes] = useState<string[]>([]);
+  const [companies, setCompanies] = useState<string[]>([]);
   
   // Transaction data state
   const [workingSheetData, setWorkingSheetData] = useState<WorkingSheetData[]>([]);
@@ -120,6 +125,7 @@ export default function Working() {
   const [filterBranch, setFilterBranch] = useState('');
   const [filterType, setFilterType] = useState('');
   const [filterType2, setFilterType2] = useState('');
+  const [filterCompany, setFilterCompany] = useState('');
   const [requiredFilters, setRequiredFilters] = useState(1);
 
   // Pagination states
@@ -242,6 +248,13 @@ export default function Working() {
         setBranches(Array.from(branchesSet).sort());
         setTypes(Array.from(typesSet).sort());
 
+        // Fetch unique companies from items
+        const companiesSet = new Set<string>();
+        itemsData.forEach(item => {
+          if (item.company) companiesSet.add(item.company);
+        });
+        setCompanies(Array.from(companiesSet).sort());
+
         setLoading(false);
       } catch (error) {
         console.error('Error fetching master data:', error);
@@ -322,8 +335,9 @@ export default function Working() {
     if (filterBranch) count++;
     if (filterType) count++;
     if (filterType2) count++;
+    if (filterCompany) count++;
     return count;
-  }, [filterSupplier, filterPeriod, filterBranch, filterType, filterType2]);
+  }, [filterSupplier, filterPeriod, filterBranch, filterType, filterType2, filterCompany]);
 
   const filtersRequirementMet = useMemo(() => {
     return appliedFiltersCount >= requiredFilters;
@@ -332,6 +346,7 @@ export default function Working() {
   // Get unique values for filters
   const uniqueBranches = useMemo(() => branches, [branches]);
   const uniqueTypes = useMemo(() => types, [types]);
+  const uniqueCompanies = useMemo(() => companies, [companies]);
 
  // Manual fetch function - ONLY called when user clicks "Load Data"
   const fetchWorkingSheetData = async () => {
@@ -375,6 +390,12 @@ export default function Working() {
         workingSheetQuery = query(
           collection(db, 'workingSheet'), 
           where('type', '==', filterType),
+          orderBy('slNo', 'asc')
+        );
+      } else if (filterCompany) {
+        workingSheetQuery = query(
+          collection(db, 'workingSheet'), 
+          where('company', '==', filterCompany),
           orderBy('slNo', 'asc')
         );
       } else {
@@ -455,6 +476,7 @@ export default function Working() {
         } else if (filterType && row.type !== filterType) {
           return false;
         }
+        if (filterCompany && row.company !== filterCompany) return false;
         return true;
       });
       
@@ -498,6 +520,236 @@ export default function Working() {
       case 'type2':
         setFilterType2(value);
         break;
+      case 'company':
+        setFilterCompany(value);
+        break;
+    }
+  };
+
+  // Download as Excel
+  const downloadExcel = () => {
+    if (workingSheetData.length === 0) return;
+    
+    // Prepare data for export
+    const exportData = workingSheetData.map((row, index) => {
+      const rowData: any = {
+        'Sl No': row.slNo || 0,
+        'Category': row.category || '',
+        'Branch': row.branch || '',
+        'Supplier': row.supplierName || '',
+        'Alias': row.alias || '',
+        'Purchase Date': row.purchaseDate || '',
+        'Bill Month': row.billMonth || '',
+        'Bill No': row.billNo || '',
+        'Buy Rate': row.buyRate || 0,
+        'Qty': row.qty || 0,
+        'Grade': row.grade || '',
+        'Item Name': row.itemName || '',
+        'Company': row.company || '',
+        'Product Category': row.productCategory || '',
+        'Type': row.type || '',
+        'Buying Terms': row.buyingTerms || '',
+        'Date for CN': row.dateForCN || '',
+        'CN Month': row.cnMonth || '',
+        'EBI Status': row.ebiStatus || '',
+        'PP': row.pp || '',
+        'Source': row.source || '',
+        'Rate As Per Confirmation': row.rateAsPerConfirmation || '',
+        'Rate As Per Price List': row.rateAsPerPriceList || '',
+        'Price Type': row.priceType || '',
+        'Location': row.location || '',
+        'MOU': row.mou || '',
+        'QD': row.qd || '',
+        'EBI Value': row.ebiValue || '',
+        'GSI': row.gsi || '',
+        'Scheme': row.scheme || '',
+        'Extra': row.extra || '',
+        'Loading': row.loading || '',
+        'TPT': row.tpt || '',
+        'Insurance': row.insurance || '',
+        'Round Off': row.roundOff || '',
+        'Commission': row.commission || '',
+        'GST CN': row.gstCn || '',
+        'Total': row.total || 0,
+        'Diff': row.diff || 0,
+        'Status': row.status || '',
+        'Remarks': row.remarks || ''
+      };
+      return rowData;
+    });
+    
+    // Add totals row
+    const totalsRow: any = {
+      'Sl No': '',
+      'Category': '',
+      'Branch': '',
+      'Supplier': '',
+      'Alias': '',
+      'Purchase Date': '',
+      'Bill Month': '',
+      'Bill No': '',
+      'Buy Rate': '',
+      'Qty': '',
+      'Grade': '',
+      'Item Name': '',
+      'Company': '',
+      'Product Category': '',
+      'Type': 'TOTALS',
+      'Buying Terms': '',
+      'Date for CN': '',
+      'CN Month': '',
+      'EBI Status': '',
+      'PP': '',
+      'Source': '',
+      'Rate As Per Confirmation': '',
+      'Rate As Per Price List': '',
+      'Price Type': '',
+      'Location': '',
+      'MOU': '',
+      'QD': '',
+      'EBI Value': '',
+      'GSI': '',
+      'Scheme': '',
+      'Extra': '',
+      'Loading': '',
+      'TPT': '',
+      'Insurance': '',
+      'Round Off': '',
+      'Commission': '',
+      'GST CN': '',
+      'Total': summary.totalOfTotal || 0,
+      'Diff': summary.totalDiff || 0,
+      'Status': '',
+      'Remarks': ''
+    };
+    exportData.push(totalsRow);
+    
+    // Create worksheet
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Working Sheet');
+    
+    // Generate filename
+    const filename = `working_sheet_${new Date().toISOString().split('T')[0]}.xlsx`;
+    
+    // Export
+    XLSX.writeFile(wb, filename);
+  };
+
+  // Download as PDF
+  const downloadPDF = async () => {
+    console.log('PDF button clicked!');
+    console.log('workingSheetData length:', workingSheetData.length);
+    console.log('dataFetched:', dataFetched);
+    
+    if (!dataFetched) {
+      console.log('Data not fetched yet, showing alert');
+      alert('Please load data first by clicking "Load Data from Firebase"');
+      return;
+    }
+    
+    if (workingSheetData.length === 0) {
+      console.log('No data available, showing alert');
+      alert('No data available to export to PDF');
+      return;
+    }
+    
+    try {
+      console.log('Starting PDF generation...');
+      
+      // Create PDF document
+      const doc = new jsPDF();
+      console.log('jsPDF created successfully');
+      
+      // Add title
+      doc.setFontSize(16);
+      doc.text('Working Sheet Report', 14, 20);
+      
+      // Add filters info
+      doc.setFontSize(10);
+      let yPos = 30;
+      
+      const filters = [];
+      if (filterSupplier) filters.push(`Supplier: ${filterSupplier}`);
+      if (filterPeriod) filters.push(`Period: ${filterPeriod}`);
+      if (filterBranch) filters.push(`Branch: ${filterBranch}`);
+      if (filterType) filters.push(`Type: ${filterType}`);
+      if (filterType2) filters.push(`Type 2: ${filterType2}`);
+      if (filterCompany) filters.push(`Company: ${filterCompany}`);
+      
+      filters.forEach(filter => {
+        doc.text(filter, 14, yPos);
+        yPos += 5;
+      });
+      
+      yPos += 5;
+      
+      // Prepare table data
+      const tableData = workingSheetData.map(row => [
+        row.slNo || '',
+        row.supplierName || '',
+        row.alias || '',
+        row.purchaseDate || '',
+        row.billMonth || '',
+        row.billNo || '',
+        row.buyRate || '',
+        row.qty || '',
+        row.grade || '',
+        row.company || '',
+        row.productCategory || '',
+        row.total || 0,
+        row.diff || 0,
+        row.status || ''
+      ]);
+      
+      // Calculate totals
+      const totalOfTotal = workingSheetData.reduce((sum, row) => sum + Number(row.total || 0), 0);
+      const totalDiff = workingSheetData.reduce((sum, row) => sum + Number(row.diff || 0), 0);
+      
+      // Add totals row
+      tableData.push([
+        '', '', '', '', '', '', '', '', '', '', 'TOTALS',
+        totalOfTotal,
+        totalDiff,
+        ''
+      ]);
+      
+      // Column headers
+      const headers = [
+        ['Sl No', 'Supplier', 'Alias', 'Purchase Date', 'Bill Month', 'Bill No',
+         'Buy Rate', 'Qty', 'Grade', 'Company', 'Category', 'Total', 'Diff', 'Status']
+      ];
+      
+      console.log('Generating table with autoTable function...');
+      
+      // Generate table using autoTable FUNCTION (not method)
+      autoTable(doc, {
+        head: headers,
+        body: tableData,
+        startY: yPos,
+        styles: {
+          fontSize: 8,
+          cellPadding: 2
+        },
+        headStyles: {
+          fillColor: [59, 130, 246],
+          textColor: 255
+        },
+        alternateRowStyles: {
+          fillColor: [243, 244, 246]
+        }
+      });
+      
+      console.log('Saving PDF...');
+      const filename = `working_sheet_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(filename);
+      console.log('PDF saved successfully as:', filename);
+      
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      alert('Error generating PDF: ' + (error as Error).message);
     }
   };
 
@@ -508,6 +760,7 @@ export default function Working() {
     setFilterBranch('');
     setFilterType('');
     setFilterType2('');
+    setFilterCompany('');
     setWorkingSheetData([]);
     setDataFetched(false);
   };
@@ -1101,12 +1354,32 @@ export default function Working() {
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
             <h2 className="text-lg font-semibold text-gray-800">🔍 Filter Records</h2>
-            <button
-              onClick={clearFilters}
-              className="w-full sm:w-auto px-4 py-2 text-sm bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg hover:from-gray-600 hover:to-gray-700 transition shadow-md"
-            >
-              ✖️ Clear Filters
-            </button>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <button
+                onClick={clearFilters}
+                className="w-full sm:w-auto px-4 py-2 text-sm bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg hover:from-gray-600 hover:to-gray-700 transition shadow-md"
+              >
+                ✖️ Clear Filters
+              </button>
+              {dataFetched && workingSheetData.length > 0 && (
+                <>
+                  <button
+                    onClick={downloadExcel}
+                    className="w-full sm:w-auto px-4 py-2 text-sm bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition shadow-md flex items-center justify-center gap-2"
+                  >
+                    <Download size={16} />
+                    Excel
+                  </button>
+                  <button
+                    onClick={downloadPDF}
+                    className="w-full sm:w-auto px-4 py-2 text-sm bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition shadow-md flex items-center justify-center gap-2"
+                  >
+                    <Download size={16} />
+                    PDF
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Filter Requirement Selector */}
@@ -1178,7 +1451,20 @@ export default function Working() {
                     : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
                 }`}
               >
-                All 5 Filters Required
+                At Least 5 Filters
+              </button>
+              <button
+                onClick={() => {
+                  setRequiredFilters(6);
+                  setDataFetched(false);
+                }}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition shadow-md ${
+                  requiredFilters === 6
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                }`}
+              >
+                All 6 Filters Required
               </button>
             </div>
           </div>
@@ -1204,7 +1490,8 @@ export default function Working() {
           
           <p className="text-xs sm:text-sm text-gray-600 mb-4 bg-blue-50 p-3 rounded-lg border border-blue-200">
             💡 <span className="font-semibold">Note:</span> Select filters and click "Load Data" to fetch from Firebase. 
-            {requiredFilters === 5 && ' All five filters must be selected.'}
+            {requiredFilters === 6 && ' All six filters must be selected.'}
+            {requiredFilters === 5 && ' At least five filters must be selected.'}
             {requiredFilters === 4 && ' At least four filters must be selected.'}
             {requiredFilters === 3 && ' At least three filters must be selected.'}
             {requiredFilters === 2 && ' At least two filters must be selected.'}
@@ -1279,6 +1566,21 @@ export default function Working() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
+                🏢 Company {filterCompany && <span className="text-green-600">✓</span>}
+              </label>
+              <SearchableDropdown
+                options={uniqueCompanies.map(company => ({ id: company, name: company }))}
+                value={filterCompany}
+                onChange={(value) => handleFilterChange('company', value)}
+                placeholder="-- All Companies --"
+                label="Company"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 sm:gap-4 mb-4 mt-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 📦 Type 2 {filterType2 && <span className="text-green-600">✓</span>}
               </label>
               <select
@@ -1291,6 +1593,7 @@ export default function Working() {
                 <option value="Import">Import</option>
               </select>
             </div>
+            <div className="md:col-span-4"></div> {/* Empty space to maintain alignment */}
           </div>
 
           {/* Load Data Button */}

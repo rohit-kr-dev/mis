@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 const pageNames: Record<string, string> = {
   '/': 'Dashboard',
@@ -20,13 +21,19 @@ export default function Header() {
   const pathname = usePathname();
   const currentPage = pageNames[pathname] || 'Material MIS';
   
-  const currentDate = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-
+  const [today, setToday] = useState('');
+  
+  useEffect(() => {
+    setToday(
+      new Date().toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+    );
+  }, []);
+  
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
       <div className="px-8 py-4">
@@ -34,7 +41,9 @@ export default function Header() {
           {/* Left: Current Page Title */}
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{currentPage}</h1>
-            <p className="text-sm text-gray-500 mt-1">{currentDate}</p>
+            <p className="text-sm text-gray-500 mt-1">
+              {today}
+            </p>
           </div>
 
           {/* Right: User Info & Actions */}

@@ -3,7 +3,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, AlertCircle, Download } from 'lucide-react';
+import SearchableDropdown from '@/components/SearchableDropdown';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface WorkingSheetRecord {
   supplierName: string;
@@ -487,6 +491,150 @@ export default function TotalSuppliersMonthly() {
     }
   };
 
+  // Download as Excel
+  const downloadExcel = () => {
+    if (calculatedRows.length === 0) return;
+    
+    // Prepare data for export
+    const exportData = calculatedRows.map((row, index) => {
+      const rowData: any = {
+        'Sl.No': index + 1,
+        'Month': row.month,
+        'Supplier': row.supplier,
+        'Type': row.type,
+        'Company': row.company
+      };
+      
+      // Add type columns
+      types.forEach(typeObj => {
+        rowData[typeObj.type] = row.values[typeObj.type] || 0;
+      });
+      
+      rowData['Total'] = row.total;
+      return rowData;
+    });
+    
+    // Add totals row
+    const totalsRow: any = {
+      'Sl.No': '',
+      'Month': '',
+      'Supplier': '',
+      'Type': '',
+      'Company': 'COLUMN TOTALS'
+    };
+    
+    types.forEach(typeObj => {
+      totalsRow[typeObj.type] = columnTotals[typeObj.type] || 0;
+    });
+    
+    totalsRow['Total'] = grandTotal;
+    exportData.push(totalsRow);
+    
+    // Create worksheet
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Total Suppliers Monthly');
+    
+    // Generate filename
+    const filename = `total_suppliers_monthly_${new Date().toISOString().split('T')[0]}.xlsx`;
+    
+    // Export
+    XLSX.writeFile(wb, filename);
+  };
+
+  // Download as PDF
+  const downloadPDF = async () => {
+    if (calculatedRows.length === 0) return;
+    
+    // Dynamically import jsPDF only when needed
+    const jsPDFModule = await import('jspdf');
+    const doc = new jsPDFModule.default();
+    
+    // Add title
+    doc.setFontSize(16);
+    doc.text('Total Suppliers Monthly Report', 14, 20);
+    
+    // Add filters info
+    doc.setFontSize(10);
+    let yPos = 30;
+    
+    if (selectedMonth) {
+      doc.text(`Month: ${selectedMonth}`, 14, yPos);
+      yPos += 5;
+    }
+    if (selectedCompany) {
+      doc.text(`Company: ${selectedCompany}`, 14, yPos);
+      yPos += 5;
+    }
+    if (selectedType) {
+      doc.text(`Type: ${selectedType}`, 14, yPos);
+      yPos += 5;
+    }
+    if (selectedStatus) {
+      doc.text(`Status: ${selectedStatus}`, 14, yPos);
+      yPos += 5;
+    }
+    if (selectedType2) {
+      doc.text(`Type 2: ${selectedType2}`, 14, yPos);
+      yPos += 5;
+    }
+    if (selectedSupplier) {
+      doc.text(`Supplier: ${selectedSupplier}`, 14, yPos);
+      yPos += 5;
+    }
+    
+    yPos += 5;
+    
+    // Prepare table data
+    const tableData = calculatedRows.map((row, index) => [
+      index + 1,
+      row.month,
+      row.supplier,
+      row.type,
+      row.company,
+      ...types.map(typeObj => row.values[typeObj.type] || 0),
+      row.total
+    ]);
+    
+    // Add totals row
+    const totalsRow = [
+      '', '', '', '', 'COLUMN TOTALS',
+      ...types.map(typeObj => columnTotals[typeObj.type] || 0),
+      grandTotal
+    ];
+    tableData.push(totalsRow);
+    
+    // Prepare column headers
+    const headers = [
+      ['Sl.No', 'Month', 'Supplier', 'Type', 'Company',
+       ...types.map(typeObj => typeObj.type),
+       'Total']
+    ];
+    
+    // Generate table
+    autoTable(doc, {
+      head: headers,
+      body: tableData,
+      startY: yPos,
+      styles: {
+        fontSize: 8,
+        cellPadding: 2
+      },
+      headStyles: {
+        fillColor: [59, 130, 246],
+        textColor: 255
+      },
+      alternateRowStyles: {
+        fillColor: [243, 244, 246]
+      }
+    });
+    
+    // Save PDF
+    doc.save(`total_suppliers_monthly_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -526,6 +674,24 @@ export default function TotalSuppliersMonthly() {
               >
                 ✖️ Clear Filters
               </button>
+              {dataFetched && calculatedRows.length > 0 && (
+                <>
+                  <button
+                    onClick={downloadExcel}
+                    className="w-full sm:w-auto px-4 py-2 text-sm bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition shadow-md flex items-center justify-center gap-2"
+                  >
+                    <Download size={16} />
+                    Excel
+                  </button>
+                  <button
+                    onClick={downloadPDF}
+                    className="w-full sm:w-auto px-4 py-2 text-sm bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition shadow-md flex items-center justify-center gap-2"
+                  >
+                    <Download size={16} />
+                    PDF
+                  </button>
+                </>
+              )}
             </div>
           </div>
           
@@ -656,18 +822,13 @@ export default function TotalSuppliersMonthly() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 🏭 Company {selectedCompany && <span className="text-green-600">✓</span>}
               </label>
-              <select
+              <SearchableDropdown
+                options={allCompanies.map(company => ({ id: company, name: company }))}
                 value={selectedCompany}
-                onChange={(e) => handleFilterChange('company', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
-              >
-                <option value="">-- Select Company --</option>
-                {allCompanies.map(company => (
-                  <option key={company} value={company}>
-                    {company}
-                  </option>
-                ))}
-              </select>
+                onChange={(value) => handleFilterChange('company', value)}
+                placeholder="-- Select Company --"
+                label="Company"
+              />
             </div>
 
             <div>

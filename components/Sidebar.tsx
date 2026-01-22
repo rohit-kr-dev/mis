@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const menuItems = [
+  { name: '🏠 Home', path: '/' },
   { name: 'Supplier Master', path: '/supplier-master' },
   { name: 'Items Master', path: '/items-master' },
   { name: 'As per Zoho', path: '/as-per-zoho' },
