@@ -552,13 +552,19 @@ export default function TotalSuppliersMonthly() {
     const jsPDFModule = await import('jspdf');
     const doc = new jsPDFModule.default();
     
+    // Add company name
+    doc.setFontSize(20);
+    doc.setFont(undefined, 'bold');
+    doc.text('Polymetalz', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+    
     // Add title
     doc.setFontSize(16);
-    doc.text('Total Suppliers Monthly Report', 14, 20);
+    doc.setFont(undefined, 'normal');
+    doc.text('Total Suppliers Monthly Report', 14, 35);
     
     // Add filters info
     doc.setFontSize(10);
-    let yPos = 30;
+    let yPos = 45;
     
     if (selectedMonth) {
       doc.text(`Month: ${selectedMonth}`, 14, yPos);
@@ -587,22 +593,31 @@ export default function TotalSuppliersMonthly() {
     
     yPos += 5;
     
-    // Prepare table data
+    // Format currency function
+    const formatCurrency = (amount: number) => {
+      return new Intl.NumberFormat('en-IN', {
+        style: 'decimal',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(amount);
+    };
+    
+    // Prepare table data with formatted currency
     const tableData = calculatedRows.map((row, index) => [
       index + 1,
       row.month,
       row.supplier,
       row.type,
       row.company,
-      ...types.map(typeObj => row.values[typeObj.type] || 0),
-      row.total
+      ...types.map(typeObj => formatCurrency(row.values[typeObj.type] || 0)),
+      formatCurrency(row.total)
     ]);
     
-    // Add totals row
+    // Add totals row with formatted currency
     const totalsRow = [
       '', '', '', '', 'COLUMN TOTALS',
-      ...types.map(typeObj => columnTotals[typeObj.type] || 0),
-      grandTotal
+      ...types.map(typeObj => formatCurrency(columnTotals[typeObj.type] || 0)),
+      formatCurrency(grandTotal)
     ];
     tableData.push(totalsRow);
     
@@ -613,11 +628,13 @@ export default function TotalSuppliersMonthly() {
        'Total']
     ];
     
+    console.log('Starting table at yPos:', yPos);
+    
     // Generate table
     autoTable(doc, {
       head: headers,
       body: tableData,
-      startY: yPos,
+      startY: yPos + 10,
       styles: {
         fontSize: 8,
         cellPadding: 2
@@ -819,15 +836,12 @@ export default function TotalSuppliersMonthly() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                🏭 Company {selectedCompany && <span className="text-green-600">✓</span>}
-              </label>
               <SearchableDropdown
                 options={allCompanies.map(company => ({ id: company, name: company }))}
                 value={selectedCompany}
                 onChange={(value) => handleFilterChange('company', value)}
                 placeholder="-- Select Company --"
-                label="Company"
+                label="🏭 Company"
               />
             </div>
 

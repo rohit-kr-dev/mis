@@ -126,6 +126,7 @@ export default function Working() {
   const [filterType, setFilterType] = useState('');
   const [filterType2, setFilterType2] = useState('');
   const [filterCompany, setFilterCompany] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
   const [requiredFilters, setRequiredFilters] = useState(1);
 
   // Pagination states
@@ -336,8 +337,9 @@ export default function Working() {
     if (filterType) count++;
     if (filterType2) count++;
     if (filterCompany) count++;
+    if (filterStatus) count++;
     return count;
-  }, [filterSupplier, filterPeriod, filterBranch, filterType, filterType2, filterCompany]);
+  }, [filterSupplier, filterPeriod, filterBranch, filterType, filterType2, filterCompany, filterStatus]);
 
   const filtersRequirementMet = useMemo(() => {
     return appliedFiltersCount >= requiredFilters;
@@ -477,6 +479,14 @@ export default function Working() {
           return false;
         }
         if (filterCompany && row.company !== filterCompany) return false;
+        // Handle status filter - "Verified & Closed" matches both Verified and Closed
+        if (filterStatus) {
+          if (filterStatus === 'Verified & Closed') {
+            if (row.status !== 'Verified' && row.status !== 'Closed') return false;
+          } else {
+            if (row.status !== filterStatus) return false;
+          }
+        }
         return true;
       });
       
@@ -522,6 +532,9 @@ export default function Working() {
         break;
       case 'company':
         setFilterCompany(value);
+        break;
+      case 'status':
+        setFilterStatus(value);
         break;
     }
   };
@@ -663,13 +676,19 @@ export default function Working() {
       const doc = new jsPDF();
       console.log('jsPDF created successfully');
       
+      // Add company name
+      doc.setFontSize(20);
+      doc.setFont(undefined, 'bold');
+      doc.text('Polymetalz', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+      
       // Add title
       doc.setFontSize(16);
-      doc.text('Working Sheet Report', 14, 20);
+      doc.setFont(undefined, 'normal');
+      doc.text('Working Sheet Report', 14, 35);
       
       // Add filters info
       doc.setFontSize(10);
-      let yPos = 30;
+      let yPos = 45;
       
       const filters = [];
       if (filterSupplier) filters.push(`Supplier: ${filterSupplier}`);
@@ -678,6 +697,7 @@ export default function Working() {
       if (filterType) filters.push(`Type: ${filterType}`);
       if (filterType2) filters.push(`Type 2: ${filterType2}`);
       if (filterCompany) filters.push(`Company: ${filterCompany}`);
+      if (filterStatus) filters.push(`Status: ${filterStatus}`);
       
       filters.forEach(filter => {
         doc.text(filter, 14, yPos);
@@ -686,7 +706,7 @@ export default function Working() {
       
       yPos += 5;
       
-      // Prepare table data
+      // Prepare table data with formatted currency
       const tableData = workingSheetData.map(row => [
         row.slNo || '',
         row.supplierName || '',
@@ -694,13 +714,13 @@ export default function Working() {
         row.purchaseDate || '',
         row.billMonth || '',
         row.billNo || '',
-        row.buyRate || '',
+        formatCurrency(row.buyRate || 0),
         row.qty || '',
         row.grade || '',
         row.company || '',
         row.productCategory || '',
-        row.total || 0,
-        row.diff || 0,
+        formatCurrency(row.total || 0),
+        formatCurrency(row.diff || 0),
         row.status || ''
       ]);
       
@@ -708,11 +728,11 @@ export default function Working() {
       const totalOfTotal = workingSheetData.reduce((sum, row) => sum + Number(row.total || 0), 0);
       const totalDiff = workingSheetData.reduce((sum, row) => sum + Number(row.diff || 0), 0);
       
-      // Add totals row
+      // Add totals row with formatted currency
       tableData.push([
         '', '', '', '', '', '', '', '', '', '', 'TOTALS',
-        totalOfTotal,
-        totalDiff,
+        formatCurrency(totalOfTotal),
+        formatCurrency(totalDiff),
         ''
       ]);
       
@@ -724,11 +744,13 @@ export default function Working() {
       
       console.log('Generating table with autoTable function...');
       
+      console.log('Starting table at yPos:', yPos);
+      
       // Generate table using autoTable FUNCTION (not method)
       autoTable(doc, {
         head: headers,
         body: tableData,
-        startY: yPos,
+        startY: yPos + 10,
         styles: {
           fontSize: 8,
           cellPadding: 2
@@ -761,6 +783,7 @@ export default function Working() {
     setFilterType('');
     setFilterType2('');
     setFilterCompany('');
+    setFilterStatus('');
     setWorkingSheetData([]);
     setDataFetched(false);
   };
@@ -928,10 +951,13 @@ export default function Working() {
   }, [workingSheetData]);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
+    const formatted = new Intl.NumberFormat('en-IN', {
       style: 'decimal',
       minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(amount);
+    console.log(`Formatting ${amount} -> ${formatted}`);
+    return formatted;
   };
 
   // Pagination
@@ -1565,19 +1591,17 @@ export default function Working() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                🏢 Company {filterCompany && <span className="text-green-600">✓</span>}
-              </label>
               <SearchableDropdown
                 options={uniqueCompanies.map(company => ({ id: company, name: company }))}
                 value={filterCompany}
                 onChange={(value) => handleFilterChange('company', value)}
                 placeholder="-- All Companies --"
-                label="Company"
+                label="🏢 Company"
               />
             </div>
           </div>
 
+          {/* Status Filter Section */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-3 sm:gap-4 mb-4 mt-2">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1593,8 +1617,26 @@ export default function Working() {
                 <option value="Import">Import</option>
               </select>
             </div>
-            <div className="md:col-span-4"></div> {/* Empty space to maintain alignment */}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                🏢 Status {filterStatus && <span className="text-green-600">✓</span>}
+              </label>
+              <select
+                value={filterStatus}
+                onChange={(e) => handleFilterChange('status', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+              >
+                <option value="">-- All Statuses --</option>
+                <option value="Open">Open</option>
+                <option value="Verified & Closed">Verified & Closed</option>
+              </select>
+            </div>
+
+            <div className="md:col-span-3"></div> {/* Empty space to maintain alignment */}
           </div>
+
+
 
           {/* Load Data Button */}
           <div className="flex justify-center">
@@ -1661,7 +1703,7 @@ export default function Working() {
           </div>
         ) : (
           <>
-            {/* Summary Cards */}
+            {/* Overall Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
               <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-md p-6 text-white">
                 <h3 className="text-sm opacity-90">Total Transactions</h3>
@@ -1680,6 +1722,233 @@ export default function Working() {
                 <p className="text-2xl font-bold">{formatCurrency(summary.totalDiff)}</p>
               </div>
             </div>
+
+            {/* Last Completed Transaction */}
+            {workingSheetData.length > 0 && (
+              <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl shadow-lg p-6 mb-6 text-white">
+                <h3 className="text-lg font-semibold mb-3">Last Completed Transaction</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  {(() => {
+                    // Filter for completed/closed transactions and get the most recent one
+                    const completedTransactions = [...workingSheetData]
+                      .filter(row => (row.status || '').toLowerCase() === 'closed')
+                      .sort((a, b) => new Date(b.purchaseDate || '').getTime() - new Date(a.purchaseDate || '').getTime());
+                    
+                    if (completedTransactions.length > 0) {
+                      const lastCompleted = completedTransactions[0];
+                      return (
+                        <>
+                          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+                            <p className="text-xs opacity-80">Supplier</p>
+                            <p className="font-semibold truncate">{lastCompleted.supplierName}</p>
+                          </div>
+                          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+                            <p className="text-xs opacity-80">Bill No</p>
+                            <p className="font-semibold">{lastCompleted.billNo}</p>
+                          </div>
+                          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+                            <p className="text-xs opacity-80">Date</p>
+                            <p className="font-semibold">{lastCompleted.purchaseDate}</p>
+                          </div>
+                          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+                            <p className="text-xs opacity-80">Status</p>
+                            <p className="font-semibold">{lastCompleted.status}</p>
+                          </div>
+                          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+                            <p className="text-xs opacity-80">Amount</p>
+                            <p className="font-semibold">{formatCurrency(lastCompleted.total)}</p>
+                          </div>
+                          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+                            <p className="text-xs opacity-80">Grade</p>
+                            <p className="font-semibold truncate">{lastCompleted.grade}</p>
+                          </div>
+                        </>
+                      );
+                    } else {
+                      // If no completed transactions, show the most recent transaction of any status
+                      const mostRecent = [...workingSheetData]
+                        .sort((a, b) => new Date(b.purchaseDate || '').getTime() - new Date(a.purchaseDate || '').getTime())[0];
+                      return (
+                        <>
+                          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+                            <p className="text-xs opacity-80">Supplier</p>
+                            <p className="font-semibold truncate">{mostRecent.supplierName}</p>
+                          </div>
+                          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+                            <p className="text-xs opacity-80">Bill No</p>
+                            <p className="font-semibold">{mostRecent.billNo}</p>
+                          </div>
+                          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+                            <p className="text-xs opacity-80">Date</p>
+                            <p className="font-semibold">{mostRecent.purchaseDate}</p>
+                          </div>
+                          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+                            <p className="text-xs opacity-80">Status</p>
+                            <p className="font-semibold">{mostRecent.status}</p>
+                          </div>
+                          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+                            <p className="text-xs opacity-80">Amount</p>
+                            <p className="font-semibold">{formatCurrency(mostRecent.total)}</p>
+                          </div>
+                          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+                            <p className="text-xs opacity-80">Grade</p>
+                            <p className="font-semibold truncate">{mostRecent.grade}</p>
+                          </div>
+                        </>
+                      );
+                    }
+                  })()}
+                </div>
+              </div>
+            )}
+
+            {/* Summary Cards for Selected Supplier */}
+            {filterSupplier && workingSheetData.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-md p-6 text-white">
+                  <h3 className="text-sm opacity-90">Open Transactions</h3>
+                  <p className="text-3xl font-bold">
+                    {workingSheetData.filter(row => (row.status || 'Open') === 'Open').length}
+                  </p>
+                </div>
+                <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-md p-6 text-white">
+                  <h3 className="text-sm opacity-90">Verified Transactions</h3>
+                  <p className="text-3xl font-bold">
+                    {workingSheetData.filter(row => (row.status || 'Open') === 'Verified').length}
+                  </p>
+                </div>
+                <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-md p-6 text-white">
+                  <h3 className="text-sm opacity-90">Closed Transactions</h3>
+                  <p className="text-3xl font-bold">
+                    {workingSheetData.filter(row => (row.status || 'Open') === 'Closed').length}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Last Transaction for Selected Supplier */}
+            {filterSupplier && workingSheetData.length > 0 && (
+              <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Last Transaction Details</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  {(() => {
+                    const lastTransaction = [...workingSheetData]
+                      .sort((a, b) => new Date(b.purchaseDate || '').getTime() - new Date(a.purchaseDate || '').getTime())[0];
+                    return (
+                      <>
+                        <div className="p-3 bg-blue-50 rounded-lg">
+                          <p className="text-xs text-gray-600">Bill No</p>
+                          <p className="font-semibold">{lastTransaction.billNo}</p>
+                        </div>
+                        <div className="p-3 bg-green-50 rounded-lg">
+                          <p className="text-xs text-gray-600">Purchase Date</p>
+                          <p className="font-semibold">{lastTransaction.purchaseDate}</p>
+                        </div>
+                        <div className="p-3 bg-yellow-50 rounded-lg">
+                          <p className="text-xs text-gray-600">Status</p>
+                          <p className="font-semibold">{lastTransaction.status}</p>
+                        </div>
+                        <div className="p-3 bg-purple-50 rounded-lg">
+                          <p className="text-xs text-gray-600">Total</p>
+                          <p className="font-semibold">{formatCurrency(lastTransaction.total)}</p>
+                        </div>
+                        <div className="p-3 bg-pink-50 rounded-lg">
+                          <p className="text-xs text-gray-600">Grade</p>
+                          <p className="font-semibold">{lastTransaction.grade}</p>
+                        </div>
+                        <div className="p-3 bg-indigo-50 rounded-lg">
+                          <p className="text-xs text-gray-600">Bill Month</p>
+                          <p className="font-semibold">{lastTransaction.billMonth}</p>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
+
+            {/* Monthly Summary for Selected Supplier */}
+            {filterSupplier && workingSheetData.length > 0 && (
+              <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">&gt;Monthly Purchase Summary</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse text-sm">
+                    <thead>
+                      <tr className="bg-gradient-to-r from-gray-800 to-gray-900 text-white">
+                        <th className="px-3 py-2 border text-xs">Month</th>
+                        <th className="px-3 py-2 border text-xs text-right">Open Amount</th>
+                        <th className="px-3 py-2 border text-xs text-right">Verified Amount</th>
+                        <th className="px-3 py-2 border text-xs text-right">Closed Amount</th>
+                        <th className="px-3 py-2 border text-xs text-right">Total Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(() => {
+                        // Group data by month and status
+                        const monthlySummary: Record<string, Record<string, number>> = {};
+                        workingSheetData.forEach(row => {
+                          const month = row.billMonth;
+                          // Ensure we have a valid month to group by
+                          if (!month) return;
+                          
+                          // Initialize the month entry if it doesn't exist
+                          if (!monthlySummary[month]) {
+                            monthlySummary[month] = { Open: 0, Verified: 0, Closed: 0, Total: 0 };
+                          }
+                          
+                          // Use the actual status value from the row, defaulting to 'Open'
+                          const status = row.status || 'Open';
+                          
+                          // Increment the appropriate status amount
+                          if (status === 'Open') {
+                            monthlySummary[month]['Open'] += row.total || 0;
+                          } else if (status === 'Verified') {
+                            monthlySummary[month]['Verified'] += row.total || 0;
+                          } else if (status === 'Closed') {
+                            monthlySummary[month]['Closed'] += row.total || 0;
+                          }
+                          
+                          // Always increment the total
+                          monthlySummary[month].Total += row.total || 0;
+                        });
+
+                        // Convert to sorted array
+                        const sortedMonths = Object.entries(monthlySummary)
+                          .sort(([a], [b]) => {
+                            // Sort months chronologically
+                            const parseMonth = (month: string) => {
+                              if (!month) return { year: 0, month: 0 };
+                              const [monthStr, yearStr] = month.split('-');
+                              const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+                              const monthIndex = months.indexOf(monthStr.toLowerCase());
+                              const year = parseInt('20' + yearStr);
+                              return { year, month: monthIndex };
+                            };
+                            
+                            const dateA = parseMonth(a);
+                            const dateB = parseMonth(b);
+                            
+                            if (dateA.year !== dateB.year) {
+                              return dateB.year - dateA.year;
+                            }
+                            return dateB.month - dateA.month;
+                          });
+
+                        return sortedMonths.map(([month, amounts]) => (
+                          <tr key={month} className="hover:bg-blue-50 transition">
+                            <td className="px-3 py-2 border text-gray-700 font-medium">{month}</td>
+                            <td className="px-3 py-2 border text-right text-gray-700">{formatCurrency(amounts.Open)}</td>
+                            <td className="px-3 py-2 border text-right text-gray-700">{formatCurrency(amounts.Verified)}</td>
+                            <td className="px-3 py-2 border text-right text-gray-700">{formatCurrency(amounts.Closed)}</td>
+                            <td className="px-3 py-2 border text-right font-semibold text-blue-700">{formatCurrency(amounts.Total)}</td>
+                          </tr>
+                        ));
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
             {/* Rows per page selector */}
             <div className="bg-white rounded-t-xl shadow-lg px-4 py-3 border border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">

@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, AlertCircle, Download } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, AlertCircle, Download, CheckCircle } from 'lucide-react';
 import SearchableDropdown from '@/components/SearchableDropdown';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -16,6 +16,55 @@ interface WorkingSheetRecord {
   qty: number;
   cnMonth: string;
   status: string;
+}
+
+interface WorkingSheetData {
+  id: string;
+  slNo?: number;
+  category?: string;
+  branch?: string;
+  supplierName: string;
+  alias?: string;
+  purchaseDate?: any;
+  billMonth?: string;
+  period?: string;
+  billNo?: string;
+  buyRate?: number;
+  qty?: number;
+  grade?: string;
+  itemName?: string;
+  company: string;
+  productCategory?: string;
+  type: string;
+  buyingTerms?: string;
+  dateForCN?: string;
+  cnMonth: string;
+  ebiStatus?: string;
+  pp?: number | null;
+  source?: string | null;
+  rateAsPerConfirmation?: number | null;
+  rateAsPerPriceList?: number | null;
+  priceType?: string | null;
+  location?: string | null;
+  mou?: number | null;
+  qd?: number | null;
+  ebiValue?: number | null;
+  gsi?: number | null;
+  scheme?: number | null;
+  extra?: number | null;
+  loading?: number | null;
+  tpt?: number | null;
+  insurance?: number | null;
+  roundOff?: number | null;
+  commission?: number | null;
+  gstCn?: number | null;
+  total: number;
+  diff?: number;
+  status: string;
+  remarks?: string;
+  createdAt?: any;
+  updatedAt?: any;
+  [key: string]: any; // Allow other properties
 }
 
 interface Supplier {
@@ -510,6 +559,75 @@ export default function SupplierWiseMonthly() {
     XLSX.writeFile(wb, filename);
   };
 
+  // Memoized check function to compare calculated values with raw data
+  const checkValues = useMemo(() => async () => {
+    if (calculatedRows.length === 0) {
+      alert('No data available to check');
+      return;
+    }
+    
+    try {
+      // Fetch working sheet data with applied filters
+      let workingQuery = query(collection(db, 'workingSheet'));
+      
+      // Apply filters to the query if they exist
+      if (selectedMonth) workingQuery = query(workingQuery, where('cnMonth', '==', selectedMonth));
+      if (selectedSupplier) workingQuery = query(workingQuery, where('supplierName', '==', selectedSupplier));
+      if (selectedCompany) workingQuery = query(workingQuery, where('company', '==', selectedCompany));
+      if (selectedType) workingQuery = query(workingQuery, where('type', '==', selectedType));
+      if (selectedStatus) workingQuery = query(workingQuery, where('status', '==', selectedStatus));
+      if (selectedType2) workingQuery = query(workingQuery, where('productCategory', '==', selectedType2));
+      
+      const workingSnapshot = await getDocs(workingQuery);
+      
+      // Convert to array of objects
+      const workingData = workingSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as WorkingSheetData));
+      
+      // For each calculated row, verify the calculation against raw data
+      let allMatch = true;
+      const mismatchDetails: string[] = [];
+      
+      for (const row of calculatedRows) {
+        // Calculate expected value based on SUMIFS logic equivalent
+        // Sum 'total' field where conditions match
+        const matchingRecords = workingData.filter(record => {
+          // Check column type matches (this can't be in the query)
+          return record.type === row.type;
+        });
+        
+        // Sum the total field for matching records
+        const expectedTotal = matchingRecords.reduce((sum, record) => sum + (record.total || 0), 0);
+        
+        // Get the calculated value for this type in this row
+        const calculatedValue = row.values[row.type] || 0;
+        
+        // Compare values
+        if (Math.abs(calculatedValue - expectedTotal) > 0.01) { // Allow small floating point differences
+          allMatch = false;
+          mismatchDetails.push(
+            `Row: ${row.month}-${row.supplier}-${row.type}, ` +
+            `Calculated: ${calculatedValue.toFixed(2)}, ` +
+            `Expected from raw data: ${expectedTotal.toFixed(2)}`
+          );
+        }
+      }
+      
+      // Show results
+      if (allMatch) {
+        alert('✅ All calculated values match the raw data!');
+      } else {
+        console.log('Value mismatches found:', mismatchDetails);
+        alert(`⚠️ Found ${mismatchDetails.length} value mismatches. Check console for details.`);
+      }
+    } catch (error) {
+      console.error('Error during check:', error);
+      alert('Error occurred during check. See console for details.');
+    }
+  }, [calculatedRows, selectedMonth, selectedSupplier, selectedCompany, selectedType, selectedType2, selectedStatus]);
+
   // Download as PDF
   const downloadPDF = () => {
     if (calculatedRows.length === 0) {
@@ -520,13 +638,19 @@ export default function SupplierWiseMonthly() {
     // Create PDF document
     const doc = new jsPDF();
     
+    // Add company name
+    doc.setFontSize(20);
+    doc.setFont(undefined, 'bold');
+    doc.text('Polymetalz', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+    
     // Add title
     doc.setFontSize(16);
-    doc.text('Supplier Wise Monthly Report', 14, 20);
+    doc.setFont(undefined, 'normal');
+    doc.text('Supplier Wise Monthly Report', 14, 35);
     
     // Add filters info
     doc.setFontSize(10);
-    let yPos = 30;
+    let yPos = 45;
     
     const filters = [];
     if (selectedMonth) filters.push(`Month: ${selectedMonth}`);
@@ -541,22 +665,31 @@ export default function SupplierWiseMonthly() {
     
     yPos += 5;
     
-    // Prepare table data
+    // Format currency function
+    const formatCurrency = (amount: number) => {
+      return new Intl.NumberFormat('en-IN', {
+        style: 'decimal',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(amount);
+    };
+    
+    // Prepare table data with formatted currency
     const tableData = calculatedRows.map((row, index) => [
       index + 1,
       row.month,
       row.supplier,
       row.type,
       row.company,
-      ...types.map(typeObj => row.values[typeObj.type] || 0),
-      row.total
+      ...types.map(typeObj => formatCurrency(row.values[typeObj.type] || 0)),
+      formatCurrency(row.total)
     ]);
     
-    // Add totals row
+    // Add totals row with formatted currency
     const totalsRow = [
       '', '', '', 'COLUMN TOTALS', '',
-      ...types.map(typeObj => columnTotals[typeObj.type] || 0),
-      grandTotal
+      ...types.map(typeObj => formatCurrency(columnTotals[typeObj.type] || 0)),
+      formatCurrency(grandTotal)
     ];
     tableData.push(totalsRow);
     
@@ -567,11 +700,13 @@ export default function SupplierWiseMonthly() {
        'Total']
     ];
     
+    console.log('Starting table at yPos:', yPos);
+    
     // Generate table using autoTable function (not method)
     autoTable(doc, {
       head: headers,
       body: tableData,
-      startY: yPos,
+      startY: yPos + 10,
       styles: {
         fontSize: 8,
         cellPadding: 2
@@ -643,6 +778,13 @@ export default function SupplierWiseMonthly() {
                   >
                     <Download size={16} />
                     PDF
+                  </button>
+                  <button
+                    onClick={checkValues}
+                    className="w-full sm:w-auto px-4 py-2 text-sm bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition shadow-md flex items-center justify-center gap-2"
+                  >
+                    <CheckCircle size={16} />
+                    Check
                   </button>
                 </>
               )}
@@ -806,15 +948,12 @@ export default function SupplierWiseMonthly() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                🏭 Company {selectedCompany && <span className="text-green-600">✓</span>}
-              </label>
               <SearchableDropdown
                 options={allCompanies.map(company => ({ id: company, name: company }))}
                 value={selectedCompany}
                 onChange={(value) => handleFilterChange('company', value)}
                 placeholder="-- Select Company --"
-                label="Company"
+                label="🏭 Company"
               />
             </div>
 
@@ -838,7 +977,7 @@ export default function SupplierWiseMonthly() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                🏢 Type 2 {selectedType2 && <span className="text-green-600">✓</span>}
+                📦 Type 2 {selectedType2 && <span className="text-green-600">✓</span>}
               </label>
               <select
                 value={selectedType2}

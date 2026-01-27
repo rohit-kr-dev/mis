@@ -1,101 +1,229 @@
-import ExcelUpload from "@/components/ExcelUpload";
+import Link from 'next/link';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 
-export default function HomePage() {
+// Define the type for our transaction data
+interface WorkingSheetData {
+  id: string;
+  supplierName?: string;
+  billNo?: string;
+  purchaseDate?: any; // Firestore timestamp
+  status?: string;
+  total?: number;
+  grade?: string;
+  [key: string]: any; // Allow other properties
+}
+
+// Format currency function (same as in working page)
+function formatCurrency(amount: number) {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'decimal',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(Math.abs(amount)); // Use absolute value for display
+}
+
+async function getLastTransaction(): Promise<WorkingSheetData | null> {
+  try {
+    const transactionsQuery = query(
+      collection(db, 'workingSheet'),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(transactionsQuery);
+    
+    if (!snapshot.empty) {
+      const lastDoc = snapshot.docs[0];
+      const data = lastDoc.data();
+      return { id: lastDoc.id, ...data } as WorkingSheetData;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching last transaction:', error);
+    return null;
+  }
+}
+
+async function getStats() {
+  try {
+    const snapshot = await getDocs(collection(db, 'workingSheet'));
+    const data = snapshot.docs.map(doc => doc.data() as WorkingSheetData);
+    
+    // Count total transactions
+    const totalTransactions = data.length;
+    
+    // Count open transactions
+    const openTransactions = data.filter(item => item.status?.toLowerCase() === 'open').length;
+    
+    // Count verified & closed transactions
+    const verifiedClosedTransactions = data.filter(item => 
+      item.status?.toLowerCase().includes('verified') || 
+      item.status?.toLowerCase().includes('closed')
+    ).length;
+    
+    return {
+      totalTransactions,
+      openTransactions,
+      verifiedClosedTransactions
+    };
+  } catch (error) {
+    console.error('Error fetching stats:', error);
+    return {
+      totalTransactions: 0,
+      openTransactions: 0,
+      verifiedClosedTransactions: 0
+    };
+  }
+}
+
+export default async function HomePage() {
+  const lastTransaction = await getLastTransaction();
+  const stats = await getStats();
+
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="mb-8">
-        <ExcelUpload />
-      </div>
-      
-      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-8">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <div className="ml-3">
-            <p className="text-sm text-blue-700">
-              <strong>Instructions:</strong> Upload your working sheet Excel file here. The system will automatically process and store the data in Firebase using serial numbers as document IDs to prevent duplicates.
-            </p>
-          </div>
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Stats Cards */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500 mb-1">Total Suppliers</p>
-              <p className="text-3xl font-bold text-gray-900">124</p>
-            </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500 mb-1">Total Items</p>
-              <p className="text-3xl font-bold text-gray-900">856</p>
-            </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500 mb-1">Active Periods</p>
-              <p className="text-3xl font-bold text-gray-900">12</p>
-            </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500 mb-1">Categories</p>
-              <p className="text-3xl font-bold text-gray-900">32</p>
-            </div>
-            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Welcome to Material MIS</h2>
-        <p className="text-gray-600 mb-4">
-          Manage your material inventory, suppliers, and track monthly reports efficiently.
-        </p>
-        <div className="space-y-2">
-          <p className="text-sm text-gray-600">
-            <span className="font-semibold">Quick Start:</span> Select an option from the sidebar to get started.
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            Material Management Information System
+          </h1>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Comprehensive solution for tracking materials, suppliers, and transactions
           </p>
-          <ul className="list-disc list-inside text-sm text-gray-600 space-y-1 ml-4">
-            <li>Add and manage suppliers in Supplier Master</li>
-            <li>Track items and inventory in Items Master</li>
-            <li>View monthly and yearly reports</li>
-            <li>Check master data consistency</li>
-          </ul>
+        </div>
+
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">Total Transactions</h3>
+            <p className="text-3xl font-bold text-blue-600">{stats.totalTransactions}</p>
+            <div className="mt-2 text-sm text-gray-500">All records in system</div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">Open Transactions</h3>
+            <p className="text-3xl font-bold text-green-600">{stats.openTransactions}</p>
+            <div className="mt-2 text-sm text-gray-500">Active/pending transactions</div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">Verified & Closed</h3>
+            <p className="text-3xl font-bold text-purple-600">{stats.verifiedClosedTransactions}</p>
+            <div className="mt-2 text-sm text-gray-500">Completed transactions</div>
+          </div>
+        </div>
+
+        {/* Last Transaction Card */}
+        {lastTransaction && (
+          <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl shadow-lg p-6 mb-8 text-white">
+            <h3 className="text-xl font-semibold mb-3">Last Transaction</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+                <p className="text-xs opacity-80">Supplier</p>
+                <p className="font-semibold truncate">{lastTransaction.supplierName || 'N/A'}</p>
+              </div>
+              <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+                <p className="text-xs opacity-80">Bill No</p>
+                <p className="font-semibold">{lastTransaction.billNo || 'N/A'}</p>
+              </div>
+              <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+                <p className="text-xs opacity-80">Date</p>
+                <p className="font-semibold">
+                  {lastTransaction.purchaseDate ? 
+                    (typeof lastTransaction.purchaseDate === 'object' && lastTransaction.purchaseDate?.seconds ? 
+                      new Date(lastTransaction.purchaseDate.seconds * 1000).toLocaleDateString() : 
+                      (typeof lastTransaction.purchaseDate === 'string' || typeof lastTransaction.purchaseDate === 'number') ?
+                      new Date(lastTransaction.purchaseDate).toLocaleDateString() : 'N/A') 
+                    : 'N/A'}
+                </p>
+              </div>
+              <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+                <p className="text-xs opacity-80">Status</p>
+                <p className="font-semibold">{lastTransaction.status || 'N/A'}</p>
+              </div>
+              <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+                <p className="text-xs opacity-80">Amount</p>
+                <p className="font-semibold">₹{formatCurrency(lastTransaction.total || 0)}</p>
+              </div>
+              <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+                <p className="text-xs opacity-80">Grade</p>
+                <p className="font-semibold truncate">{lastTransaction.grade || 'N/A'}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Main Navigation Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          <Link href="/working" className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-200 group">
+            <div className="text-4xl font-bold text-blue-600 mb-4 group-hover:scale-110 transition-transform">🔧</div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">Working Sheet</h3>
+            <p className="text-gray-600 mb-4">Manage daily transactions with auto-calculations</p>
+            <div className="text-blue-600 font-medium">View &raquo;</div>
+          </Link>
+
+          <Link href="/supplier-wise-monthly" className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-200 group">
+            <div className="text-4xl font-bold text-green-600 mb-4 group-hover:scale-110 transition-transform">📈</div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">Supplier Wise Monthly</h3>
+            <p className="text-gray-600 mb-4">View monthly transactions by supplier</p>
+            <div className="text-green-600 font-medium">View &raquo;</div>
+          </Link>
+
+          <Link href="/supplier-wise-yearly" className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-200 group">
+            <div className="text-4xl font-bold text-purple-600 mb-4 group-hover:scale-110 transition-transform">📅</div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">Supplier Wise Yearly</h3>
+            <p className="text-gray-600 mb-4">View yearly transactions by supplier</p>
+            <div className="text-purple-600 font-medium">View &raquo;</div>
+          </Link>
+
+          <Link href="/total-suppliers-monthly" className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-200 group">
+            <div className="text-4xl font-bold text-yellow-600 mb-4 group-hover:scale-110 transition-transform">📊</div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">Total Suppliers Monthly</h3>
+            <p className="text-gray-600 mb-4">Comprehensive monthly supplier analysis</p>
+            <div className="text-yellow-600 font-medium">View &raquo;</div>
+          </Link>
+
+          <Link href="/all-suppliers-monthly" className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-200 group">
+            <div className="text-4xl font-bold text-red-600 mb-4 group-hover:scale-110 transition-transform">🏢</div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">All Suppliers Monthly</h3>
+            <p className="text-gray-600 mb-4">Compare all suppliers across different types</p>
+            <div className="text-red-600 font-medium">View &raquo;</div>
+          </Link>
+
+          <Link href="/items-master" className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-200 group">
+            <div className="text-4xl font-bold text-indigo-600 mb-4 group-hover:scale-110 transition-transform">📦</div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">Items Master</h3>
+            <p className="text-gray-600 mb-4">Manage master list of items and materials</p>
+            <div className="text-indigo-600 font-medium">View &raquo;</div>
+          </Link>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8 border border-gray-200">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Quick Actions</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Link href="/working" className="p-4 bg-blue-50 rounded-lg text-center hover:bg-blue-100 transition-colors">
+              <div className="text-2xl mb-2">➕</div>
+              <div className="font-medium text-gray-800">Add Transaction</div>
+            </Link>
+            <Link href="/supplier-master" className="p-4 bg-green-50 rounded-lg text-center hover:bg-green-100 transition-colors">
+              <div className="text-2xl mb-2">👥</div>
+              <div className="font-medium text-gray-800">Manage Suppliers</div>
+            </Link>
+            <Link href="/items-master" className="p-4 bg-purple-50 rounded-lg text-center hover:bg-purple-100 transition-colors">
+              <div className="text-2xl mb-2">🏷️</div>
+              <div className="font-medium text-gray-800">Manage Items</div>
+            </Link>
+            <Link href="/working" className="p-4 bg-yellow-50 rounded-lg text-center hover:bg-yellow-100 transition-colors">
+              <div className="text-2xl mb-2">📊</div>
+              <div className="font-medium text-gray-800">Generate Report</div>
+            </Link>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center text-gray-500 text-sm">
+          <p>Material Management Information System &copy; {new Date().getFullYear()}</p>
         </div>
       </div>
     </div>

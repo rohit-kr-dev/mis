@@ -75,7 +75,8 @@ export default function EnhancedVendorManagement() {
   useEffect(() => {
     if (vendors.length === 0) return;
 
-    const unsubscribes: (() => void)[] = [];
+    // Create a single map to track all unsubscribes
+    const unsubscribes = new Map<string, () => void>();
 
     vendors.forEach((vendor) => {
       const periodsRef = collection(db, 'vendorList', vendor.id, 'periods');
@@ -92,19 +93,40 @@ export default function EnhancedVendorManagement() {
           });
           
           setPeriodData(prev => {
+            // Remove all entries for this vendor first
             const filtered = prev.filter(p => p.vendorId !== vendor.id);
+            // Add new entries for this vendor
             return [...filtered, ...data];
           });
         },
         (error) => console.error('Error fetching period data:', error)
       );
-      unsubscribes.push(unsubscribe);
+      unsubscribes.set(vendor.id, unsubscribe);
     });
 
     return () => {
       unsubscribes.forEach(unsub => unsub());
+      unsubscribes.clear();
     };
   }, [vendors]);
+
+  // Clean up duplicate entries in periodData
+  useEffect(() => {
+    if (periodData.length > 0) {
+      setPeriodData(prev => {
+        // Create a map to store unique entries by vendorId and period
+        const uniqueMap = new Map<string, PeriodData>();
+        
+        prev.forEach(entry => {
+          const key = `${entry.vendorId}-${entry.period}`;
+          // If there's a duplicate, keep the latest one (or just keep one)
+          uniqueMap.set(key, entry);
+        });
+        
+        return Array.from(uniqueMap.values());
+      });
+    }
+  }, [vendors]); // Run when vendors list changes
 
   // Real-time subscription to periods collection
   useEffect(() => {

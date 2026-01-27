@@ -425,13 +425,19 @@ export default function SupplierWiseYearly() {
     const jsPDF = jsPDFModule.default || jsPDFModule;
     const doc = new jsPDF();
     
+    // Add company name
+    doc.setFontSize(20);
+    doc.setFont(undefined, 'bold');
+    doc.text('Polymetalz', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+    
     // Add title
     doc.setFontSize(16);
-    doc.text('Supplier Wise Yearly Report', 14, 20);
+    doc.setFont(undefined, 'normal');
+    doc.text('Supplier Wise Yearly Report', 14, 35);
     
     // Add filters info
     doc.setFontSize(10);
-    let yPos = 30;
+    let yPos = 45;
     
     if (selectedSupplier) {
       doc.text(`Supplier: ${selectedSupplier}`, 14, yPos);
@@ -448,21 +454,30 @@ export default function SupplierWiseYearly() {
     
     yPos += 5;
     
-    // Prepare table data
+    // Format currency function
+    const formatCurrency = (amount: number) => {
+      return new Intl.NumberFormat('en-IN', {
+        style: 'decimal',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(amount);
+    };
+    
+    // Prepare table data with formatted currency
     const tableData = calculatedRows.map((row, index) => [
       index + 1,
       row.supplier,
       row.materialType,
       row.company,
-      ...periods.map(period => row.values[period.period] || 0),
-      row.total
+      ...periods.map(period => formatCurrency(row.values[period.period] || 0)),
+      formatCurrency(row.total)
     ]);
     
-    // Add totals row
+    // Add totals row with formatted currency
     const totalsRow = [
       '', '', '', 'COLUMN TOTALS',
-      ...periods.map(period => columnTotals[period.period] || 0),
-      grandTotal
+      ...periods.map(period => formatCurrency(columnTotals[period.period] || 0)),
+      formatCurrency(grandTotal)
     ];
     tableData.push(totalsRow);
     
@@ -473,11 +488,13 @@ export default function SupplierWiseYearly() {
        'Total']
     ];
     
+    console.log('Starting table at yPos:', yPos);
+    
     // Generate table
     autoTable(doc, {
       head: headers,
       body: tableData,
-      startY: yPos,
+      startY: yPos + 10,
       styles: {
         fontSize: 8,
         cellPadding: 2
@@ -668,15 +685,12 @@ export default function SupplierWiseYearly() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                🏭 Company {selectedCompany && <span className="text-green-600">✓</span>}
-              </label>
               <SearchableDropdown
                 options={allCompanies.map(company => ({ id: company, name: company }))}
                 value={selectedCompany}
                 onChange={(value) => handleFilterChange('company', value)}
                 placeholder="-- Select Company --"
-                label="Company"
+                label="🏭 Company"
               />
             </div>
           </div>
