@@ -77,8 +77,14 @@ export default function EnhancedVendorManagement() {
 
     // Create a single map to track all unsubscribes
     const unsubscribes = new Map<string, () => void>();
+    // Keep track of processed vendors to prevent duplicate subscriptions
+    const processedVendors = new Set<string>();
 
     vendors.forEach((vendor) => {
+      // Skip if already processed
+      if (processedVendors.has(vendor.id)) return;
+      processedVendors.add(vendor.id);
+
       const periodsRef = collection(db, 'vendorList', vendor.id, 'periods');
       const unsubscribe = onSnapshot(
         periodsRef,
@@ -96,7 +102,24 @@ export default function EnhancedVendorManagement() {
             // Remove all entries for this vendor first
             const filtered = prev.filter(p => p.vendorId !== vendor.id);
             // Add new entries for this vendor
-            return [...filtered, ...data];
+            const newData = [...filtered, ...data];
+            
+            // Debug: Check for duplicates
+            const seen = new Set<string>();
+            const duplicates: string[] = [];
+            newData.forEach(entry => {
+              const key = `${entry.vendorId}-${entry.period}`;
+              if (seen.has(key)) {
+                duplicates.push(key);
+              }
+              seen.add(key);
+            });
+            
+            if (duplicates.length > 0) {
+              console.warn('Duplicate entries found:', duplicates);
+            }
+            
+            return newData;
           });
         },
         (error) => console.error('Error fetching period data:', error)
@@ -107,6 +130,7 @@ export default function EnhancedVendorManagement() {
     return () => {
       unsubscribes.forEach(unsub => unsub());
       unsubscribes.clear();
+      processedVendors.clear();
     };
   }, [vendors]);
 
@@ -126,7 +150,25 @@ export default function EnhancedVendorManagement() {
         return Array.from(uniqueMap.values());
       });
     }
-  }, [vendors]); // Run when vendors list changes
+  }, [periodData]); // Run when periodData changes
+
+  // Additional cleanup: Periodically check for duplicates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (periodData.length > 0) {
+        setPeriodData(prev => {
+          const uniqueMap = new Map<string, PeriodData>();
+          prev.forEach(entry => {
+            const key = `${entry.vendorId}-${entry.period}`;
+            uniqueMap.set(key, entry);
+          });
+          return Array.from(uniqueMap.values());
+        });
+      }
+    }, 2000); // Check every 2 seconds
+
+    return () => clearInterval(interval);
+  }, [periodData]);
 
   // Real-time subscription to periods collection
   useEffect(() => {
