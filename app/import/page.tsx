@@ -75,8 +75,7 @@ export default function ImportPage() {
       
       // Calculate custom duty when customDuty changes
       if (field === 'customDuty' && value) {
-        const customDutyStr = value.replace('%', '').trim();
-        const customDutyPercent = parseFloat(customDutyStr);
+        const customDutyPercent = parseFloat(value);
         if (!isNaN(customDutyPercent)) {
           // Formula: Custom Duty + (Custom Duty * 10%)
           const calculatedValue = customDutyPercent + (customDutyPercent * 0.10);
@@ -99,8 +98,7 @@ export default function ImportPage() {
         const exchRate = parseFloat(updatedForm.exchRate || '0');
         const calculatedCustomDuty = parseFloat(updatedForm.calculatedCustomDuty || '0');
         const clearanceCharges = parseFloat(updatedForm.clearanceCharges || '0');
-        const customDutyStr = updatedForm.customDuty.replace('%', '').trim();
-        const customDutyPercent = customDutyStr ? parseFloat(customDutyStr) : 0; // Now as raw percentage (e.g., 10)
+        const customDutyPercent = parseFloat(updatedForm.customDuty) || 0; // Now as raw number (e.g., 10)
         const commissionValue = parseFloat(updatedForm.commission || '0');
         
         // Determine commission value based on currency
@@ -561,15 +559,15 @@ export default function ImportPage() {
                   onChange={(e) => handleFormChange('customDuty', e.target.value)}
                   className="w-full px-2 py-1 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
                 >
-                  <option value="">Select Duty %</option>
-                  <option value="5%">5%</option>
-                  <option value="7.5%">7.5%</option>
-                  <option value="10%">10%</option>
+                  <option value="">Select Duty</option>
+                  <option value="5">5</option>
+                  <option value="7.5">7.5</option>
+                  <option value="10">10</option>
                 </select>
               </div>
               
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">🧮 Calculated Custom Duty</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">🧮 Calculated Duty Value</label>
                 <input 
                   type="number" 
                   step="0.01" 
@@ -578,6 +576,9 @@ export default function ImportPage() {
                   className="w-full px-2 py-1 text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700"
                   placeholder="0.00"
                 />
+                <div className="text-xs text-gray-500 mt-1">
+                  Duty + (Duty × 10%)
+                </div>
               </div>
               
               <div>
@@ -615,7 +616,7 @@ export default function ImportPage() {
                   placeholder="0.00"
                 />
                 <div className="text-xs text-gray-500 mt-1">
-                  Formula: ((Booking Rate × Exchange Rate) + (Booking Rate × Exchange Rate × Calculated Duty %) + Clearance Charges + (Custom Duty % × Exchange Rate) + Commission Converted) ÷ 1000
+                  Formula: ((Booking Rate × Exchange Rate) + (Booking Rate × Exchange Rate × Calculated Duty %) + Clearance Charges + (Custom Duty × Exchange Rate) + Commission Converted) ÷ 1000
                 </div>
               </div>
               
