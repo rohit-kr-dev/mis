@@ -60,11 +60,26 @@ export default function EnhancedVendorManagement() {
     const unsubscribe = onSnapshot(
       collection(db, 'vendorList'),
       (snapshot) => {
-        const data: Vendor[] = [];
+        const vendorMap = new Map<string, Vendor>();
+        
         snapshot.forEach((doc) => {
-          data.push({ id: doc.id, ...doc.data() } as Vendor);
+          const vendorName = doc.data().vendorName as string;
+          // Only add if vendor name doesn't exist in map (deduplication)
+          if (vendorName && !vendorMap.has(vendorName)) {
+            vendorMap.set(vendorName, {
+              id: doc.id,
+              vendorName: vendorName,
+              totalAmount: doc.data().totalAmount || 0,
+              createdAt: doc.data().createdAt,
+              updatedAt: doc.data().updatedAt
+            } as Vendor);
+          }
         });
-        setVendors(data.sort((a, b) => a.vendorName.localeCompare(b.vendorName)));
+        
+        const data = Array.from(vendorMap.values()).sort((a, b) => 
+          a.vendorName.localeCompare(b.vendorName)
+        );
+        setVendors(data);
       },
       (error) => console.error('Error fetching vendors:', error)
     );
@@ -461,30 +476,26 @@ export default function EnhancedVendorManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <div className="max-w-[95vw] mx-auto p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 flex flex-col">
+      <div className="max-w-full mx-auto bg-white rounded-xl shadow-lg flex-1 flex flex-col min-h-[calc(100vh-2rem)]">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Vendor Management System
-              </h1>
-              <p className="text-slate-600 mt-2">Track and manage vendor payments with period-wise breakdown</p>
-            </div>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-            >
-              <Plus size={20} />
-              Add Vendor
-            </button>
+        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">📊 Vendor Management System</h1>
+            <p className="text-gray-600 mt-2">Track and manage vendor payments with period-wise breakdown</p>
           </div>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 shadow-lg transition transform hover:scale-105"
+          >
+            <Plus size={20} className="inline mr-2" />
+            Add Vendor
+          </button>
         </div>
 
         {/* Message Toast */}
         {message && (
-          <div className={`fixed top-6 right-6 px-6 py-3 rounded-lg shadow-lg z-50 ${
+          <div className={`fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300 ${
             message.includes('Error') || message.includes('exists') || message.includes('enter')
               ? 'bg-red-500 text-white'
               : 'bg-green-500 text-white'
@@ -494,46 +505,31 @@ export default function EnhancedVendorManagement() {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-100 text-sm font-medium">Page Total</p>
-                <p className="text-3xl font-bold mt-2">{formatCurrency(overallTotal)}</p>
-                <p className="text-blue-100 text-xs mt-2">{paginatedVendors.length} vendors × {filteredPeriods.length} periods</p>
+                <p className="text-gray-600 text-sm font-medium">Total Vendors</p>
+                <p className="text-3xl font-bold mt-2 text-green-600">{filteredVendors.length}</p>
+                <p className="text-gray-500 text-xs mt-2">Showing {paginatedVendors.length} on page</p>
               </div>
-              <div className="bg-white/20 p-3 rounded-lg">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-green-100 text-sm font-medium">Total Vendors</p>
-                <p className="text-3xl font-bold mt-2">{filteredVendors.length}</p>
-                <p className="text-green-100 text-xs mt-2">Showing {paginatedVendors.length} on page</p>
-              </div>
-              <div className="bg-white/20 p-3 rounded-lg">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-green-100 p-3 rounded-lg">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-purple-100 text-sm font-medium">Total Periods</p>
-                <p className="text-3xl font-bold mt-2">{filteredPeriods.length}</p>
-                <p className="text-purple-100 text-xs mt-2">Columns in grid</p>
+                <p className="text-gray-600 text-sm font-medium">Total Periods</p>
+                <p className="text-3xl font-bold mt-2 text-purple-600">{filteredPeriods.length}</p>
+                <p className="text-gray-500 text-xs mt-2">Columns in grid</p>
               </div>
-              <div className="bg-white/20 p-3 rounded-lg">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-purple-100 p-3 rounded-lg">
+                <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
@@ -542,28 +538,28 @@ export default function EnhancedVendorManagement() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200">
           <div className="flex items-center gap-2 mb-4">
-            <Filter size={20} className="text-slate-600" />
-            <h2 className="text-lg font-semibold text-slate-800">Filters & Search</h2>
+            <Filter size={20} className="text-gray-600" />
+            <h2 className="text-lg font-semibold text-gray-800">Filters & Search</h2>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
               <input
                 type="text"
                 placeholder="Search vendors..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
             <select
               value={selectedVendor}
               onChange={(e) => setSelectedVendor(e.target.value)}
-              className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
             >
               <option value="">All Vendors</option>
               {vendors.map((vendor) => (
@@ -574,7 +570,7 @@ export default function EnhancedVendorManagement() {
             <select
               value={selectedPeriod}
               onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
             >
               <option value="">All Periods</option>
               {periods.map((period) => (
@@ -585,7 +581,7 @@ export default function EnhancedVendorManagement() {
             <select
               value={itemsPerPage}
               onChange={(e) => setItemsPerPage(Number(e.target.value))}
-              className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
             >
               <option value={5}>5 per page</option>
               <option value={10}>10 per page</option>
@@ -596,7 +592,7 @@ export default function EnhancedVendorManagement() {
 
             <button
               onClick={handleResetFilters}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
             >
               <RefreshCw size={18} />
               Reset
@@ -605,37 +601,37 @@ export default function EnhancedVendorManagement() {
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 flex-1">
           <div className="overflow-x-auto">
-            <div style={{ maxHeight: 'calc(100vh - 450px)', overflowY: 'auto' }}>
+            <div className="h-[500px] overflow-y-auto">
               <table className="w-full border-collapse">
-                <thead className="bg-gradient-to-r from-slate-700 to-slate-800 text-white sticky top-0 z-10">
+                <thead className="bg-gray-800 text-white sticky top-0 z-10">
                   <tr>
-                    <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider border-r border-slate-600 sticky left-0 bg-slate-700 z-20" style={{ minWidth: '80px' }}>
+                    <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider border-r border-gray-600 sticky left-0 bg-gray-800 z-20" style={{ minWidth: '80px' }}>
                       S.No
                     </th>
-                    <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider border-r border-slate-600 sticky left-20 bg-slate-700 z-20" style={{ minWidth: '200px' }}>
+                    <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider border-r border-gray-600 sticky left-20 bg-gray-800 z-20" style={{ minWidth: '200px' }}>
                       Vendor Name
                     </th>
                     {filteredPeriods.map((period) => (
-                      <th key={period.id} className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider border-r border-slate-600" style={{ minWidth: '120px' }}>
+                      <th key={period.id} className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider border-r border-gray-600" style={{ minWidth: '120px' }}>
                         {period.period}
                       </th>
                     ))}
-                    <th className="px-4 py-4 text-right text-xs font-semibold uppercase tracking-wider border-r border-slate-600 bg-slate-800" style={{ minWidth: '140px' }}>
+                    <th className="px-4 py-4 text-right text-xs font-semibold uppercase tracking-wider border-r border-gray-600 bg-gray-800" style={{ minWidth: '140px' }}>
                       Total
                     </th>
-                    <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider bg-slate-800" style={{ minWidth: '180px' }}>
+                    <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider bg-gray-800" style={{ minWidth: '180px' }}>
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200">
+                <tbody className="divide-y divide-gray-200">
                   {paginatedVendors.length === 0 ? (
                     <tr>
-                      <td colSpan={filteredPeriods.length + 4} className="px-6 py-12 text-center text-slate-500">
+                      <td colSpan={filteredPeriods.length + 4} className="px-6 py-12 text-center text-gray-500">
                         <div className="flex flex-col items-center gap-2">
-                          <Search size={48} className="text-slate-300" />
+                          <Search size={48} className="text-gray-300" />
                           <p className="text-lg">No vendors found</p>
                           <p className="text-sm">Try adjusting your filters or add a new vendor</p>
                         </div>
@@ -647,11 +643,11 @@ export default function EnhancedVendorManagement() {
                       const serialNo = (currentPage - 1) * itemsPerPage + index + 1;
                       
                       return (
-                        <tr key={vendor.id} className="hover:bg-slate-50 transition-colors">
-                          <td className="px-4 py-3 text-sm font-medium text-slate-700 border-r border-slate-200 sticky left-0 bg-white z-10">
+                        <tr key={vendor.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-3 text-sm font-medium text-gray-700 border-r border-gray-200 sticky left-0 bg-white z-10">
                             {serialNo}
                           </td>
-                          <td className="px-4 py-3 text-sm font-medium text-slate-900 border-r border-slate-200 sticky left-20 bg-white z-10">
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900 border-r border-gray-200 sticky left-20 bg-white z-10">
                             {vendor.vendorName}
                           </td>
                           {filteredPeriods.map((period) => {
@@ -661,7 +657,7 @@ export default function EnhancedVendorManagement() {
                               : getCellValue(vendor.id, period.period);
 
                             return (
-                              <td key={period.id} className="px-2 py-2 text-center border-r border-slate-100">
+                              <td key={period.id} className="px-2 py-2 text-center border-r border-gray-100">
                                 {isEditing ? (
                                   <input
                                     type="number"
@@ -674,19 +670,19 @@ export default function EnhancedVendorManagement() {
                                 ) : (
                                   <div className="px-2 py-2 min-h-[40px] flex items-center justify-center">
                                     {cellValue === 0 ? (
-                                      <span className="text-slate-400">-</span>
+                                      <span className="text-gray-400">-</span>
                                     ) : (
-                                      <span className="font-medium text-slate-700">{formatCurrency(cellValue as number)}</span>
+                                      <span className="font-medium text-gray-700">₹{formatCurrency(cellValue as number)}</span>
                                     )}
                                   </div>
                                 )}
                               </td>
                             );
                           })}
-                          <td className="px-4 py-3 text-right text-sm font-bold text-slate-900 border-r border-slate-200 bg-slate-50">
-                            {formatCurrency(getRowTotal(vendor.id))}
+                          <td className="px-4 py-3 text-right text-sm font-bold text-gray-900 border-r border-gray-200 bg-gray-50">
+                            ₹{formatCurrency(getRowTotal(vendor.id))}
                           </td>
-                          <td className="px-4 py-3 text-center border-slate-200 bg-slate-50">
+                          <td className="px-4 py-3 text-center border-gray-200 bg-gray-50">
                             <div className="flex gap-2 justify-center">
                               {isEditing ? (
                                 <>
@@ -701,7 +697,7 @@ export default function EnhancedVendorManagement() {
                                   <button
                                     onClick={() => toggleRowEdit(vendor.id)}
                                     disabled={loading}
-                                    className="flex items-center gap-1 px-3 py-1.5 bg-slate-600 text-white text-xs font-medium rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-50"
+                                    className="flex items-center gap-1 px-3 py-1.5 bg-gray-600 text-white text-xs font-medium rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
                                   >
                                     <X size={14} />
                                     Cancel
@@ -743,22 +739,22 @@ export default function EnhancedVendorManagement() {
                   )}
                 </tbody>
                 {paginatedVendors.length > 0 && (
-                  <tfoot className="bg-gradient-to-r from-slate-700 to-slate-800 text-white border-t-2 border-slate-600 sticky bottom-0">
+                  <tfoot className="bg-gray-800 text-white border-t-2 border-gray-600">
                     <tr>
-                      <td className="px-4 py-4 text-sm font-bold uppercase border-r border-slate-600 sticky left-0 bg-slate-700 z-20">
+                      <td className="px-4 py-4 text-sm font-bold uppercase border-r border-gray-600 sticky left-0 bg-gray-800 z-20">
                         Total
                       </td>
-                      <td className="px-4 py-4 text-sm font-bold uppercase border-r border-slate-600 sticky left-20 bg-slate-700 z-20">
+                      <td className="px-4 py-4 text-sm font-bold uppercase border-r border-gray-600 sticky left-20 bg-gray-800 z-20">
                       </td>
                       {filteredPeriods.map((period) => (
-                        <td key={period.id} className="px-4 py-4 text-center text-sm font-bold border-r border-slate-600">
-                          {formatCurrency(getColumnTotal(period.period))}
+                        <td key={period.id} className="px-4 py-4 text-center text-sm font-bold border-r border-gray-600">
+                          ₹{formatCurrency(getColumnTotal(period.period))}
                         </td>
                       ))}
-                      <td className="px-4 py-4 text-right text-sm font-bold border-r border-slate-600">
-                        {formatCurrency(overallTotal)}
+                      <td className="px-4 py-4 text-right text-sm font-bold border-r border-gray-600">
+                        ₹{formatCurrency(overallTotal)}
                       </td>
-                      <td className="px-4 py-4 border-slate-600"></td>
+                      <td className="px-4 py-4 border-gray-600"></td>
                     </tr>
                   </tfoot>
                 )}
@@ -768,9 +764,9 @@ export default function EnhancedVendorManagement() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="px-6 py-4 border-t border-slate-200 bg-slate-50">
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 sticky bottom-0">
               <div className="flex items-center justify-between">
-                <div className="text-sm text-slate-700">
+                <div className="text-sm text-gray-700">
                   Showing <span className="font-semibold">{(currentPage - 1) * itemsPerPage + 1}</span> to{' '}
                   <span className="font-semibold">{Math.min(currentPage * itemsPerPage, filteredVendors.length)}</span> of{' '}
                   <span className="font-semibold">{filteredVendors.length}</span> vendors
@@ -779,7 +775,7 @@ export default function EnhancedVendorManagement() {
                   <button
                     onClick={() => setCurrentPage(1)}
                     disabled={currentPage === 1}
-                    className="p-2 border border-slate-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 border border-gray-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     title="First Page"
                   >
                     <ChevronsLeft size={18} />
@@ -787,18 +783,18 @@ export default function EnhancedVendorManagement() {
                   <button
                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                     disabled={currentPage === 1}
-                    className="p-2 border border-slate-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 border border-gray-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     title="Previous Page"
                   >
                     <ChevronLeft size={18} />
                   </button>
-                  <div className="px-4 py-2 border border-slate-300 rounded-lg bg-white font-medium">
+                  <div className="px-4 py-2 border border-gray-300 rounded-lg bg-white font-medium">
                     Page {currentPage} of {totalPages}
                   </div>
                   <button
                     onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                     disabled={currentPage === totalPages}
-                    className="p-2 border border-slate-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 border border-gray-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     title="Next Page"
                   >
                     <ChevronRight size={18} />
@@ -806,7 +802,7 @@ export default function EnhancedVendorManagement() {
                   <button
                     onClick={() => setCurrentPage(totalPages)}
                     disabled={currentPage === totalPages}
-                    className="p-2 border border-slate-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 border border-gray-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     title="Last Page"
                   >
                     <ChevronsRight size={18} />
@@ -821,14 +817,14 @@ export default function EnhancedVendorManagement() {
         {showAddModal && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all">
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4 rounded-t-xl">
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 rounded-t-xl">
                 <h3 className="text-xl font-bold text-white">
                   {editingVendor ? 'Edit Vendor' : 'Add New Vendor'}
                 </h3>
               </div>
               <div className="p-6">
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Vendor Name <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -838,21 +834,21 @@ export default function EnhancedVendorManagement() {
                     onKeyDown={(e) => e.key === 'Enter' && (editingVendor ? handleUpdateVendor() : handleAddVendor())}
                     placeholder="Enter vendor name"
                     autoFocus
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
                 <div className="flex gap-3">
                   <button
                     onClick={editingVendor ? handleUpdateVendor : handleAddVendor}
                     disabled={loading || !newVendorName.trim()}
-                    className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     {loading ? 'Processing...' : editingVendor ? 'Update' : 'Add Vendor'}
                   </button>
                   <button
                     onClick={closeModal}
                     disabled={loading}
-                    className="px-4 py-2 bg-slate-200 text-slate-700 font-medium rounded-lg hover:bg-slate-300 disabled:opacity-50 transition-colors"
+                    className="px-4 py-2 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 disabled:opacity-50 transition-colors"
                   >
                     Cancel
                   </button>

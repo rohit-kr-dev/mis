@@ -119,6 +119,19 @@ export default function Sidebar() {
               </Link>
             </li>
 
+            <li>
+              <Link
+                href="/domestic"
+                className={`block px-4 py-3 rounded-lg transition-colors ${
+                  isActive('/domestic')
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                }`}
+              >
+                🏠 Domestic
+              </Link>
+            </li>
+
             {/* Reports Section */}
             <li>
               <div 

@@ -14,6 +14,7 @@ import {
   orderBy
 } from 'firebase/firestore';
 import { AlertCircle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Upload, Download } from 'lucide-react';
+import Sidebar from '@/components/Sidebar';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -1065,8 +1066,13 @@ export default function Working() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-6 px-4">
-      <div className="max-w-full mx-auto">
+    <div className="flex min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <Sidebar />
+      
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-auto">
+          <div className="p-6">
         {/* Header */}
         <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -1389,7 +1395,7 @@ export default function Working() {
               </div>
             </div>
           </div>
-        )}
+        </div>
 
         {/* Filters */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200">
@@ -2153,6 +2159,8 @@ export default function Working() {
             </div>
           </>
         )}
+          </div>
+        </div>
       </div>
     </div>
   );

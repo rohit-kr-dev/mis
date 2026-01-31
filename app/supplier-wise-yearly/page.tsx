@@ -76,12 +76,24 @@ export default function SupplierWiseYearly() {
       try {
         setLoading(true);
 
-        // Fetch suppliers
+        // Fetch suppliers with deduplication
         const suppliersSnap = await getDocs(collection(db, 'suppliers'));
-        const suppliersData = suppliersSnap.docs.map(doc => ({
-          id: doc.id,
-          supplierName: doc.data().supplierName as string
-        }));
+        const supplierMap = new Map<string, Supplier>();
+        
+        suppliersSnap.docs.forEach(doc => {
+          const supplierName = doc.data().supplierName as string;
+          // Only add if supplier name doesn't exist in map (deduplication)
+          if (supplierName && !supplierMap.has(supplierName)) {
+            supplierMap.set(supplierName, {
+              id: doc.id,
+              supplierName: supplierName
+            });
+          }
+        });
+        
+        const suppliersData = Array.from(supplierMap.values()).sort((a, b) => 
+          a.supplierName.localeCompare(b.supplierName)
+        );
         setSuppliers(suppliersData);
 
         // Fetch periods

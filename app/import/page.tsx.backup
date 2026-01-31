@@ -1,0 +1,1065 @@
+"use client";
+
+import { useState, useEffect } from 'react';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, getDocs, query, orderBy, deleteDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
+import SearchableDropdown from '@/components/SearchableDropdown';
+
+interface BookingData {
+  id: string | number;
+  dateOfBooking: string;
+  vendor: string;
+  port: string;
+  grade: string;
+  qty: string;
+  commission: string;
+  commissionCurrency: string;
+  exchRate: string;
+  customDuty: string;
+  calculatedCustomDuty?: string;
+  bookingRate?: string;
+  clearanceCharges: string;
+  netLanded: string;
+  status: string;
+  completed: string;
+}
+
+interface Supplier {
+  id: string;
+  supplierName: string;
+  alias?: string;
+}
+
+interface Grade {
+  id: string;
+  gradeName: string;
+}
+
+export default function ImportPage() {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [showDomesticSection, setShowDomesticSection] = useState(false);
+  const [bookingData, setBookingData] = useState<BookingData[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [filteredSuppliers, setFilteredSuppliers] = useState<Supplier[]>([]);
+  const [grades, setGrades] = useState<Grade[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<BookingData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [currentExchangeRate, setCurrentExchangeRate] = useState<number | null>(null);
+  const [loadingRate, setLoadingRate] = useState(true);
+  const [formData, setFormData] = useState<BookingData>({
+    id: 0,
+    dateOfBooking: '',
+    vendor: '',
+    port: '',
+    grade: '',
+    qty: '',
+    commission: '',
+    commissionCurrency: 'USD',
+    exchRate: '',
+    customDuty: '',
+    calculatedCustomDuty: '',
+    bookingRate: '',
+    clearanceCharges: '',
+    netLanded: '',
+    status: '',
+    completed: ''
+  });
+
+  const handleFormChange = (field: keyof BookingData, value: string) => {
+    setFormData(prev => {
+      const updatedForm = { ...prev, [field]: value };
+      
+      // Get current values
+      const commissionValue = parseFloat(updatedForm.commission || '0');
+      const exchRate = parseFloat(updatedForm.exchRate || '0');
+      
+      // Calculate custom duty when customDuty changes
+      if (field === 'customDuty' && value) {
+        const customDutyStr = value.replace('%', '').trim();
+        const customDutyPercent = parseFloat(customDutyStr) / 100;
+        if (!isNaN(customDutyPercent)) {
+          // Formula: L + (L * 10%) where L = customDuty (as percentage)
+          const calculatedValue = customDutyPercent + (customDutyPercent * 0.10);
+          updatedForm.calculatedCustomDuty = (calculatedValue * 100).toFixed(2); // Convert back to percentage
+        } else {
+          updatedForm.calculatedCustomDuty = '';
+        }
+      }
+      
+      // Calculate net landed when relevant fields change
+      if (
+        field === 'bookingRate' || 
+        field === 'exchRate' || 
+        field === 'calculatedCustomDuty' || 
+        field === 'clearanceCharges' || 
+        field === 'customDuty' || 
+        field === 'commission'
+      ) {
+        const bookingRate = parseFloat(updatedForm.bookingRate || '0');
+        const exchRate = parseFloat(updatedForm.exchRate || '0');
+        const calculatedCustomDuty = parseFloat(updatedForm.calculatedCustomDuty || '0');
+        const clearanceCharges = parseFloat(updatedForm.clearanceCharges || '0');
+        const customDutyStr = updatedForm.customDuty.replace('%', '').trim();
+        const customDutyPercent = customDutyStr ? parseFloat(customDutyStr) / 100 : 0;
+        const commissionValue = parseFloat(updatedForm.commission || '0');
+        
+        // Determine commission value based on currency
+        let commissionINRValue = commissionValue;
+        if (updatedForm.commissionCurrency === 'USD' && exchRate > 0) {
+          commissionINRValue = commissionValue * exchRate;
+        }
+        
+        // Net Landed formula:
+        // ((booking rate * exchange rate) + (booking rate * exchange rate * calculated custom duty) + 
+        // clearance charges + (custom duty * exchange rate) + commission inr) / 1000
+        
+        const part1 = bookingRate * exchRate;
+        const part2 = bookingRate * exchRate * calculatedCustomDuty;
+        const part3 = clearanceCharges;
+        const part4 = customDutyPercent * exchRate;
+        const part5 = commissionINRValue;
+        
+        const netLandedValue = (part1 + part2 + part3 + part4 + part5) / 1000;
+        
+        if (!isNaN(netLandedValue) && isFinite(netLandedValue)) {
+          updatedForm.netLanded = netLandedValue.toFixed(2);
+        } else {
+          updatedForm.netLanded = '';
+        }
+      }
+      
+      return updatedForm;
+    });
+  };
+
+  // Fetch suppliers from Firestore
+  const fetchSuppliers = async () => {
+    try {
+      const q = query(collection(db, 'suppliers'), orderBy('supplierName'));
+      const snapshot = await getDocs(q);
+      
+      const supplierList: Supplier[] = [];
+      snapshot.forEach((doc) => {
+        supplierList.push({
+          id: doc.id,
+          ...doc.data()
+        } as Supplier);
+      });
+      
+      // Remove duplicates based on supplierName
+      const uniqueSuppliers = supplierList.filter((supplier, index, self) =>
+        index === self.findIndex(s => s.supplierName === supplier.supplierName)
+      );
+      
+      setSuppliers(uniqueSuppliers);
+      setFilteredSuppliers(uniqueSuppliers);
+    } catch (error) {
+      console.error('Error fetching suppliers:', error);
+    }
+  };
+
+  // Fetch grades from Firestore
+  const fetchGrades = async () => {
+    try {
+      const q = query(collection(db, 'grades'), orderBy('gradeName'));
+      const snapshot = await getDocs(q);
+      
+      const gradeList: Grade[] = [];
+      snapshot.forEach((doc) => {
+        gradeList.push({
+          id: doc.id,
+          ...doc.data()
+        } as Grade);
+      });
+      
+      setGrades(gradeList);
+      console.log('Fetched grades:', gradeList);
+    } catch (error) {
+      console.error('Error fetching grades:', error);
+    }
+  };
+
+  // Fetch transactions from Firestore
+  const fetchTransactions = async () => {
+    try {
+      setLoading(true);
+      const q = query(collection(db, 'import-transactions'), orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(q);
+      
+      const transactions: BookingData[] = [];
+      snapshot.forEach((doc) => {
+        transactions.push({
+          id: doc.id,
+          ...doc.data()
+        } as BookingData);
+      });
+      
+      console.log('Fetched transactions:', transactions);
+      setBookingData(transactions);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Save transaction to Firestore
+  const handleAddTransaction = async () => {
+    if (editingTransaction) {
+      await updateTransaction();
+      return;
+    }
+    // Determine commission values based on currency
+    const commissionValue = parseFloat(formData.commission || '0');
+    const exchRate = parseFloat(formData.exchRate || '0');
+    
+    // Validate and sync commission values
+    let finalCommission = formData.commission;
+    let finalCommissionINR = commissionValue;
+    
+    if (formData.commissionCurrency === 'USD' && exchRate > 0) {
+      // If commission is in USD, convert to INR
+      finalCommissionINR = commissionValue * exchRate;
+    } else {
+      // If commission is in INR, use as-is
+      finalCommissionINR = commissionValue;
+    }
+    
+    try {
+      const transactionData = {
+        ...formData,
+        commissionUSD: formData.commission,
+        commissionINR: formData.commissionCurrency === 'USD' && exchRate > 0 ? (commissionValue * exchRate).toString() : formData.commission,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+      
+      await addDoc(collection(db, 'import-transactions'), transactionData);
+      
+      // Reset form
+      setFormData({
+        id: 0,
+        dateOfBooking: '',
+        vendor: '',
+        port: '',
+        grade: '',
+        qty: '',
+        commission: '',
+        commissionCurrency: 'USD',
+        exchRate: '',
+        customDuty: '',
+        calculatedCustomDuty: '',
+        bookingRate: '',
+        clearanceCharges: '',
+        netLanded: '',
+        status: '',
+        completed: ''
+      });
+      
+      setShowAddForm(false);
+      
+      // Refresh data
+      await fetchTransactions();
+    } catch (error) {
+      console.error('Error saving transaction:', error);
+      alert('Error saving transaction. Please try again.');
+    }
+  };
+
+  // Edit transaction
+  const startEditTransaction = (transaction: BookingData) => {
+    console.log('Starting edit transaction:', transaction);
+    setEditingTransaction(transaction);
+    setFormData({
+      ...transaction,
+      id: 0 // Reset ID for new transaction
+    });
+    setShowAddForm(true);
+  };
+
+  // Update transaction in Firestore
+  const updateTransaction = async () => {
+    if (!editingTransaction) {
+      console.error('No editing transaction found');
+      alert('Error: No transaction selected for update');
+      return;
+    }
+    
+    if (!editingTransaction.id || editingTransaction.id === '' || (typeof editingTransaction.id === 'string' && editingTransaction.id.trim() === '')) {
+      console.error('Invalid transaction ID for update:', editingTransaction.id);
+      alert('Error: Invalid transaction ID for update');
+      return;
+    }
+    
+    try {
+      console.log('Updating transaction with ID:', editingTransaction.id);
+      const transactionData = {
+        ...formData,
+        updatedAt: serverTimestamp()
+      };
+      
+      // Convert ID to string if it's a number
+      const idString = typeof editingTransaction.id === 'number' ? editingTransaction.id.toString() : editingTransaction.id;
+      
+      await updateDoc(doc(db, 'import-transactions', idString), transactionData);
+      console.log('Transaction updated successfully');
+      
+      // Reset form and editing state
+      setFormData({
+        id: 0,
+        dateOfBooking: '',
+        vendor: '',
+        port: '',
+        grade: '',
+        qty: '',
+        commission: '',
+        commissionCurrency: 'USD',
+        exchRate: '',
+        customDuty: '',
+        calculatedCustomDuty: '',
+        bookingRate: '',
+        clearanceCharges: '',
+        netLanded: '',
+        status: '',
+        completed: ''
+      });
+      
+      setEditingTransaction(null);
+      setShowAddForm(false);
+      
+      // Refresh data
+      await fetchTransactions();
+    } catch (error) {
+      console.error('Error updating transaction:', error);
+      alert(`Error updating transaction: ${(error as Error).message || 'Unknown error occurred'}`);
+    }
+  };
+
+  // Delete transaction from Firestore
+  const removeTransaction = async (id: string | number) => {
+    console.log('Remove transaction called with ID:', id);
+    console.log('ID type:', typeof id);
+    
+    if (!id || id === '' || (typeof id === 'string' && id.trim() === '')) {
+      console.error('Invalid transaction ID:', id);
+      alert('Cannot delete transaction: Invalid ID');
+      return;
+    }
+    
+    // Convert to string if it's a number
+    const stringId = typeof id === 'number' ? id.toString() : id;
+    
+    if (confirm('Are you sure you want to delete this transaction? This action cannot be undone.')) {
+      try {
+        console.log('Deleting transaction with ID:', stringId);
+        const deleteResult = await deleteDoc(doc(db, 'import-transactions', stringId));
+        console.log('Delete operation result:', deleteResult);
+        console.log('Transaction deleted successfully');
+        
+        // Small delay to ensure delete completes
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Refresh data after successful deletion
+        console.log('Refreshing data...');
+        await fetchTransactions();
+        console.log('Data refreshed after deletion');
+      } catch (error) {
+        console.error('Error deleting transaction:', error);
+        alert(`Error deleting transaction: ${(error as Error).message || 'Unknown error occurred'}`);
+      }
+    }
+  };
+
+  // Filter suppliers based on search term
+  useEffect(() => {
+    if (searchTerm.trim() === '') {
+      setFilteredSuppliers(suppliers);
+    } else {
+      const filtered = suppliers.filter(supplier =>
+        supplier.supplierName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (supplier.alias && supplier.alias.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+      setFilteredSuppliers(filtered);
+    }
+  }, [searchTerm, suppliers]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowDropdown(false);
+    };
+    
+    if (showDropdown) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showDropdown]);
+
+  // Load data on component mount
+  useEffect(() => {
+    fetchSuppliers();
+    fetchGrades();
+    fetchTransactions();
+  }, []);
+
+  // Fetch live exchange rate
+  const fetchExchangeRate = async () => {
+    try {
+      setLoadingRate(true);
+      const API_KEY = '2b6e56cdcac338867b2edbe8';
+      const response = await fetch(`https://v6.exchangerate-api.com/v6/${API_KEY}/latest/USD`);
+      const data = await response.json();
+      
+      if (data.result === 'success' && data.conversion_rates?.INR) {
+        const rate = data.conversion_rates.INR;
+        setCurrentExchangeRate(rate);
+        
+        // Auto-fill exchange rate in form if it's empty
+        if (!formData.exchRate) {
+          setFormData(prev => ({
+            ...prev,
+            exchRate: rate.toFixed(4)
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch exchange rate:', error);
+    } finally {
+      setLoadingRate(false);
+    }
+  };
+
+  // Fetch rate on component mount
+  useEffect(() => {
+    fetchExchangeRate();
+    
+    // Refresh every 5 minutes
+    const interval = setInterval(fetchExchangeRate, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Header Section */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">📥 Import Booking Data</h1>
+              <p className="text-gray-600 mt-1">Manage and import booking transaction records</p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                {bookingData.length} Records
+              </div>
+              <button 
+                onClick={() => {
+                  if (showAddForm && editingTransaction) {
+                    // Cancel edit mode
+                    setEditingTransaction(null);
+                    setFormData({
+                      id: 0,
+                      dateOfBooking: '',
+                      vendor: '',
+                      port: '',
+                      grade: '',
+                      qty: '',
+                      commission: '',
+                      commissionCurrency: 'USD',
+                      exchRate: '',
+                      customDuty: '',
+                      calculatedCustomDuty: '',
+                      bookingRate: '',
+                      clearanceCharges: '',
+                      netLanded: '',
+                      status: '',
+                      completed: ''
+                    });
+                  }
+                  setShowAddForm(!showAddForm);
+                }}
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition shadow-md flex items-center space-x-2"
+              >
+                <span>{showAddForm ? '❌' : '➕'}</span>
+                <span>{showAddForm ? (editingTransaction ? 'Cancel Edit' : 'Cancel') : 'Add Transaction'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Add Form */}
+        {showAddForm && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200">
+            <div className="border-b border-gray-200 pb-4 mb-6">
+              <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+                <span className="mr-2">{editingTransaction ? '✏️' : '📝'}</span>
+                {editingTransaction ? 'Edit Booking Transaction' : 'Add New Booking Transaction'}
+              </h2>
+              <p className="text-gray-600 mt-1">
+                {editingTransaction ? 'Modify the transaction details below' : 'Fill in the transaction details below'}
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 xl:grid-cols-4 gap-6">
+              {/* Left Section - Basic Info */}
+              <div className="space-y-6">
+                <div className="bg-white p-4 rounded-lg border border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <span className="mr-2">📋</span>
+                    Basic Information
+                  </h3>
+                  <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">📅 Date of Booking</label>
+                  <input 
+                    type="date" 
+                    value={formData.dateOfBooking} 
+                    onChange={(e) => handleFormChange('dateOfBooking', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  </div>
+                </div>
+                
+                <div className="bg-white p-4 rounded-lg border border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <span className="mr-2">🚢</span>
+                    Shipment Details
+                  </h3>
+                  <div className="space-y-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">🏢 Vendor</label>
+                  <div 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 bg-white cursor-pointer"
+                    onClick={() => setShowDropdown(!showDropdown)}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className={`${formData.vendor ? 'text-gray-900' : 'text-gray-500'}`}>
+                        {formData.vendor || (suppliers.length === 0 ? 'Loading vendors...' : 'Select Vendor')}
+                      </span>
+                      <svg 
+                        className={`w-5 h-5 text-gray-400 transition-transform ${showDropdown ? 'rotate-180' : ''}`}
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                  
+                  {showDropdown && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+                      <div className="p-2 border-b border-gray-200 sticky top-0 bg-white">
+                        <input
+                          type="text"
+                          placeholder="Search vendors..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="py-1">
+                        {filteredSuppliers.length === 0 ? (
+                          <div className="px-4 py-2 text-gray-500 text-sm">No vendors found</div>
+                        ) : (
+                          filteredSuppliers.map((supplier) => (
+                            <div
+                              key={supplier.id}
+                              className={`px-4 py-2 cursor-pointer hover:bg-blue-50 ${formData.vendor === supplier.supplierName ? 'bg-blue-100 text-blue-800' : 'text-gray-700'}`}
+                              onClick={() => {
+                                handleFormChange('vendor', supplier.supplierName);
+                                setShowDropdown(false);
+                                setSearchTerm('');
+                              }}
+                            >
+                              <div className="font-medium">{supplier.supplierName}</div>
+                              {supplier.alias && (
+                                <div className="text-sm text-gray-500">{supplier.alias}</div>
+                              )}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div>
+                  <SearchableDropdown
+                    options={grades.map(grade => ({ id: grade.id, name: grade.gradeName }))}
+                    value={formData.grade}
+                    onChange={(value) => handleFormChange('grade', value)}
+                    placeholder={grades.length === 0 ? 'Loading grades...' : 'Select Grade'}
+                    label="🏷️ Grade"
+                    disabled={grades.length === 0}
+                    searchKey="name"
+                    displayKey="name"
+                  />
+                </div>
+                
+
+                  </div>
+                </div>
+              </div>
+              
+              {/* Middle Section - Financial Details */}
+              <div className="lg:col-span-2 space-y-6">
+                <div className="bg-white p-4 rounded-lg border border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <span className="mr-2">💰</span>
+                    Financial Information
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Exchange Rate & Commission Side by Side */}
+                <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">🚢 Port</label>
+                      <select
+                        value={formData.port}
+                        onChange={(e) => handleFormChange('port', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                      >
+                        <option value="">Select Port</option>
+                        <option value="Chennai">Chennai</option>
+                        <option value="JNPT">JNPT</option>
+                        <option value="Delivered-BLR">Delivered-BLR</option>
+                      </select>
+                    </div>
+                                      
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">⚖️ Qty (Kg)</label>
+                      <input 
+                        type="number" 
+                        value={formData.qty} 
+                        onChange={(e) => handleFormChange('qty', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="0"
+                      />
+                    </div>
+                                      
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">💸 Custom Duty</label>
+                      <select
+                        value={formData.customDuty}
+                        onChange={(e) => handleFormChange('customDuty', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                      >
+                        <option value="">Select Custom Duty</option>
+                        <option value="5%">5%</option>
+                        <option value="7.5%">7.5%</option>
+                        <option value="10%">10%</option>
+                      </select>
+                    </div>
+                                      
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">🧮 Calculated Custom Duty (L + 10%)</label>
+                      <input 
+                        type="number" 
+                        step="0.01" 
+                        value={formData.calculatedCustomDuty || ''}
+                        readOnly
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700"
+                        placeholder="0.00"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Formula: L + (L × 10%) where L = Custom Duty (percentage)</p>
+                    </div>
+                                      
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">🚛 Clearance Charges</label>
+                      <input 
+                        type="number" 
+                        step="0.01" 
+                        value={formData.clearanceCharges} 
+                        onChange={(e) => handleFormChange('clearanceCharges', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="0.00"
+                      />
+                    </div>
+              </div>
+              
+              {/* Column 3 */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">💱 Exch Rate</label>
+                    <div className="relative">
+                      <input 
+                        type="number" 
+                        step="0.0001" 
+                        value={formData.exchRate} 
+                        onChange={(e) => handleFormChange('exchRate', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-20"
+                        placeholder="e.g., 83.5000"
+                        title="Exchange rate for converting between USD and INR"
+                      />
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                          {loadingRate ? '...' : currentExchangeRate ? `₹${currentExchangeRate.toFixed(2)}` : 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Live USD-INR rate: {loadingRate ? 'Loading...' : currentExchangeRate ? currentExchangeRate.toFixed(4) : 'Unavailable'}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">💸 Commission</label>
+                    <div className="flex space-x-2">
+                      <input 
+                        type="number" 
+                        step="0.01" 
+                        value={formData.commission}
+                        onChange={(e) => handleFormChange('commission', e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="0.00"
+                      />
+                      <select
+                        value={formData.commissionCurrency}
+                        onChange={(e) => handleFormChange('commissionCurrency', e.target.value)}
+                        className="w-24 px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                      >
+                        <option value="USD">USD</option>
+                        <option value="INR">INR</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">💸 Custom Duty</label>
+                  <select
+                    value={formData.customDuty}
+                    onChange={(e) => handleFormChange('customDuty', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                  >
+                    <option value="">Select Custom Duty</option>
+                    <option value="5%">5%</option>
+                    <option value="7.5%">7.5%</option>
+                    <option value="10%">10%</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">🧮 Calculated Custom Duty (L + 10%)</label>
+                  <input 
+                    type="number" 
+                    step="0.01" 
+                    value={formData.calculatedCustomDuty || ''}
+                    readOnly
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700"
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Formula: L + (L × 10%) where L = Custom Duty (percentage)</p>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">🎫 Booking Rate</label>
+                    <input 
+                      type="number" 
+                      step="0.01" 
+                      value={formData.bookingRate || ''}
+                      onChange={(e) => handleFormChange('bookingRate', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">📦 Net Landed (Kg)</label>
+                    <input 
+                      type="number" 
+                      step="0.01" 
+                      value={formData.netLanded || ''}
+                      readOnly
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">📊 Status</label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => handleFormChange('status', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                    >
+                      <option value="">Select Status</option>
+                      <option value="Not Yet Arrived">Not Yet Arrived</option>
+                      <option value="Arrived">Arrived</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="text-xs text-gray-500 mt-1">Formula: ((Booking Rate * Exchange Rate) + (Booking Rate * Exchange Rate * Calculated Duty) + Clearance Charges + (Custom Duty * Exchange Rate) + Commission INR) / 1000</div>
+              </div>
+              
+              {/* Column 4 */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">🚛 Clearance Charges</label>
+                  <input 
+                    type="number" 
+                    step="0.01" 
+                    value={formData.clearanceCharges} 
+                    onChange={(e) => handleFormChange('clearanceCharges', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="0.00"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">✅ Completed</label>
+                  <select
+                    value={formData.completed}
+                    onChange={(e) => handleFormChange('completed', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                  >
+                    <option value="">Select Completion</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Done">Done</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+              <div className="flex items-start">
+                <span className="text-blue-500 mr-3 mt-0.5 text-lg">🔄</span>
+                <div>
+                  <h3 className="font-semibold text-blue-800 mb-2">Live Currency Conversion</h3>
+                  <p className="text-sm text-blue-700 mb-2">Enter values in either Commission (US $) or Commission (INR) field along with the Exchange Rate for real-time conversion.</p>
+                  <div className="text-xs text-blue-600 space-y-1">
+                    <div>• Change USD value → INR updates automatically</div>
+                    <div>• Change INR value → USD updates automatically</div>
+                    <div>• Change Exchange Rate → Both values recalculate</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-6 flex justify-end space-x-3">
+              {editingTransaction && (
+                <button 
+                  onClick={() => {
+                    setEditingTransaction(null);
+                    setFormData({
+                      id: 0,
+                      dateOfBooking: '',
+                      vendor: '',
+                      port: '',
+                      grade: '',
+                      qty: '',
+                      commission: '',
+                      commissionCurrency: 'USD',
+                      exchRate: '',
+                      customDuty: '',
+                      calculatedCustomDuty: '',
+                      bookingRate: '',
+                      clearanceCharges: '',
+                      netLanded: '',
+                      status: '',
+                      completed: ''
+                    });
+                  }}
+                  className="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition shadow-md flex items-center space-x-2"
+                >
+                  <span>❌</span>
+                  <span>Cancel Edit</span>
+                </button>
+              )}
+              <button 
+                onClick={handleAddTransaction}
+                className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 shadow-md transition transform hover:scale-105 flex items-center space-x-2"
+              >
+                <span>{editingTransaction ? '🔄' : '💾'}</span>
+                <span>{editingTransaction ? 'Update Transaction' : 'Save Transaction'}</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center">
+            <div className="flex flex-col items-center justify-center">
+              <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+              <p className="text-gray-600">Loading transactions...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Transactions Table */}
+        {!loading && bookingData.length > 0 && (
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200">
+            <div className="border-b border-gray-200 px-6 py-4">
+              <h2 className="text-lg font-semibold text-gray-800 flex items-center">
+                <span className="mr-2">📋</span>
+                Booking Transactions
+                <span className="ml-3 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                  {bookingData.length} records
+                </span>
+              </h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendor</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Port</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty (Kg)</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comm Value</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Currency</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exch Rate</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duty</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Charges</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Net Landed</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Completed</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {bookingData.map((row, index) => (
+                    <tr key={row.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 text-sm text-gray-900">{row.dateOfBooking || '-'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{row.vendor || '-'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{row.port || '-'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{row.grade || '-'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{row.qty || '0'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{row.commission || '0.00'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{row.commissionCurrency || 'USD'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{row.exchRate || '0.0000'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{row.customDuty || '-'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{row.clearanceCharges || '0.00'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{row.netLanded || '0.00'}</td>
+                      <td className="px-4 py-3 text-sm">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          row.status === 'Arrived' ? 'bg-green-100 text-green-800' :
+                          row.status === 'Not Yet Arrived' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {row.status || 'N/A'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          row.completed === 'Done' ? 'bg-green-100 text-green-800' :
+                          row.completed === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {row.completed || 'N/A'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-center space-x-2">
+                        <button 
+                          onClick={() => startEditTransaction(row)}
+                          className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50 transition-colors"
+                          title="Edit transaction"
+                        >
+                          ✏️
+                        </button>
+                        <button 
+                          onClick={() => {
+                            console.log('Delete button clicked, row.id:', row.id);
+                            removeTransaction(row.id);
+                          }}
+                          className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50 transition-colors"
+                          title="Delete transaction"
+                        >
+                          🗑️
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Domestic Section - Slider Box */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 mt-6 overflow-hidden">
+          <div 
+            className="border-b border-gray-200 px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors flex items-center justify-between"
+            onClick={() => setShowDomesticSection(!showDomesticSection)}
+          >
+            <div className="flex items-center">
+              <span className="mr-2 text-xl">🏠</span>
+              <h2 className="text-lg font-semibold text-gray-800">Domestic Transactions</h2>
+              <span className="ml-3 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                Coming Soon
+              </span>
+            </div>
+            <div className="transform transition-transform duration-200" style={{ transform: showDomesticSection ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+          
+          <div 
+            className={`transition-all duration-300 ease-in-out ${showDomesticSection ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+            style={{ overflow: 'hidden' }}
+          >
+            <div className="p-6 text-center">
+              <div className="mx-auto max-w-md">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                  <span className="text-2xl text-gray-400">🏠</span>
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">Domestic Transactions Section</h3>
+                <p className="text-gray-600 mb-6">
+                  This section will handle domestic transactions separately from import bookings.
+                </p>
+                <div className="flex flex-wrap justify-center gap-2 text-sm text-gray-500 mb-6">
+                  <span className="bg-gray-100 px-3 py-1 rounded-full">Local Vendors</span>
+                  <span className="bg-gray-100 px-3 py-1 rounded-full">INR Only</span>
+                  <span className="bg-gray-100 px-3 py-1 rounded-full">No Exchange Rate</span>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
+                  <h4 className="font-medium text-blue-800 mb-2">Planned Features:</h4>
+                  <ul className="text-sm text-blue-700 space-y-1">
+                    <li>• Dedicated form for domestic vendor bookings</li>
+                    <li>• Simplified INR-only transaction tracking</li>
+                    <li>• Local supplier management</li>
+                    <li>• Separate reporting and analytics</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {!loading && bookingData.length === 0 && !showAddForm && (
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center">
+            <div className="mx-auto max-w-md">
+              <div className="w-20 h-20 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+                <span className="text-4xl text-gray-400">📋</span>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-3">No Booking Transactions Found</h2>
+              <p className="text-gray-600 mb-8 max-w-md mx-auto">
+                Get started by adding your first booking transaction. Track vendor bookings, commissions, and delivery status all in one place.
+              </p>
+              <button 
+                onClick={() => setShowAddForm(true)}
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center space-x-2 mx-auto"
+              >
+                <span>➕</span>
+                <span>Add Your First Transaction</span>
+              </button>
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <p className="text-sm text-gray-500">
+                  <span className="font-medium">Tip:</span> Select the currency for your commission value using the dropdown next to the field.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

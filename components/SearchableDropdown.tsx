@@ -4,12 +4,15 @@ import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, X } from 'lucide-react';
 
 interface SearchableDropdownProps {
-  options: { id: string; name: string }[];
+  options: { id: string; name: string; [key: string]: any }[];
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
   label: string;
   selectedIndicator?: string;
+  searchKey?: string;
+  displayKey?: string;
+  disabled?: boolean;
 }
 
 export default function SearchableDropdown({
@@ -18,15 +21,18 @@ export default function SearchableDropdown({
   onChange,
   placeholder,
   label,
-  selectedIndicator
+  selectedIndicator,
+  searchKey = 'name',
+  displayKey = 'name',
+  disabled = false
 }: SearchableDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Filter options based on search term (prefix matching)
+  // Filter options based on search term (contains matching)
   const filteredOptions = options.filter(option =>
-    option.name.toLowerCase().startsWith(searchTerm.toLowerCase())
+    option[searchKey].toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Close dropdown when clicking outside
@@ -52,13 +58,13 @@ export default function SearchableDropdown({
       </label>
       
       <div 
-        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white cursor-pointer flex justify-between items-center ${
+        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white flex justify-between items-center ${
           isOpen ? 'ring-2 ring-blue-500 border-blue-500' : ''
-        }`}
-        onClick={() => setIsOpen(!isOpen)}
+        } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
       >
         <span className={value ? 'text-gray-900' : 'text-gray-500'}>
-          {value ? selectedOption?.name || value : placeholder}
+          {value ? selectedOption?.[displayKey] || value : placeholder}
         </span>
         <div className="flex items-center gap-2">
           {value && (
@@ -109,7 +115,7 @@ export default function SearchableDropdown({
                     setSearchTerm('');
                   }}
                 >
-                  {option.name}
+                  {option[displayKey]}
                 </div>
               ))
             ) : (

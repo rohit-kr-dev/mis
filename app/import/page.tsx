@@ -1,9 +1,13 @@
-"use client";
+'use client';
 
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, orderBy, deleteDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, orderBy, deleteDoc, updateDoc, doc, serverTimestamp, getDoc } from 'firebase/firestore';
 import SearchableDropdown from '@/components/SearchableDropdown';
+import { Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface BookingData {
   id: string | number;
@@ -38,6 +42,7 @@ interface Grade {
 export default function ImportPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [bookingData, setBookingData] = useState<BookingData[]>([]);
+  const [filteredData, setFilteredData] = useState<BookingData[]>([]); // For filtered results
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [grades, setGrades] = useState<Grade[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -46,6 +51,11 @@ export default function ImportPage() {
   const [loading, setLoading] = useState(true);
   const [currentExchangeRate, setCurrentExchangeRate] = useState<number | null>(null);
   const [loadingRate, setLoadingRate] = useState(true);
+  const [customPort, setCustomPort] = useState(''); // For custom port input
+  const [filters, setFilters] = useState({
+    completed: '', // Filter for completed status
+    status: ''     // Filter for general status
+  });
   const [formData, setFormData] = useState<BookingData>({
     id: 0,
     dateOfBooking: '',
@@ -109,13 +119,13 @@ export default function ImportPage() {
         
         // Net Landed formula:
         // ((booking rate * exchange rate) + (booking rate * exchange rate * calculated custom duty%) + 
-        // clearance charges + (select custom duty % * exchange rate) + commission converted) / 1000
+        // clearance charges + commission converted + commission converted) / 1000
         
         const part1 = bookingRate * exchRate;
         const part2 = bookingRate * exchRate * (calculatedCustomDuty / 100);
         const part3 = clearanceCharges;
-        const part4 = customDutyPercent * exchRate; // Select Custom Duty % * Exchange Rate
-        const part5 = getConvertedCommission(); // Use converted commission value
+        const part4 = getConvertedCommission(); // Commission Converted (INR value)
+        const part5 = getConvertedCommission(); // Commission Converted (INR value) - added again
         
         const netLandedValue = (part1 + part2 + part3 + part4 + part5) / 1000;
         
@@ -140,6 +150,145 @@ export default function ImportPage() {
       return commission;
     }
     return 0;
+  };
+
+  // Format number with Indian comma separators
+  const formatIndianNumber = (num: string | number): string => {
+    const number = typeof num === 'string' ? parseFloat(num) || 0 : num;
+    if (number === 0) return '0';
+    
+    // Handle the case where number is between 0 and 1 (like 0.5)
+    if (number > 0 && number < 1) {
+      return number.toString(); // Return as is for numbers like 0.5
+    }
+    
+    // Convert to string and split at decimal point
+    const [integer, decimal] = number.toString().split('.');
+    
+    // Format integer part with Indian numbering system
+    let formatted = '';
+    const reversed = integer.split('').reverse();
+    
+    for (let i = 0; i < reversed.length; i++) {
+      if (i === 3 || (i > 3 && (i - 3) % 2 === 0)) {
+        formatted = ',' + formatted;
+      }
+      formatted = reversed[i] + formatted;
+    }
+    
+    // Add decimal part if exists
+    if (decimal) {
+      formatted += '.' + decimal;
+    }
+    
+    return formatted;
+  };
+
+  // Format currency with 2 decimal places and Indian commas
+  const formatCurrency = (amount: string | number): string => {
+    const num = typeof amount === 'string' ? parseFloat(amount) || 0 : amount;
+    return formatIndianNumber(num.toFixed(2));
+  };
+
+  // Download as Excel
+  const downloadExcel = () => {
+    if (filteredData.length === 0) return;
+    
+    // Prepare data for export
+    const exportData = filteredData.map((row, index) => ({
+      'SL No': index + 1,
+      'Date of Booking': row.dateOfBooking || '-',
+      'Vendor': row.vendor || '-',
+      'Port': row.port || '-',
+      'Grade': row.grade || '-',
+      'Qty (Kg)': formatIndianNumber(row.qty || '0'),
+      'Booking Rate': formatCurrency(row.bookingRate || '0.00'),
+      'Net Landed (Kg)': formatCurrency(row.netLanded || '0.00'),
+      'Status': row.status || '-',
+      'Completed': row.completed || '-'
+    }));
+    
+    // Create worksheet
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Booking Transactions');
+    
+    // Generate filename
+    const filename = `booking_transactions_${new Date().toISOString().split('T')[0]}.xlsx`;
+    
+    // Export
+    XLSX.writeFile(wb, filename);
+  };
+
+  // Download as PDF
+  const downloadPDF = async () => {
+    if (filteredData.length === 0) return;
+    
+    // Dynamically import jsPDF only when needed
+    const jsPDFModule = await import('jspdf');
+    const doc = new jsPDFModule.default();
+    
+    // Add company name
+    doc.setFontSize(20);
+    doc.setFont(undefined, 'bold');
+    doc.text('Polymetalz', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+    
+    // Add title
+    doc.setFontSize(16);
+    doc.setFont(undefined, 'normal');
+    doc.text('Booking Transactions Report', 14, 35);
+    
+    // Add date
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 45);
+    
+    // Format currency function for PDF (using existing formatCurrency)
+    const formatCurrencyForPDF = (amount: string) => {
+      return formatCurrency(amount);
+    };
+    
+    // Prepare table data
+    const tableData = filteredData.map((row, index) => [
+      index + 1,
+      row.dateOfBooking || '-',
+      row.vendor || '-',
+      row.port || '-',
+      row.grade || '-',
+      formatIndianNumber(row.qty || '0'),
+      formatCurrencyForPDF(row.bookingRate || '0'),
+      formatCurrencyForPDF(row.netLanded || '0'),
+      row.status || '-',
+      row.completed || '-'
+    ]);
+
+    // Prepare column headers
+    const headers = [[
+      'SL No', 'Date', 'Vendor', 'Port', 'Grade', 'Qty (Kg)', 
+      'Booking Rate', 'Net Landed', 'Status', 'Completed'
+    ]];
+    
+    // Generate table
+    autoTable(doc, {
+      head: headers,
+      body: tableData,
+      startY: 55,
+      styles: {
+        fontSize: 8,
+        cellPadding: 2
+      },
+      headStyles: {
+        fillColor: [59, 130, 246],
+        textColor: 255
+      },
+      alternateRowStyles: {
+        fillColor: [243, 244, 246]
+      }
+    });
+    
+    // Save PDF
+    doc.save(`booking_transactions_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   // Fetch suppliers from Firestore
@@ -189,24 +338,39 @@ export default function ImportPage() {
 
   // Fetch transactions from Firestore
   const fetchTransactions = async () => {
+    console.log('=== FETCH TRANSACTIONS DEBUG ===');
     try {
       setLoading(true);
       const q = query(collection(db, 'import-transactions'), orderBy('createdAt', 'desc'));
+      console.log('Querying collection: import-transactions');
+      
       const snapshot = await getDocs(q);
+      console.log('Firestore returned', snapshot.size, 'documents');
       
       const transactions: BookingData[] = [];
       snapshot.forEach((doc) => {
-        transactions.push({
+        console.log('Document ID:', doc.id);
+        console.log('Document data:', doc.data());
+        
+        const transactionData = {
           id: doc.id,
           ...doc.data()
-        } as BookingData);
+        } as BookingData;
+        
+        console.log('Processed transaction:', transactionData);
+        transactions.push(transactionData);
       });
       
+      console.log('Final transactions array length:', transactions.length);
+      console.log('Setting bookingData with', transactions.length, 'items');
       setBookingData(transactions);
+      console.log('✅ Booking data updated successfully');
     } catch (error) {
-      console.error('Error fetching transactions:', error);
+      console.error('❌ Error fetching transactions:', error);
+      console.error('Error details:', error);
     } finally {
       setLoading(false);
+      console.log('=== END FETCH TRANSACTIONS DEBUG ===');
     }
   };
 
@@ -224,7 +388,9 @@ export default function ImportPage() {
         updatedAt: serverTimestamp()
       };
       
-      await addDoc(collection(db, 'import-transactions'), transactionData);
+      // Use addDoc which returns the reference to the new document with its ID
+      const docRef = await addDoc(collection(db, 'import-transactions'), transactionData);
+      console.log('New transaction added with ID:', docRef.id);
       
       // Reset form
       setFormData({
@@ -315,22 +481,64 @@ export default function ImportPage() {
     }
   };
 
-  // Delete transaction from Firestore
+  // Delete transaction from Firestore - Direct approach
   const removeTransaction = async (id: string | number) => {
-    if (!id || id === '' || (typeof id === 'string' && id.trim() === '')) {
+    console.log('=== DELETE TRANSACTION ATTEMPT ===');
+    console.log('Target ID:', id);
+    
+    // Validate ID
+    if (!id && id !== 0) {
       console.error('Invalid transaction ID:', id);
       alert('Cannot delete transaction: Invalid ID');
       return;
     }
     
-    if (window.confirm('Are you sure you want to delete this transaction?')) {
+    const idString = typeof id === 'number' ? id.toString() : id;
+    console.log('Using ID string:', idString);
+    
+    // Find transaction for confirmation
+    const transaction = bookingData.find(t => {
+      const tIdString = typeof t.id === 'number' ? t.id.toString() : t.id;
+      return tIdString === idString;
+    });
+    
+    if (!transaction) {
+      console.error('Transaction not found in local data');
+      alert('Cannot delete transaction: Transaction not found');
+      return;
+    }
+    
+    if (window.confirm(`Delete transaction for ${transaction.vendor || 'Unknown'}?`)) {
       try {
-        const idString = typeof id === 'number' ? id.toString() : id;
-        await deleteDoc(doc(db, 'import-transactions', idString));
+        console.log('Starting deletion process...');
+        
+        // Attempt to delete from Firestore first
+        const docRef = doc(db, 'import-transactions', idString);
+        console.log('Attempting to delete document:', docRef.path);
+        
+        // Check if document exists before deletion
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists()) {
+          console.log('Document already deleted from Firestore:', idString);
+          alert('Transaction has already been deleted from the database.');
+        } else {
+          // Document exists, so delete it
+          await deleteDoc(docRef);
+          console.log('Document deleted from Firestore');
+          alert('Transaction deleted successfully!');
+        }
+        
+        // Refresh data to get current state
+        console.log('Refreshing data...');
         await fetchTransactions();
+        console.log('=== DELETION PROCESS COMPLETE ===');
+        
       } catch (error) {
-        console.error('Error deleting transaction:', error);
-        alert('Error deleting transaction. Please try again.');
+        console.error('❌ Deletion failed:', error);
+        alert(`Deletion failed: ${(error as Error).message || 'An unknown error occurred'}`);
+        
+        // Refresh data on error to ensure consistency
+        await fetchTransactions();
       }
     }
   };
@@ -363,6 +571,33 @@ export default function ImportPage() {
     fetchGrades();
     fetchTransactions();
   }, []);
+
+  // Apply filters to booking data
+  useEffect(() => {
+    let filtered = [...bookingData];
+    
+    // Apply completed filter
+    if (filters.completed) {
+      filtered = filtered.filter(item => item.completed === filters.completed);
+    }
+    
+    // Apply status filter
+    if (filters.status) {
+      filtered = filtered.filter(item => item.status === filters.status);
+    }
+    
+    // Apply search term filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(item => 
+        (item.vendor && item.vendor.toLowerCase().includes(term)) ||
+        (item.grade && item.grade.toLowerCase().includes(term)) ||
+        (item.port && item.port.toLowerCase().includes(term))
+      );
+    }
+    
+    setFilteredData(filtered);
+  }, [bookingData, filters, searchTerm]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -437,58 +672,102 @@ export default function ImportPage() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">🏢 Vendor</label>
-                <select
+                <SearchableDropdown
+                  options={suppliers.map(supplier => ({
+                    id: supplier.supplierName,
+                    name: supplier.supplierName,
+                    alias: supplier.alias
+                  }))}
                   value={formData.vendor}
-                  onChange={(e) => handleFormChange('vendor', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                >
-                  <option value="">Select Vendor</option>
-                  {suppliers.map(supplier => (
-                    <option key={supplier.id} value={supplier.supplierName}>
-                      {supplier.supplierName}
-                      {supplier.alias && ` (${supplier.alias})`}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(value) => handleFormChange('vendor', value)}
+                  placeholder="Select Vendor"
+                  label="🏢 Vendor"
+                  displayKey="name"
+                  searchKey="name"
+                />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">🏷️ Grade</label>
-                <select
+                <SearchableDropdown
+                  options={grades.map(grade => ({
+                    id: grade.gradeName,
+                    name: grade.gradeName
+                  }))}
                   value={formData.grade}
-                  onChange={(e) => handleFormChange('grade', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                >
-                  <option value="">Select Grade</option>
-                  {grades.map(grade => (
-                    <option key={grade.id} value={grade.gradeName}>
-                      {grade.gradeName}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(value) => handleFormChange('grade', value)}
+                  placeholder="Select Grade"
+                  label="🏷️ Grade"
+                  displayKey="name"
+                  searchKey="name"
+                />
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">🚢 Port</label>
-                <select
-                  value={formData.port}
-                  onChange={(e) => handleFormChange('port', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                >
-                  <option value="">Select Port</option>
-                  <option value="Chennai">Chennai</option>
-                  <option value="JNPT">JNPT</option>
-                  <option value="Delivered-BLR">Delivered-BLR</option>
-                </select>
+                <div className="space-y-2">
+                  <select
+                    value={formData.port}
+                    onChange={(e) => {
+                      const selectedValue = e.target.value;
+                      if (selectedValue === 'other') {
+                        // Don't set the value yet, let user type it
+                        setFormData(prev => ({ ...prev, port: '' }));
+                        setCustomPort('');
+                      } else {
+                        handleFormChange('port', selectedValue);
+                        setCustomPort('');
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                  >
+                    <option value="">Select Port</option>
+                    <option value="Chennai">Chennai</option>
+                    <option value="JNPT">JNPT</option>
+                    <option value="Delivered-BLR">Delivered-BLR</option>
+                    <option value="other">Other (Specify below)</option>
+                  </select>
+                  
+                  {(!formData.port || formData.port === '') && (
+                    <input
+                      type="text"
+                      value={customPort}
+                      onChange={(e) => setCustomPort(e.target.value)}
+                      onBlur={() => {
+                        if (customPort.trim()) {
+                          handleFormChange('port', customPort.trim());
+                        }
+                      }}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && customPort.trim()) {
+                          handleFormChange('port', customPort.trim());
+                          e.preventDefault();
+                        }
+                      }}
+                      placeholder="Enter custom port name"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  )}
+                </div>
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">⚖️ Qty (Kg)</label>
                 <input 
-                  type="number" 
-                  value={formData.qty} 
-                  onChange={(e) => handleFormChange('qty', e.target.value)}
+                  type="text" 
+                  value={formData.qty ? formatIndianNumber(formData.qty) : ''}
+                  onChange={(e) => {
+                    // Remove commas and other non-numeric characters except decimal point
+                    let rawValue = e.target.value.replace(/[^0-9.]/g, '');
+                    
+                    // Ensure only one decimal point is present
+                    const parts = rawValue.split('.');
+                    if (parts.length > 2) {
+                      // If more than one decimal point, keep only the first one
+                      rawValue = parts[0] + '.' + parts.slice(1).join('');
+                    }
+                    
+                    handleFormChange('qty', rawValue);
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="0"
                 />
@@ -498,10 +777,22 @@ export default function ImportPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">💱 Exchange Rate</label>
                 <div className="relative">
                   <input 
-                    type="number" 
-                    step="0.0001" 
-                    value={formData.exchRate} 
-                    onChange={(e) => handleFormChange('exchRate', e.target.value)}
+                    type="text" 
+                    value={formData.exchRate || ''}
+                    onChange={(e) => {
+                      // Remove commas and other non-numeric characters except decimal point
+                      let rawValue = e.target.value.replace(/[^0-9.]/g, '');
+                      
+                      // Ensure only one decimal point is present
+                      const parts = rawValue.split('.');
+                      if (parts.length > 2) {
+                        // If more than one decimal point, keep only the first one
+                        rawValue = parts[0] + '.' + parts.slice(1).join('');
+                      }
+                      
+                      console.log('Raw value being set:', rawValue); // Debug
+                      handleFormChange('exchRate', rawValue);
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-20"
                     placeholder="e.g., 83.5000"
                   />
@@ -517,10 +808,21 @@ export default function ImportPage() {
                 <label className="block text-xs font-medium text-gray-700 mb-1">💸 Commission</label>
                 <div className="flex space-x-1">
                   <input 
-                    type="number" 
-                    step="0.01" 
-                    value={formData.commission}
-                    onChange={(e) => handleFormChange('commission', e.target.value)}
+                    type="text" 
+                    value={formData.commission ? formatCurrency(formData.commission) : ''}
+                    onChange={(e) => {
+                      // Remove commas and other non-numeric characters except decimal point
+                      let rawValue = e.target.value.replace(/[^0-9.]/g, '');
+                      
+                      // Ensure only one decimal point is present
+                      const parts = rawValue.split('.');
+                      if (parts.length > 2) {
+                        // If more than one decimal point, keep only the first one
+                        rawValue = parts[0] + '.' + parts.slice(1).join('');
+                      }
+                      
+                      handleFormChange('commission', rawValue);
+                    }}
                     className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="0.00"
                   />
@@ -538,9 +840,8 @@ export default function ImportPage() {
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">💱 Commission Converted (INR)</label>
                 <input 
-                  type="number" 
-                  step="0.01" 
-                  value={getConvertedCommission() || ''}
+                  type="text" 
+                  value={getConvertedCommission() ? formatCurrency(getConvertedCommission()) : ''}
                   readOnly
                   className="w-full px-2 py-1 text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700"
                   placeholder="0.00"
@@ -569,9 +870,8 @@ export default function ImportPage() {
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">🧮 Calculated Duty Value</label>
                 <input 
-                  type="number" 
-                  step="0.01" 
-                  value={formData.calculatedCustomDuty || ''}
+                  type="text" 
+                  value={formData.calculatedCustomDuty ? formatCurrency(formData.calculatedCustomDuty) : ''}
                   readOnly
                   className="w-full px-2 py-1 text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700"
                   placeholder="0.00"
@@ -584,39 +884,60 @@ export default function ImportPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">🚛 Clearance Charges</label>
                 <input 
-                  type="number" 
-                  step="0.01" 
-                  value={formData.clearanceCharges} 
-                  onChange={(e) => handleFormChange('clearanceCharges', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="0.00"
-                />
+                  type="text" 
+                  value={formData.clearanceCharges ? formatCurrency(formData.clearanceCharges) : ''}
+                  onChange={(e) => {
+                    // Remove commas and other non-numeric characters except decimal point
+                    let rawValue = e.target.value.replace(/[^0-9.]/g, '');
+                      
+                      // Ensure only one decimal point is present
+                      const parts = rawValue.split('.');
+                      if (parts.length > 2) {
+                        // If more than one decimal point, keep only the first one
+                        rawValue = parts[0] + '.' + parts.slice(1).join('');
+                      }
+                      
+                      handleFormChange('clearanceCharges', rawValue);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="0.00"
+                  />
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">🎫 Booking Rate</label>
                 <input 
-                  type="number" 
-                  step="0.01" 
-                  value={formData.bookingRate || ''}
-                  onChange={(e) => handleFormChange('bookingRate', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="0.00"
-                />
+                  type="text" 
+                  value={formData.bookingRate ? formatCurrency(formData.bookingRate) : ''}
+                  onChange={(e) => {
+                    // Remove commas and other non-numeric characters except decimal point
+                    let rawValue = e.target.value.replace(/[^0-9.]/g, '');
+                      
+                      // Ensure only one decimal point is present
+                      const parts = rawValue.split('.');
+                      if (parts.length > 2) {
+                        // If more than one decimal point, keep only the first one
+                        rawValue = parts[0] + '.' + parts.slice(1).join('');
+                      }
+                      
+                      handleFormChange('bookingRate', rawValue);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="0.00"
+                  />
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">📦 Net Landed (Kg)</label>
                 <input 
-                  type="number" 
-                  step="0.01" 
-                  value={formData.netLanded || ''}
+                  type="text" 
+                  value={formData.netLanded ? formatCurrency(formData.netLanded) : ''}
                   readOnly
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700"
                   placeholder="0.00"
                 />
                 <div className="text-xs text-gray-500 mt-1">
-                  Formula: ((Booking Rate × Exchange Rate) + (Booking Rate × Exchange Rate × Calculated Duty %) + Clearance Charges + (Custom Duty × Exchange Rate) + Commission Converted) ÷ 1000
+                  Formula: ((Booking Rate × Exchange Rate) + (Booking Rate × Exchange Rate × Calculated Duty %) + Clearance Charges + Commission Converted + Commission Converted) ÷ 1000
                 </div>
               </div>
               
@@ -670,6 +991,7 @@ export default function ImportPage() {
                       status: '',
                       completed: ''
                     });
+                    setCustomPort(''); // Clear custom port input
                   }}
                   className="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition shadow-md flex items-center space-x-2"
                 >
@@ -699,21 +1021,84 @@ export default function ImportPage() {
         )}
 
         {/* Transactions Table */}
-        {!loading && bookingData.length > 0 && (
+        {!loading && filteredData.length > 0 && (
           <div className="bg-white rounded-xl shadow-lg border border-gray-200">
             <div className="border-b border-gray-200 px-6 py-4">
-              <h2 className="text-lg font-semibold text-gray-800 flex items-center">
-                <span className="mr-2">📋</span>
-                Booking Transactions
-                <span className="ml-3 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
-                  {bookingData.length} records
-                </span>
-              </h2>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <h2 className="text-lg font-semibold text-gray-800 flex items-center">
+                  <span className="mr-2">📋</span>
+                  Booking Transactions
+                  <span className="ml-3 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                    {filteredData.length} records
+                  </span>
+                </h2>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  {/* Filter Controls */}
+                  <div className="flex flex-wrap gap-2">
+                    {/* Completed Status Filter */}
+                    <select
+                      value={filters.completed}
+                      onChange={(e) => setFilters(prev => ({ ...prev, completed: e.target.value }))}
+                      className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                    >
+                      <option value="">All Completion Status</option>
+                      <option value="Pending">Pending</option>
+                      <option value="Done">Done</option>
+                    </select>
+                    
+                    {/* General Status Filter */}
+                    <select
+                      value={filters.status}
+                      onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+                      className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                    >
+                      <option value="">All Status</option>
+                      <option value="Not Yet Arrived">Not Yet Arrived</option>
+                      <option value="Arrived">Arrived</option>
+                    </select>
+                    
+                    {/* Search Input */}
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Search vendor, grade, port..."
+                        className="pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full sm:w-64"
+                      />
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Export Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button
+                      onClick={downloadExcel}
+                      className="w-full sm:w-auto px-4 py-2 text-sm bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition shadow-md flex items-center justify-center gap-2"
+                    >
+                      <Download size={16} />
+                      Excel
+                    </button>
+                    <button
+                      onClick={downloadPDF}
+                      className="w-full sm:w-auto px-4 py-2 text-sm bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition shadow-md flex items-center justify-center gap-2"
+                    >
+                      <Download size={16} />
+                      PDF
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SL No</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendor</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Port</th>
@@ -731,19 +1116,20 @@ export default function ImportPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {bookingData.map((row) => (
+                  {filteredData.map((row, index) => (
                     <tr key={row.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 text-sm text-gray-900 font-medium">{index + 1}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{row.dateOfBooking || '-'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{row.vendor || '-'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{row.port || '-'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{row.grade || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{row.qty || '0'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{row.commission || '0.00'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{formatIndianNumber(row.qty || '0')}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{formatCurrency(row.commission || '0.00')}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{row.commissionCurrency || 'USD'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{row.exchRate || '0.0000'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{row.customDuty || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{row.clearanceCharges || '0.00'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{row.netLanded || '0.00'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{formatCurrency(row.clearanceCharges || '0.00')}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{formatCurrency(row.netLanded || '0.00')}</td>
                       <td className="px-4 py-3 text-sm">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           row.status === 'Arrived' ? 'bg-green-100 text-green-800' :
@@ -797,11 +1183,14 @@ export default function ImportPage() {
                 Get started by adding your first booking transaction. Track vendor bookings, commissions, and delivery status all in one place.
               </p>
               <button 
-                onClick={() => setShowAddForm(true)}
-                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center space-x-2 mx-auto"
+                onClick={() => {
+                  setShowAddForm(true);
+                  setCustomPort(''); // Clear custom port when opening form
+                }}
+                className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 shadow-md transition transform hover:scale-105 flex items-center justify-center space-x-2"
               >
                 <span>➕</span>
-                <span>Add Your First Transaction</span>
+                <span>Add Transaction</span>
               </button>
             </div>
           </div>
