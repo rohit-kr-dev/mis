@@ -61,6 +61,7 @@ export default function SupplierGradeWiseYearly() {
   const [selectedSupplier, setSelectedSupplier] = useState<string>('');
   const [selectedType, setSelectedType] = useState<string>('');
   const [selectedGrade, setSelectedGrade] = useState<string>('');
+  const [supplierSearch, setSupplierSearch] = useState<string>(''); // New search state
   const [loading, setLoading] = useState(true);
   const [loadingData, setLoadingData] = useState(false);
   const [dataFetched, setDataFetched] = useState(false);
@@ -171,6 +172,14 @@ export default function SupplierGradeWiseYearly() {
 
     fetchMasterData();
   }, []);
+
+  // Filter suppliers based on search
+  const filteredSuppliers = useMemo(() => {
+    if (!supplierSearch.trim()) return suppliers;
+    return suppliers.filter(supplier => 
+      supplier.supplierName.toLowerCase().includes(supplierSearch.toLowerCase())
+    );
+  }, [suppliers, supplierSearch]);
 
   // Check if filter requirements are met
   const appliedFiltersCount = useMemo(() => {
@@ -419,25 +428,42 @@ export default function SupplierGradeWiseYearly() {
     }
   };
 
-  // Download as Excel
+  // Format currency function for Indian numbering system
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'decimal',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
+
+  // Format for downloads (without decimals for cleaner look)
+  const formatForDownload = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
   const downloadExcel = () => {
     if (calculatedRows.length === 0) return;
     
-    // Prepare data for export
+    // Prepare data for export with formatted numbers
     const exportData = calculatedRows.map((row, index) => {
       const rowData: any = {
         'Sl.No': index + 1,
         'Supplier': row.supplier,
         'Grade': row.materialType,
-        'Actual Grade Name': row.gradeName || ''
+        'Actual Grade Name': row.gradeName || '',
       };
-      
-      // Add period columns
+          
+      // Add period columns with formatted numbers
       periods.forEach(period => {
-        rowData[period.period] = row.values[period.period] || 0;
+        const value = row.values[period.period] || 0;
+        rowData[period.period] = value === 0 ? 0 : formatForDownload(value);
       });
-      
-      rowData['Total'] = row.total;
+          
+      rowData['Total'] = formatForDownload(row.total);
       return rowData;
     });
     
@@ -523,15 +549,21 @@ export default function SupplierGradeWiseYearly() {
       row.supplier,
       row.materialType,
       row.gradeName || '',
-      ...periods.map(period => formatCurrency(row.values[period.period] || 0)),
-      formatCurrency(row.total)
+      ...periods.map(period => {
+        const value = row.values[period.period] || 0;
+        return value === 0 ? '0' : formatForDownload(value);
+      }),
+      formatForDownload(row.total)
     ]);
     
     // Add totals row with formatted currency
     const totalsRow = [
       '', '', 'COLUMN TOTALS', '',
-      ...periods.map(period => formatCurrency(columnTotals[period.period] || 0)),
-      formatCurrency(grandTotal)
+      ...periods.map(period => {
+        const value = columnTotals[period.period] || 0;
+        return value === 0 ? '0' : formatForDownload(value);
+      }),
+      formatForDownload(grandTotal)
     ];
     tableData.push(totalsRow);
     
@@ -704,18 +736,27 @@ export default function SupplierGradeWiseYearly() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 🏢 Supplier {selectedSupplier && <span className="text-green-600">✓</span>}
               </label>
-              <select
-                value={selectedSupplier}
-                onChange={(e) => handleFilterChange('supplier', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
-              >
-                <option value="">-- Select Supplier --</option>
-                {suppliers.map(supplier => (
-                  <option key={supplier.id} value={supplier.supplierName}>
-                    {supplier.supplierName}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={supplierSearch}
+                  onChange={(e) => setSupplierSearch(e.target.value)}
+                  placeholder="Search suppliers..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-t-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+                />
+                <select
+                  value={selectedSupplier}
+                  onChange={(e) => handleFilterChange('supplier', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-b-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white border-t-0"
+                >
+                  <option value="">-- Select Supplier --</option>
+                  {filteredSuppliers.map(supplier => (
+                    <option key={supplier.id} value={supplier.supplierName}>
+                      {supplier.supplierName}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div>
@@ -874,11 +915,14 @@ export default function SupplierGradeWiseYearly() {
                         </td>
                         {periods.map(period => (
                           <td key={period.id} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-700 border border-gray-300">
-                            {(row.values[period.period] || 0) === 0 ? '—' : (row.values[period.period] || 0).toFixed(2)}
+                            {(row.values[period.period] || 0) === 0 
+                              ? '—' 
+                              : formatCurrency(row.values[period.period] || 0)
+                            }
                           </td>
                         ))}
                         <td className="px-3 py-3 text-xs sm:text-sm text-center font-semibold text-blue-700 border border-gray-300">
-                          {row.total.toFixed(2)}
+                          {formatCurrency(row.total)}
                         </td>
                       </tr>
                     ))}
@@ -893,7 +937,10 @@ export default function SupplierGradeWiseYearly() {
                       </td>
                       {periods.map(period => (
                         <td key={period.id} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
-                          {(columnTotals[period.period] || 0) === 0 ? '—' : (columnTotals[period.period] || 0).toFixed(2)}
+                          {(columnTotals[period.period] || 0) === 0 
+                            ? '—' 
+                            : formatCurrency(columnTotals[period.period] || 0)
+                          }
                         </td>
                       ))}
                       <td className="px-3 py-3 text-xs sm:text-sm text-center text-blue-700 font-bold text-base border border-gray-400">
@@ -907,7 +954,7 @@ export default function SupplierGradeWiseYearly() {
                         💰 GRAND TOTAL
                       </td>
                       <td colSpan={periods.length + 1} className="px-3 py-3 text-sm sm:text-base text-center text-green-800 font-bold border border-gray-400">
-                        {grandTotal.toFixed(2)}
+                        {formatCurrency(grandTotal)}
                       </td>
                     </tr>
                   </tbody>
