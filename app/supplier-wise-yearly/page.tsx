@@ -661,21 +661,16 @@ export default function SupplierWiseYearly() {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                🏢 Supplier {selectedSupplier && <span className="text-green-600">✓</span>}
-              </label>
-              <select
+              <SearchableDropdown
+                options={suppliers.map(supplier => ({ 
+                  id: supplier.supplierName, 
+                  name: supplier.supplierName 
+                }))}
                 value={selectedSupplier}
-                onChange={(e) => handleFilterChange('supplier', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm bg-white"
-              >
-                <option value="">-- Select Supplier --</option>
-                {suppliers.map(supplier => (
-                  <option key={supplier.id} value={supplier.supplierName}>
-                    {supplier.supplierName}
-                  </option>
-                ))}
-              </select>
+                onChange={(value) => handleFilterChange('supplier', value)}
+                placeholder="-- Select Supplier --"
+                label="🏢 Supplier"
+              />
             </div>
 
             <div>
