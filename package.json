@@ -16,6 +16,7 @@
     "grade-summary": "node scripts/grade-analysis-from-sample.js"
   },
   "dependencies": {
+    "browserslist": "^4.28.1",
     "dayjs": "^1.11.19",
     "firebase": "^12.6.0",
     "firebase-admin": "^13.6.0",
@@ -35,7 +36,6 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
-    "baseline-browser-mapping": "^2.9.19",
     "eslint": "^9",
     "eslint-config-next": "16.0.7",
     "tailwindcss": "^4",
