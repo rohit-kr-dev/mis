@@ -60,7 +60,6 @@ export default function SupplierGradeWiseYearly() {
   
   const [selectedSupplier, setSelectedSupplier] = useState<string>('');
   const [selectedType, setSelectedType] = useState<string>('');
-  const [selectedGrade, setSelectedGrade] = useState<string>('');
   const [supplierSearch, setSupplierSearch] = useState<string>(''); // New search state
   const [loading, setLoading] = useState(true);
   const [loadingData, setLoadingData] = useState(false);
@@ -185,9 +184,8 @@ export default function SupplierGradeWiseYearly() {
   const appliedFiltersCount = useMemo(() => {
     let count = 0;
     if (selectedSupplier) count++;
-    if (selectedGrade) count++;
     return count;
-  }, [selectedSupplier, selectedGrade]);
+  }, [selectedSupplier]);
 
   const filtersRequirementMet = useMemo(() => {
     return appliedFiltersCount >= requiredFilters;
@@ -210,9 +208,6 @@ export default function SupplierGradeWiseYearly() {
 
       if (selectedSupplier) {
         constraints.push(where('supplierName', '==', selectedSupplier));
-      }
-      if (selectedGrade) {
-        constraints.push(where('grade', '==', selectedGrade));
       }
 
       // Create query with constraints
@@ -262,10 +257,6 @@ export default function SupplierGradeWiseYearly() {
     const aggregatedData = new Map<string, { qty: number; grade: string }>();
     
     workingSheet.forEach(record => {
-      // Filter by grade if selected
-      if (selectedGrade && record.grade !== selectedGrade) {
-        return; // Skip this record if it doesn't match the selected grade
-      }
       
       const key = [
         (record.supplierName || '').trim().toLowerCase(),
@@ -298,10 +289,6 @@ export default function SupplierGradeWiseYearly() {
     
     // Process each record and group by actual grade name
     workingSheet.forEach(record => {
-      // Filter by grade if selected
-      if (selectedGrade && record.grade !== selectedGrade) {
-        return; // Skip this record if it doesn't match the selected grade
-      }
       
       const supplier = record.supplierName || '';
       const type = record.type || '';
@@ -357,7 +344,7 @@ export default function SupplierGradeWiseYearly() {
     });
 
     return results;
-  }, [selectedSupplier, selectedGrade, workingSheet, items, periods, suppliers, allGrades, showOnlyWithValues, dataFetched]);
+  }, [selectedSupplier, workingSheet, items, periods, suppliers, allGrades, showOnlyWithValues, dataFetched]);
 
   // Calculate column totals
   const columnTotals: Record<string, number> & { total: number } = useMemo(() => {
@@ -399,21 +386,17 @@ export default function SupplierGradeWiseYearly() {
   // Clear all filters
   const clearFilters = () => {
     setSelectedSupplier('');
-    setSelectedGrade('');
     setWorkingSheet([]);
     setDataFetched(false);
   };
 
   // Handle filter changes - mark data as stale
-  const handleFilterChange = (filterType: 'supplier' | 'grade', value: string) => {
+  const handleFilterChange = (filterType: 'supplier', value: string) => {
     setDataFetched(false); // Mark data as stale when filters change
     
     switch (filterType) {
       case 'supplier':
         setSelectedSupplier(value);
-        break;
-      case 'grade':
-        setSelectedGrade(value);
         break;
     }
   };
@@ -511,10 +494,6 @@ export default function SupplierGradeWiseYearly() {
     
     if (selectedSupplier) {
       doc.text(`Supplier: ${selectedSupplier}`, 14, yPos);
-      yPos += 5;
-    }
-    if (selectedGrade) {
-      doc.text(`Grade: ${selectedGrade}`, 14, yPos);
       yPos += 5;
     }
     
@@ -717,7 +696,7 @@ export default function SupplierGradeWiseYearly() {
             <span className="block mt-1 text-green-700 font-medium">🔥 Zero Firebase reads until you click the button!</span>
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-3 sm:gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 🏢 Supplier {selectedSupplier && <span className="text-green-600">✓</span>}
@@ -743,16 +722,6 @@ export default function SupplierGradeWiseYearly() {
                   ))}
                 </select>
               </div>
-            </div>
-
-            <div>
-              <SearchableDropdown
-                options={allGrades.map(grade => ({ id: grade, name: grade }))}
-                value={selectedGrade}
-                onChange={(value) => handleFilterChange('grade', value)}
-                placeholder="-- Select Grade --"
-                label="🏷️ Grade"
-              />
             </div>
           </div>
 
