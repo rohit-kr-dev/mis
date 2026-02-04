@@ -255,11 +255,10 @@ export default function SupplierWiseMonthly() {
     if (selectedMonth) count++;
     if (selectedSupplier) count++;
     if (selectedCompany) count++;
-    if (selectedType) count++;
-    if (selectedType2) count++;
+    if (selectedType2) count++; // Grade filter
     if (selectedStatus) count++;
     return count;
-  }, [selectedMonth, selectedSupplier, selectedCompany, selectedType, selectedType2, selectedStatus]);
+  }, [selectedMonth, selectedSupplier, selectedCompany, selectedType2, selectedStatus]);
 
   const filtersRequirementMet = useMemo(() => {
     return appliedFiltersCount >= requiredFilters;
@@ -288,9 +287,6 @@ export default function SupplierWiseMonthly() {
       }
       if (selectedCompany) {
         constraints.push(where('company', '==', selectedCompany));
-      }
-      if (selectedType) {
-        constraints.push(where('type', '==', selectedType));
       }
       // Note: Type2 (Domestic/Import) filter is applied after data retrieval
       // since it requires vlookup from items collection, not direct field in workingSheet
@@ -485,7 +481,6 @@ export default function SupplierWiseMonthly() {
     setSelectedMonth('');
     setSelectedSupplier('');
     setSelectedCompany('');
-    setSelectedType('');
     setSelectedType2('');
     setSelectedStatus('');
     setWorkingSheet([]);
@@ -906,7 +901,7 @@ export default function SupplierWiseMonthly() {
             <span className="block mt-1 text-green-700 font-medium">🔥 Zero Firebase reads until you click the button!</span>
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 📅 Month {selectedMonth && <span className="text-green-600">✓</span>}
@@ -971,32 +966,14 @@ export default function SupplierWiseMonthly() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                📦 Type {selectedType && <span className="text-green-600">✓</span>}
-              </label>
-              <select
-                value={selectedType}
-                onChange={(e) => handleFilterChange('type', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
-              >
-                <option value="">-- All Types --</option>
-                {types.map(typeObj => (
-                  <option key={typeObj.id} value={typeObj.type}>
-                    {typeObj.type}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                📦 Type 2 {selectedType2 && <span className="text-green-600">✓</span>}
+                🏷️ Grade {selectedType2 && <span className="text-green-600">✓</span>}
               </label>
               <select
                 value={selectedType2}
                 onChange={(e) => handleFilterChange('type2', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
               >
-                <option value="">-- All Type 2 --</option>
+                <option value="">-- All Grades --</option>
                 <option value="Domestic">Domestic</option>
                 <option value="Import">Import</option>
               </select>
