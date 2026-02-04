@@ -295,6 +295,7 @@ export default function SupplierGradeWiseYearly() {
           // Calculate values for each month dynamically using the lookup map
           const values: { [monthName: string]: number } = {};
           let total = 0;
+          let gradeName = ''; // Initialize gradeName for this combination
 
           for (const period of periods) {
             const key = [
@@ -305,7 +306,9 @@ export default function SupplierGradeWiseYearly() {
             
             const data = aggregatedData.get(key);
             const monthValue = data ? data.qty : 0;
-            const gradeName = data ? data.grade : '';
+            if (data && data.grade && !gradeName) {
+              gradeName = data.grade; // Capture the first non-empty grade found
+            }
             values[period.period] = monthValue;
             total += monthValue;
           }
