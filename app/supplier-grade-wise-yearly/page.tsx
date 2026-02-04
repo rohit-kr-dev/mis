@@ -283,49 +283,75 @@ export default function SupplierGradeWiseYearly() {
       }
     });
 
-    // Determine which combinations to calculate
-    const suppliersToProcess = selectedSupplier ? [selectedSupplier] : suppliers.map(s => s.supplierName);
-    const typesToProcess = selectedType ? [selectedType] : types.map(t => t.type);
-    const gradesToProcess = selectedGrade ? [selectedGrade] : allGrades;
-
-    // Generate all combinations
-    for (const supplier of suppliersToProcess) {
-      for (const type of typesToProcess) {
-        for (const grade of gradesToProcess) {
-          // Calculate values for each month dynamically using the lookup map
-          const values: { [monthName: string]: number } = {};
-          let total = 0;
-          let gradeName = ''; // Initialize gradeName for this combination
-
-          for (const period of periods) {
-            const key = [
-              supplier.trim().toLowerCase(),
-              type.trim().toLowerCase(),
-              period.period.trim().toLowerCase()
-            ].join('|');
-            
-            const data = aggregatedData.get(key);
-            const monthValue = data ? data.qty : 0;
-            if (data && data.grade && !gradeName) {
-              gradeName = data.grade; // Capture the first non-empty grade found
-            }
-            values[period.period] = monthValue;
-            total += monthValue;
-          }
-
-          // Add row based on filter setting
-          if (!showOnlyWithValues || total > 0) {
-            results.push({
-              supplier: supplier,
-              materialType: grade,  // This will be the selected grade filter
-              gradeName: gradeName, // Actual grade name from data
-              values: values,
-              total: total
-            });
-          }
+    // Group data by actual grade names instead of filter grades
+    const gradeGroups = new Map<string, { 
+      supplier: string; 
+      type: string; 
+      actualGrade: string; 
+      values: { [monthName: string]: number }; 
+      total: number 
+    }>();
+    
+    // Process each record and group by actual grade name
+    workingSheet.forEach(record => {
+      // Filter by grade if selected
+      if (selectedGrade && record.grade !== selectedGrade) {
+        return; // Skip this record if it doesn't match the selected grade
+      }
+      
+      const supplier = record.supplierName || '';
+      const type = record.type || '';
+      const actualGrade = record.grade || '';
+      
+      // Skip if no actual grade
+      if (!actualGrade.trim()) return;
+      
+      const key = `${supplier}|${type}|${actualGrade}`;
+      
+      const qty = typeof record.qty === 'number' ? record.qty : parseFloat(String(record.qty || 0));
+      const validQty = isNaN(qty) ? 0 : qty;
+      
+      if (gradeGroups.has(key)) {
+        const existing = gradeGroups.get(key)!;
+        existing.values[record.cnMonth] = (existing.values[record.cnMonth] || 0) + validQty;
+        existing.total += validQty;
+      } else {
+        // Initialize values for all periods
+        const values: { [monthName: string]: number } = {};
+        periods.forEach(period => {
+          values[period.period] = period.period === record.cnMonth ? validQty : 0;
+        });
+        
+        gradeGroups.set(key, {
+          supplier,
+          type,
+          actualGrade,
+          values,
+          total: validQty
+        });
+      }
+    });
+    
+    // Convert grouped data to results array
+    gradeGroups.forEach((groupData, key) => {
+      // Apply filter constraints
+      const [supplier, type, actualGrade] = key.split('|');
+      
+      const supplierMatch = !selectedSupplier || supplier === selectedSupplier;
+      const typeMatch = !selectedType || type === selectedType;
+      
+      if (supplierMatch && typeMatch) {
+        if (!showOnlyWithValues || groupData.total > 0) {
+          results.push({
+            supplier: groupData.supplier,
+            materialType: groupData.actualGrade, // Use actual grade name as materialType
+            gradeName: groupData.actualGrade,    // Actual grade name
+            values: groupData.values,
+            total: groupData.total
+          });
         }
       }
-    }
+    });
 
     return results;
   }, [selectedSupplier, selectedType, selectedGrade, workingSheet, items, periods, suppliers, types, allGrades, showOnlyWithValues, dataFetched]);
