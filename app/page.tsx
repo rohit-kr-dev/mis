@@ -14,13 +14,16 @@ interface WorkingSheetData {
   [key: string]: any; // Allow other properties
 }
 
-// Format currency function (same as in working page)
+// Format currency function with Indian numbering system (10,00,000 format)
 function formatCurrency(amount: number) {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'decimal',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(Math.abs(amount)); // Use absolute value for display
+  // Convert to absolute value and handle the Indian numbering system
+  const absAmount = Math.abs(amount);
+  
+  // Format with Indian comma separators
+  return absAmount.toLocaleString('en-IN', {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 0
+  });
 }
 
 async function getLastTransaction(): Promise<WorkingSheetData | null> {
@@ -113,45 +116,68 @@ export default async function HomePage() {
           </div>
         </div>
 
-        {/* Last Transaction Card */}
+        {/* Last Updated Date */}
         {lastTransaction && (
           <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl shadow-lg p-6 mb-8 text-white">
-            <h3 className="text-xl font-semibold mb-3">Last Transaction</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                <p className="text-xs opacity-80">Supplier</p>
-                <p className="font-semibold truncate">{lastTransaction.supplierName || 'N/A'}</p>
-              </div>
-              <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                <p className="text-xs opacity-80">Bill No</p>
-                <p className="font-semibold">{lastTransaction.billNo || 'N/A'}</p>
-              </div>
-              <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                <p className="text-xs opacity-80">Date</p>
-                <p className="font-semibold">
-                  {lastTransaction.purchaseDate ? 
-                    (typeof lastTransaction.purchaseDate === 'object' && lastTransaction.purchaseDate?.seconds ? 
-                      new Date(lastTransaction.purchaseDate.seconds * 1000).toLocaleDateString() : 
-                      (typeof lastTransaction.purchaseDate === 'string' || typeof lastTransaction.purchaseDate === 'number') ?
-                      new Date(lastTransaction.purchaseDate).toLocaleDateString() : 'N/A') 
-                    : 'N/A'}
-                </p>
-              </div>
-              <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                <p className="text-xs opacity-80">Status</p>
-                <p className="font-semibold">{lastTransaction.status || 'N/A'}</p>
-              </div>
-              <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                <p className="text-xs opacity-80">Amount</p>
-                <p className="font-semibold">₹{formatCurrency(lastTransaction.total || 0)}</p>
-              </div>
-              <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                <p className="text-xs opacity-80">Grade</p>
-                <p className="font-semibold truncate">{lastTransaction.grade || 'N/A'}</p>
-              </div>
+            <h3 className="text-xl font-semibold mb-3">Last Updated</h3>
+            <div className="text-2xl font-bold">
+              {lastTransaction.purchaseDate ? 
+                (typeof lastTransaction.purchaseDate === 'object' && lastTransaction.purchaseDate?.seconds ? 
+                  new Date(lastTransaction.purchaseDate.seconds * 1000).toLocaleDateString() : 
+                  (typeof lastTransaction.purchaseDate === 'string' || typeof lastTransaction.purchaseDate === 'number') ?
+                  new Date(lastTransaction.purchaseDate).toLocaleDateString() : 'N/A') 
+                : 'N/A'}
             </div>
           </div>
         )}
+
+        {/* Reports Section */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">📋 Reports & Analytics</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Link href="/supplier-wise-monthly" className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-200 group">
+              <div className="text-4xl font-bold text-green-600 mb-4 group-hover:scale-110 transition-transform">📈</div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">Supplier Wise Monthly</h3>
+              <p className="text-gray-600 mb-4">View monthly transactions by supplier</p>
+              <div className="text-green-600 font-medium">View &raquo;</div>
+            </Link>
+
+            <Link href="/supplier-wise-yearly" className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-200 group">
+              <div className="text-4xl font-bold text-purple-600 mb-4 group-hover:scale-110 transition-transform">📅</div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">Supplier Wise Yearly</h3>
+              <p className="text-gray-600 mb-4">View yearly transactions by supplier</p>
+              <div className="text-purple-600 font-medium">View &raquo;</div>
+            </Link>
+
+            <Link href="/supplier-grade-wise-yearly" className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-200 group">
+              <div className="text-4xl font-bold text-indigo-600 mb-4 group-hover:scale-110 transition-transform">📊</div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">Supplier Grade Wise Yearly</h3>
+              <p className="text-gray-600 mb-4">View yearly transactions by supplier and grade</p>
+              <div className="text-indigo-600 font-medium">View &raquo;</div>
+            </Link>
+
+            <Link href="/total-suppliers-monthly" className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-200 group">
+              <div className="text-4xl font-bold text-yellow-600 mb-4 group-hover:scale-110 transition-transform">📊</div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">Total Suppliers Monthly</h3>
+              <p className="text-gray-600 mb-4">Comprehensive monthly supplier analysis</p>
+              <div className="text-yellow-600 font-medium">View &raquo;</div>
+            </Link>
+
+            <Link href="/all-suppliers-monthly" className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-200 group">
+              <div className="text-4xl font-bold text-red-600 mb-4 group-hover:scale-110 transition-transform">🏢</div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">All Suppliers Monthly</h3>
+              <p className="text-gray-600 mb-4">Compare all suppliers across different types</p>
+              <div className="text-red-600 font-medium">View &raquo;</div>
+            </Link>
+
+            <Link href="/grade-wise-yearly" className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-200 group">
+              <div className="text-4xl font-bold text-teal-600 mb-4 group-hover:scale-110 transition-transform">📊</div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">Grade Wise Yearly</h3>
+              <p className="text-gray-600 mb-4">View yearly transactions by grade</p>
+              <div className="text-teal-600 font-medium">View &raquo;</div>
+            </Link>
+          </div>
+        </div>
 
         {/* Main Navigation Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
@@ -160,34 +186,6 @@ export default async function HomePage() {
             <h3 className="text-xl font-semibold text-gray-800 mb-2">Working Sheet</h3>
             <p className="text-gray-600 mb-4">Manage daily transactions with auto-calculations</p>
             <div className="text-blue-600 font-medium">View &raquo;</div>
-          </Link>
-
-          <Link href="/supplier-wise-monthly" className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-200 group">
-            <div className="text-4xl font-bold text-green-600 mb-4 group-hover:scale-110 transition-transform">📈</div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">Supplier Wise Monthly</h3>
-            <p className="text-gray-600 mb-4">View monthly transactions by supplier</p>
-            <div className="text-green-600 font-medium">View &raquo;</div>
-          </Link>
-
-          <Link href="/supplier-wise-yearly" className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-200 group">
-            <div className="text-4xl font-bold text-purple-600 mb-4 group-hover:scale-110 transition-transform">📅</div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">Supplier Wise Yearly</h3>
-            <p className="text-gray-600 mb-4">View yearly transactions by supplier</p>
-            <div className="text-purple-600 font-medium">View &raquo;</div>
-          </Link>
-
-          <Link href="/total-suppliers-monthly" className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-200 group">
-            <div className="text-4xl font-bold text-yellow-600 mb-4 group-hover:scale-110 transition-transform">📊</div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">Total Suppliers Monthly</h3>
-            <p className="text-gray-600 mb-4">Comprehensive monthly supplier analysis</p>
-            <div className="text-yellow-600 font-medium">View &raquo;</div>
-          </Link>
-
-          <Link href="/all-suppliers-monthly" className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-200 group">
-            <div className="text-4xl font-bold text-red-600 mb-4 group-hover:scale-110 transition-transform">🏢</div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">All Suppliers Monthly</h3>
-            <p className="text-gray-600 mb-4">Compare all suppliers across different types</p>
-            <div className="text-red-600 font-medium">View &raquo;</div>
           </Link>
 
           <Link href="/items-master" className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-200 group">

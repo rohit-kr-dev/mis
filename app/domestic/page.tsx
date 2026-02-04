@@ -2,8 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, orderBy, deleteDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, orderBy, deleteDoc, updateDoc, doc, serverTimestamp, getDoc } from 'firebase/firestore';
 import SearchableDropdown from '@/components/SearchableDropdown';
+import { Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface DomesticData {
   id: string | number;
@@ -48,6 +52,24 @@ export default function DomesticPage() {
   const [editingTransaction, setEditingTransaction] = useState<DomesticData | null>(null);
   const [formData, setFormData] = useState<DomesticData>(initialFormData);
 
+  // Format number with Indian comma separators
+  const formatIndianNumber = (num: string | number): string => {
+    const number = typeof num === 'string' ? parseFloat(num) || 0 : num;
+    if (number === 0) return '0';
+    
+    // Use toLocaleString for Indian numbering system (10,00,000 format)
+    return Math.abs(number).toLocaleString('en-IN', {
+      maximumFractionDigits: 2,
+      minimumFractionDigits: 0
+    });
+  };
+
+  // Format currency with Indian commas
+  const formatCurrency = (amount: string | number): string => {
+    const num = typeof amount === 'string' ? parseFloat(amount) || 0 : amount;
+    return formatIndianNumber(num);
+  };
+
   const handleFormChange = (field: keyof DomesticData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -60,12 +82,38 @@ export default function DomesticPage() {
       const snapshot = await getDocs(q);
       
       const transactions: DomesticData[] = [];
+      const invalidIds: string[] = [];
+      
       snapshot.forEach((doc) => {
-        transactions.push({
+        const data = {
           id: doc.id,
           ...doc.data()
-        } as DomesticData);
+        } as DomesticData;
+        
+        // Check for invalid IDs (like '0' or other problematic values)
+        if (data.id === 0 || data.id === '0' || !data.id) {
+          console.warn('Found transaction with invalid ID:', data);
+          invalidIds.push(doc.id);
+        } else {
+          transactions.push(data);
+        }
       });
+      
+      // Clean up invalid transactions
+      if (invalidIds.length > 0) {
+        console.log('Cleaning up', invalidIds.length, 'invalid transactions');
+        for (const invalidId of invalidIds) {
+          try {
+            await deleteDoc(doc(db, 'domestic-transactions', invalidId));
+            console.log('Deleted invalid transaction with ID:', invalidId);
+          } catch (error) {
+            console.error('Error deleting invalid transaction:', error);
+          }
+        }
+        // Refresh after cleanup
+        await fetchTransactions();
+        return;
+      }
       
       console.log('Fetched domestic transactions:', transactions);
       setDomesticData(transactions);
@@ -81,8 +129,8 @@ export default function DomesticPage() {
     console.log('Starting edit domestic transaction:', transaction);
     setEditingTransaction(transaction);
     setFormData({
-      ...transaction,
-      id: 0 // Reset ID for new transaction
+      ...transaction
+      // Don't reset the ID - keep the original Firestore document ID
     });
     setShowAddForm(true);
   };
@@ -141,12 +189,18 @@ export default function DomesticPage() {
 
     try {
       const transactionData = {
-        ...formData,
+        dateOfBooking: formData.dateOfBooking,
+        vendor: formData.vendor,
+        grade: formData.grade,
+        qty: formData.qty,
+        location: formData.location,
+        status: formData.status,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       };
       
-      await addDoc(collection(db, 'domestic-transactions'), transactionData);
+      const docRef = await addDoc(collection(db, 'domestic-transactions'), transactionData);
+      console.log('New domestic transaction added with ID:', docRef.id);
       
       // Reset form
       setFormData(initialFormData);
@@ -165,34 +219,151 @@ export default function DomesticPage() {
     console.log('Remove domestic transaction called with ID:', id);
     console.log('ID type:', typeof id);
     
-    if (!id || id === '' || (typeof id === 'string' && id.trim() === '')) {
+    // More flexible ID validation - accept string IDs from Firestore
+    if (id === null || id === undefined) {
       console.error('Invalid domestic transaction ID:', id);
       alert('Cannot delete transaction: Invalid ID');
       return;
     }
     
-    // Convert to string if it's a number
+    // Convert to string for Firestore operations
     const stringId = typeof id === 'number' ? id.toString() : id;
+    
+    // Additional validation for empty strings
+    if (typeof stringId === 'string' && stringId.trim() === '') {
+      console.error('Empty domestic transaction ID:', stringId);
+      alert('Cannot delete transaction: Invalid ID');
+      return;
+    }
     
     if (confirm('Are you sure you want to delete this transaction? This action cannot be undone.')) {
       try {
         console.log('Deleting domestic transaction with ID:', stringId);
-        const deleteResult = await deleteDoc(doc(db, 'domestic-transactions', stringId));
-        console.log('Delete operation result:', deleteResult);
+        
+        // Check if document exists before deletion
+        const docRef = doc(db, 'domestic-transactions', stringId);
+        const docSnap = await getDoc(docRef);
+        
+        if (!docSnap.exists()) {
+          console.log('Document already deleted or does not exist');
+          alert('Transaction has already been deleted.');
+          await fetchTransactions(); // Refresh to show current state
+          return;
+        }
+        
+        // Perform the deletion
+        await deleteDoc(docRef);
         console.log('Domestic transaction deleted successfully');
         
-        // Small delay to ensure delete completes
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Refresh data after successful deletion
-        console.log('Refreshing domestic data...');
+        // Force multiple refresh attempts to ensure UI sync
+        console.log('Refreshing data...');
         await fetchTransactions();
+        await new Promise(resolve => setTimeout(resolve, 300)); // Wait for propagation
+        await fetchTransactions(); // Second refresh for certainty
+        
+        // Force state update to ensure UI reflects changes
+        setDomesticData(prev => [...prev]); // Trigger re-render
+        
         console.log('Domestic data refreshed after deletion');
+        alert('Transaction deleted successfully!');
+        
       } catch (error) {
         console.error('Error deleting domestic transaction:', error);
         alert(`Error deleting transaction: ${(error as Error).message || 'Unknown error occurred'}`);
+        
+        // Refresh on error to ensure consistency
+        await fetchTransactions();
       }
     }
+  };
+
+  // Download as Excel
+  const downloadExcel = () => {
+    if (domesticData.length === 0) return;
+    
+    // Prepare data for export with Indian number formatting
+    const exportData = domesticData.map((row, index) => ({
+      'SL No': index + 1,
+      'Date of Booking': row.dateOfBooking || '-',
+      'Vendor': row.vendor || '-',
+      'Grade': row.grade || '-',
+      'Qty (Kg)': formatIndianNumber(row.qty || '0'),
+      'Location': row.location || '-',
+      'Status': row.status || '-'
+    }));
+    
+    // Create worksheet
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Domestic Transactions');
+    
+    // Generate filename
+    const filename = `domestic_transactions_${new Date().toISOString().split('T')[0]}.xlsx`;
+    
+    // Export
+    XLSX.writeFile(wb, filename);
+  };
+
+  // Download as PDF
+  const downloadPDF = async () => {
+    if (domesticData.length === 0) return;
+    
+    // Dynamically import jsPDF only when needed
+    const jsPDFModule = await import('jspdf');
+    const doc = new jsPDFModule.default();
+    
+    // Add company name
+    doc.setFontSize(20);
+    doc.setFont(undefined, 'bold');
+    doc.text('Polymetalz', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+    
+    // Add title
+    doc.setFontSize(16);
+    doc.setFont(undefined, 'normal');
+    doc.text('Domestic Transactions Report', 14, 35);
+    
+    // Add date
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 45);
+    
+    // Prepare table data with Indian number formatting
+    const tableData = domesticData.map((row, index) => [
+      index + 1,
+      row.dateOfBooking || '-',
+      row.vendor || '-',
+      row.grade || '-',
+      formatIndianNumber(row.qty || '0'),
+      row.location || '-',
+      row.status || '-'
+    ]);
+
+    // Prepare column headers
+    const headers = [[
+      'SL No', 'Date', 'Vendor', 'Grade', 'Qty (Kg)', 'Location', 'Status'
+    ]];
+    
+    // Generate table
+    autoTable(doc, {
+      head: headers,
+      body: tableData,
+      startY: 55,
+      styles: {
+        fontSize: 8,
+        cellPadding: 2
+      },
+      headStyles: {
+        fillColor: [34, 197, 94],
+        textColor: 255
+      },
+      alternateRowStyles: {
+        fillColor: [243, 244, 246]
+      }
+    });
+    
+    // Save PDF
+    doc.save(`domestic_transactions_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   // Fetch suppliers from Firestore
@@ -321,7 +492,7 @@ export default function DomesticPage() {
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Column 1 */}
               <div className="space-y-4">
                 <div>
@@ -334,7 +505,7 @@ export default function DomesticPage() {
                   />
                 </div>
                 
-                <div className="relative">
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">🏢 Vendor</label>
                   <div 
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-green-500 focus-within:border-green-500 bg-white cursor-pointer"
@@ -397,29 +568,17 @@ export default function DomesticPage() {
               {/* Column 2 */}
               <div className="space-y-4">
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">🏷️ Grade</label>
                   <SearchableDropdown
                     options={grades.map(grade => ({ id: grade.id, name: grade.gradeName }))}
                     value={formData.grade}
-                    onChange={(value) => handleFormChange('grade', value)}
+                    onChange={(value: string) => handleFormChange('grade', value)}
                     placeholder={grades.length === 0 ? 'Loading grades...' : 'Select Grade'}
-                    label="🏷️ Grade"
+                    label=""
                     disabled={grades.length === 0}
                     searchKey="name"
                     displayKey="name"
-                  />
-                </div>
-              </div>
-              
-              {/* Column 3 */}
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">🔢 Qty (Kg)</label>
-                  <input 
-                    type="number" 
-                    value={formData.qty} 
-                    onChange={(e) => handleFormChange('qty', e.target.value)}
-                    placeholder="Enter quantity in Kg"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    returnKey="name" // Return the grade name instead of document ID
                   />
                 </div>
                 
@@ -440,8 +599,19 @@ export default function DomesticPage() {
                 </div>
               </div>
               
-              {/* Column 4 */}
+              {/* Column 3 */}
               <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">🔢 Qty (Kg)</label>
+                  <input 
+                    type="number" 
+                    value={formData.qty} 
+                    onChange={(e) => handleFormChange('qty', e.target.value)}
+                    placeholder="Enter quantity in Kg"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  />
+                </div>
+                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">📊 Status</label>
                   <select
@@ -497,18 +667,39 @@ export default function DomesticPage() {
         {!loading && domesticData.length > 0 && (
           <div className="bg-white rounded-xl shadow-lg border border-gray-200">
             <div className="border-b border-gray-200 px-6 py-4">
-              <h2 className="text-lg font-semibold text-gray-800 flex items-center">
-                <span className="mr-2">📋</span>
-                Domestic Transactions
-                <span className="ml-3 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                  {domesticData.length} records
-                </span>
-              </h2>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <h2 className="text-lg font-semibold text-gray-800 flex items-center">
+                  <span className="mr-2">📋</span>
+                  Domestic Transactions
+                  <span className="ml-3 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                    {domesticData.length} records
+                  </span>
+                </h2>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button
+                      onClick={downloadExcel}
+                      className="w-full sm:w-auto px-4 py-2 text-sm bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition shadow-md flex items-center justify-center gap-2"
+                    >
+                      <Download size={16} />
+                      Excel
+                    </button>
+                    <button
+                      onClick={downloadPDF}
+                      className="w-full sm:w-auto px-4 py-2 text-sm bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition shadow-md flex items-center justify-center gap-2"
+                    >
+                      <Download size={16} />
+                      PDF
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SL No</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date of Booking</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendor</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade</th>
@@ -521,10 +712,11 @@ export default function DomesticPage() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {domesticData.map((row) => (
                     <tr key={row.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 text-sm text-gray-900 font-medium">{domesticData.indexOf(row) + 1}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{row.dateOfBooking || '-'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{row.vendor || '-'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{row.grade || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{row.qty || '0'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{formatIndianNumber(row.qty || '0')}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{row.location || '-'}</td>
                       <td className="px-4 py-3 text-sm">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -545,7 +737,10 @@ export default function DomesticPage() {
                         </button>
                         <button 
                           onClick={() => {
-                            console.log('Delete button clicked, row.id:', row.id);
+                            console.log('Delete button clicked');
+                            console.log('Row data:', row);
+                            console.log('Row ID:', row.id);
+                            console.log('Row ID type:', typeof row.id);
                             removeTransaction(row.id);
                           }}
                           className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50 transition-colors"

@@ -61,17 +61,17 @@ export async function POST(request: NextRequest) {
     // Apply normalization to all rows
     const jsonData: any[] = rawJsonData.map(normalizeRow);
     
-    // Find the highest SL No already in the database for optimization
-    let lastUploadedSlNo = 0;
+    // Find the highest SL No already in the database
+    let maxExistingSlNo = 0;
     try {
       const q = query(collection(db, 'workingSheet'), orderBy('slNo', 'desc'), limit(1));
       const snapshot = await getDocs(q);
       if (!snapshot.empty) {
         const lastDoc = snapshot.docs[0];
-        lastUploadedSlNo = lastDoc.data().slNo || 0;
+        maxExistingSlNo = lastDoc.data().slNo || 0;
       }
     } catch (error) {
-      console.log('Could not fetch last uploaded SL No, proceeding with full upload');
+      console.log('Could not fetch existing records, proceeding with full check');
     }
     
     // Process data and prepare for Firestore
@@ -126,39 +126,58 @@ export async function POST(request: NextRequest) {
       return processedRow;
     });
     
-    // Filter data to only include records with slNo greater than last uploaded (optimization)
-    const filteredData = processedData.filter(record => record.slNo > lastUploadedSlNo);
+    // Sort by SL No to get the latest records
+    processedData.sort((a, b) => a.slNo - b.slNo);
+    
+    // Get only the last 100 new records (or all new records if less than 100)
+    const newRecords = processedData.filter(record => record.slNo > maxExistingSlNo);
+    const recordsToProcess = newRecords.slice(-100); // Last 100 new records
 
-    // Save to Firestore in batches
+    // Save to Firestore with proper duplicate check
     const batchSize = 50;
     let savedCount = 0;
+    let duplicateCount = 0;
+    let errorCount = 0;
     
-    for (let i = 0; i < filteredData.length; i += batchSize) {
-      const batch = filteredData.slice(i, i + batchSize);
+    for (let i = 0; i < recordsToProcess.length; i += batchSize) {
+      const batch = recordsToProcess.slice(i, i + batchSize);
       
       for (const record of batch) {
         try {
-          // Use slNo as document ID
+          // Check if document already exists
           const docRef = doc(db, 'workingSheet', record.slNo.toString());
-
-          // Use setDoc with merge: false to prevent overwriting existing documents
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+            // Document already exists - skip
+            duplicateCount++;
+            continue;
+          }
+          
+          // Document doesn't exist - save it
           await setDoc(docRef, {
             ...record,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
-          }, { merge: false });
+          });
           
           savedCount++;
         } catch (saveError) {
           console.error('Error saving record:', saveError);
-          // continue with other records
+          errorCount++;
         }
       }
     }
 
     return NextResponse.json({ 
-      message: `Successfully uploaded ${savedCount} records`, 
-      count: savedCount 
+      message: `Upload completed successfully`,
+      summary: {
+        totalProcessed: recordsToProcess.length,
+        saved: savedCount,
+        duplicatesSkipped: duplicateCount,
+        errors: errorCount,
+        maxExistingSlNo: maxExistingSlNo
+      }
     }, { status: 200 });
     
   } catch (error) {

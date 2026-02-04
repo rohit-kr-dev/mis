@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, AlertCircle, Download } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, AlertCircle, CheckCircle, Database, Download } from 'lucide-react';
 import SearchableDropdown from '@/components/SearchableDropdown';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -42,29 +42,28 @@ interface Type {
 }
 
 interface CalculatedRow {
+  supplier: string;
   materialType: string;
-  company: string;
-  supplierValues: { [supplierName: string]: number };
+  values: { [monthName: string]: number };
   total: number;
 }
 
-export default function AllSuppliersMonthly() {
+export default function SupplierGradeWiseYearly() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [periods, setPeriods] = useState<Period[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [types, setTypes] = useState<Type[]>([]);
   const [workingSheet, setWorkingSheet] = useState<WorkingSheetRecord[]>([]);
-  const [allCompanies, setAllCompanies] = useState<string[]>([]);
+  const [allGrades, setAllGrades] = useState<string[]>([]);
   
-  const [selectedMonth, setSelectedMonth] = useState<string>('');
-  const [selectedType, setSelectedType] = useState<string>('');
-  const [selectedCompany, setSelectedCompany] = useState<string>('');
   const [selectedSupplier, setSelectedSupplier] = useState<string>('');
+  const [selectedType, setSelectedType] = useState<string>('');
+  const [selectedGrade, setSelectedGrade] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [loadingData, setLoadingData] = useState(false);
   const [dataFetched, setDataFetched] = useState(false);
   const [showOnlyWithValues, setShowOnlyWithValues] = useState(true);
-  const [requiredFilters, setRequiredFilters] = useState<number>(0);
+  const [requiredFilters, setRequiredFilters] = useState<number>(1);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -153,14 +152,14 @@ export default function AllSuppliersMonthly() {
         });
         setItems(itemsData);
         
-        // Extract unique companies, filter out "NA" and empty strings
-        const companies = [...new Set(
+        // Extract unique grades (materialType), filter out empty strings
+        const grades = [...new Set(
           itemsData
-            .map(item => item.company.trim())
-            .filter(company => company && company.toUpperCase() !== 'NA')
+            .map(item => item.materialType.trim())
+            .filter(grade => grade)
         )].sort();
         
-        setAllCompanies(companies);
+        setAllGrades(grades);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching master data:', error);
@@ -174,12 +173,11 @@ export default function AllSuppliersMonthly() {
   // Check if filter requirements are met
   const appliedFiltersCount = useMemo(() => {
     let count = 0;
-    if (selectedMonth) count++;
-    if (selectedType) count++;
-    if (selectedCompany) count++;
     if (selectedSupplier) count++;
+    if (selectedType) count++;
+    if (selectedGrade) count++;
     return count;
-  }, [selectedMonth, selectedType, selectedCompany, selectedSupplier]);
+  }, [selectedSupplier, selectedType, selectedGrade]);
 
   const filtersRequirementMet = useMemo(() => {
     return appliedFiltersCount >= requiredFilters;
@@ -200,17 +198,15 @@ export default function AllSuppliersMonthly() {
       // Build query with where clauses based on selected filters
       const constraints = [];
 
-      if (selectedMonth) {
-        constraints.push(where('cnMonth', '==', selectedMonth));
+      if (selectedSupplier) {
+        constraints.push(where('supplierName', '==', selectedSupplier));
       }
       if (selectedType) {
         constraints.push(where('type', '==', selectedType));
       }
-      if (selectedCompany) {
-        constraints.push(where('company', '==', selectedCompany));
-      }
-      if (selectedSupplier) {
-        constraints.push(where('supplierName', '==', selectedSupplier));
+      if (selectedGrade) {
+        // For grade filtering, we need to filter by materialType from items
+        constraints.push(where('company', '!=', '')); // This will be filtered later
       }
 
       // Create query with constraints
@@ -259,11 +255,18 @@ export default function AllSuppliersMonthly() {
     const aggregatedData = new Map<string, number>();
     
     workingSheet.forEach(record => {
+      // Filter by grade if selected
+      if (selectedGrade) {
+        const materialType = vlookupMaterialType(record.company);
+        if (materialType !== selectedGrade) {
+          return; // Skip this record if it doesn't match the selected grade
+        }
+      }
+      
       const key = [
-        (record.cnMonth || '').trim().toLowerCase(),
-        (record.company || '').trim().toLowerCase(),
+        (record.supplierName || '').trim().toLowerCase(),
         (record.type || '').trim().toLowerCase(),
-        (record.supplierName || '').trim().toLowerCase()
+        (record.cnMonth || '').trim().toLowerCase()
       ].join('|');
       
       const qty = typeof record.qty === 'number' ? record.qty : parseFloat(String(record.qty || 0));
@@ -273,40 +276,36 @@ export default function AllSuppliersMonthly() {
     });
 
     // Determine which combinations to calculate
-    const monthsToProcess = selectedMonth ? [selectedMonth] : periods.map(p => p.period);
+    const suppliersToProcess = selectedSupplier ? [selectedSupplier] : suppliers.map(s => s.supplierName);
     const typesToProcess = selectedType ? [selectedType] : types.map(t => t.type);
-    const companiesToProcess = selectedCompany ? [selectedCompany] : allCompanies;
+    const gradesToProcess = selectedGrade ? [selectedGrade] : allGrades;
 
     // Generate all combinations
-    for (const month of monthsToProcess) {
+    for (const supplier of suppliersToProcess) {
       for (const type of typesToProcess) {
-        for (const company of companiesToProcess) {
-          // Get the material type for the company
-          const materialType = vlookupMaterialType(company);
-
-          // Calculate values for each supplier dynamically using the lookup map
-          const supplierValues: { [supplierName: string]: number } = {};
+        for (const grade of gradesToProcess) {
+          // Calculate values for each month dynamically using the lookup map
+          const values: { [monthName: string]: number } = {};
           let total = 0;
 
-          for (const supplier of suppliers) {
+          for (const period of periods) {
             const key = [
-              month.trim().toLowerCase(),
-              company.trim().toLowerCase(),
+              supplier.trim().toLowerCase(),
               type.trim().toLowerCase(),
-              supplier.supplierName.trim().toLowerCase()
+              period.period.trim().toLowerCase()
             ].join('|');
             
-            const supplierValue = aggregatedData.get(key) || 0;
-            supplierValues[supplier.supplierName] = supplierValue;
-            total += supplierValue;
+            const monthValue = aggregatedData.get(key) || 0;
+            values[period.period] = monthValue;
+            total += monthValue;
           }
 
           // Add row based on filter setting
           if (!showOnlyWithValues || total > 0) {
             results.push({
-              materialType: materialType,
-              company: company,
-              supplierValues: supplierValues,
+              supplier: supplier,
+              materialType: grade,
+              values: values,
               total: total
             });
           }
@@ -315,21 +314,21 @@ export default function AllSuppliersMonthly() {
     }
 
     return results;
-  }, [selectedMonth, selectedType, selectedCompany, workingSheet, items, periods, suppliers, types, allCompanies, showOnlyWithValues, dataFetched]);
+  }, [selectedSupplier, selectedType, selectedGrade, workingSheet, items, periods, suppliers, types, allGrades, showOnlyWithValues, dataFetched]);
 
   // Calculate column totals
   const columnTotals: Record<string, number> & { total: number } = useMemo(() => {
-    const totals: { [supplierName: string]: number } = {};
+    const totals: { [monthName: string]: number } = {};
     
-    // Initialize totals for each supplier
-    suppliers.forEach(supplier => {
-      totals[supplier.supplierName] = 0;
+    // Initialize totals for each month
+    periods.forEach(period => {
+      totals[period.period] = 0;
     });
     
     // Sum up values
     calculatedRows.forEach(row => {
-      suppliers.forEach(supplier => {
-        totals[supplier.supplierName] += row.supplierValues[supplier.supplierName] || 0;
+      periods.forEach(period => {
+        totals[period.period] += row.values[period.period] || 0;
       });
     });
     
@@ -337,7 +336,7 @@ export default function AllSuppliersMonthly() {
     const grandTotal = Object.values(totals).reduce((sum, val) => sum + val, 0);
     
     return { ...totals, total: grandTotal };
-  }, [calculatedRows, suppliers]);
+  }, [calculatedRows, periods]);
 
   // Grand Total
   const grandTotal = useMemo(() => {
@@ -354,40 +353,28 @@ export default function AllSuppliersMonthly() {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
 
-  // Format number in Indian numbering system without currency symbol
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
   // Clear all filters
   const clearFilters = () => {
-    setSelectedMonth('');
-    setSelectedType('');
-    setSelectedCompany('');
     setSelectedSupplier('');
+    setSelectedType('');
+    setSelectedGrade('');
     setWorkingSheet([]);
     setDataFetched(false);
   };
 
   // Handle filter changes - mark data as stale
-  const handleFilterChange = (filterType: 'month' | 'type' | 'company' | 'supplier', value: string) => {
+  const handleFilterChange = (filterType: 'supplier' | 'type' | 'grade', value: string) => {
     setDataFetched(false); // Mark data as stale when filters change
     
     switch (filterType) {
-      case 'month':
-        setSelectedMonth(value);
+      case 'supplier':
+        setSelectedSupplier(value);
         break;
       case 'type':
         setSelectedType(value);
         break;
-      case 'company':
-        setSelectedCompany(value);
-        break;
-      case 'supplier':
-        setSelectedSupplier(value);
+      case 'grade':
+        setSelectedGrade(value);
         break;
     }
   };
@@ -400,13 +387,13 @@ export default function AllSuppliersMonthly() {
     const exportData = calculatedRows.map((row, index) => {
       const rowData: any = {
         'Sl.No': index + 1,
-        'Type': row.materialType,
-        'Company': row.company
+        'Supplier': row.supplier,
+        'Grade': row.materialType
       };
       
-      // Add supplier columns
-      suppliers.forEach(supplier => {
-        rowData[supplier.supplierName] = row.supplierValues[supplier.supplierName] || 0;
+      // Add period columns
+      periods.forEach(period => {
+        rowData[period.period] = row.values[period.period] || 0;
       });
       
       rowData['Total'] = row.total;
@@ -416,12 +403,12 @@ export default function AllSuppliersMonthly() {
     // Add totals row
     const totalsRow: any = {
       'Sl.No': '',
-      'Type': '',
-      'Company': 'COLUMN TOTALS'
+      'Supplier': '',
+      'Grade': 'COLUMN TOTALS'
     };
     
-    suppliers.forEach(supplier => {
-      totalsRow[supplier.supplierName] = columnTotals[supplier.supplierName] || 0;
+    periods.forEach(period => {
+      totalsRow[period.period] = columnTotals[period.period] || 0;
     });
     
     totalsRow['Total'] = grandTotal;
@@ -432,10 +419,10 @@ export default function AllSuppliersMonthly() {
     
     // Create workbook
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'All Suppliers Monthly');
+    XLSX.utils.book_append_sheet(wb, ws, 'Supplier Grade Wise Yearly');
     
     // Generate filename
-    const filename = `all_suppliers_monthly_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const filename = `supplier_grade_wise_yearly_${new Date().toISOString().split('T')[0]}.xlsx`;
     
     // Export
     XLSX.writeFile(wb, filename);
@@ -447,7 +434,8 @@ export default function AllSuppliersMonthly() {
     
     // Dynamically import jsPDF only when needed
     const jsPDFModule = await import('jspdf');
-    const doc = new jsPDFModule.default();
+    const jsPDF = jsPDFModule.default || jsPDFModule;
+    const doc = new jsPDF();
     
     // Add company name
     doc.setFontSize(20);
@@ -457,26 +445,22 @@ export default function AllSuppliersMonthly() {
     // Add title
     doc.setFontSize(16);
     doc.setFont(undefined, 'normal');
-    doc.text('All Suppliers Monthly Report', 14, 35);
+    doc.text('Supplier Grade Wise Yearly Report', 14, 35);
     
     // Add filters info
     doc.setFontSize(10);
     let yPos = 45;
     
-    if (selectedMonth) {
-      doc.text(`Month: ${selectedMonth}`, 14, yPos);
+    if (selectedSupplier) {
+      doc.text(`Supplier: ${selectedSupplier}`, 14, yPos);
       yPos += 5;
     }
     if (selectedType) {
       doc.text(`Type: ${selectedType}`, 14, yPos);
       yPos += 5;
     }
-    if (selectedCompany) {
-      doc.text(`Company: ${selectedCompany}`, 14, yPos);
-      yPos += 5;
-    }
-    if (selectedSupplier) {
-      doc.text(`Supplier: ${selectedSupplier}`, 14, yPos);
+    if (selectedGrade) {
+      doc.text(`Grade: ${selectedGrade}`, 14, yPos);
       yPos += 5;
     }
     
@@ -494,28 +478,26 @@ export default function AllSuppliersMonthly() {
     // Prepare table data with formatted currency
     const tableData = calculatedRows.map((row, index) => [
       index + 1,
+      row.supplier,
       row.materialType,
-      row.company,
-      ...suppliers.map(supplier => formatCurrency(row.supplierValues[supplier.supplierName] || 0)),
+      ...periods.map(period => formatCurrency(row.values[period.period] || 0)),
       formatCurrency(row.total)
     ]);
     
     // Add totals row with formatted currency
     const totalsRow = [
       '', '', 'COLUMN TOTALS',
-      ...suppliers.map(supplier => formatCurrency(columnTotals[supplier.supplierName] || 0)),
+      ...periods.map(period => formatCurrency(columnTotals[period.period] || 0)),
       formatCurrency(grandTotal)
     ];
     tableData.push(totalsRow);
     
     // Prepare column headers
     const headers = [
-      ['Sl.No', 'Type', 'Company',
-       ...suppliers.map(supplier => supplier.supplierName),
+      ['Sl.No', 'Supplier', 'Grade',
+       ...periods.map(period => period.period),
        'Total']
     ];
-    
-    console.log('Starting table at yPos:', yPos);
     
     // Generate table
     autoTable(doc, {
@@ -536,7 +518,7 @@ export default function AllSuppliersMonthly() {
     });
     
     // Save PDF
-    doc.save(`all_suppliers_monthly_${new Date().toISOString().split('T')[0]}.pdf`);
+    doc.save(`supplier_grade_wise_yearly_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   if (loading) {
@@ -554,7 +536,7 @@ export default function AllSuppliersMonthly() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-4 px-2 sm:px-4 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-800 text-center">
-          📊 All Suppliers Monthly Report
+          📊 Supplier Grade Wise Yearly Report
         </h1>
 
         {/* Filters */}
@@ -566,7 +548,7 @@ export default function AllSuppliersMonthly() {
                 onClick={() => setShowOnlyWithValues(!showOnlyWithValues)}
                 className={`w-full sm:w-auto px-4 py-2 text-sm rounded-lg transition shadow-md ${
                   showOnlyWithValues
-                    ? 'bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800'
                     : 'bg-gradient-to-r from-orange-600 to-orange-700 text-white hover:from-orange-700 hover:to-orange-800'
                 }`}
               >
@@ -605,19 +587,6 @@ export default function AllSuppliersMonthly() {
               ⚙️ Minimum Filters Required:
             </label>
             <div className="flex flex-wrap gap-3">
-              <button
-                onClick={() => {
-                  setRequiredFilters(0);
-                  setDataFetched(false);
-                }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition shadow-md ${
-                  requiredFilters === 0
-                    ? 'bg-gradient-to-r from-green-600 to-green-700 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                }`}
-              >
-                ✅ Show All Data (No Filters Required)
-              </button>
               <button
                 onClick={() => {
                   setRequiredFilters(1);
@@ -684,37 +653,26 @@ export default function AllSuppliersMonthly() {
             {requiredFilters === 3 && ' All three filters must be selected.'}
             {requiredFilters === 2 && ' At least two filters must be selected.'}
             {requiredFilters === 1 && ' At least one filter must be selected.'}
-            {requiredFilters === 0 && ' No filters required - click "Load Data" to see all records.'}
             <span className="block mt-1 text-green-700 font-medium">🔥 Zero Firebase reads until you click the button!</span>
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                📅 Month {selectedMonth && <span className="text-green-600">✓</span>}
+                🏢 Supplier {selectedSupplier && <span className="text-green-600">✓</span>}
               </label>
               <select
-                value={selectedMonth}
-                onChange={(e) => handleFilterChange('month', e.target.value)}
+                value={selectedSupplier}
+                onChange={(e) => handleFilterChange('supplier', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
               >
-                <option value="">-- Select Month --</option>
-                {periods.map(period => (
-                  <option key={period.id} value={period.period}>
-                    {period.period}
+                <option value="">-- Select Supplier --</option>
+                {suppliers.map(supplier => (
+                  <option key={supplier.id} value={supplier.supplierName}>
+                    {supplier.supplierName}
                   </option>
                 ))}
               </select>
-            </div>
-
-            <div>
-              <SearchableDropdown
-                options={suppliers.map(supplier => ({ id: supplier.supplierName, name: supplier.supplierName }))}
-                value={selectedSupplier}
-                onChange={(value) => handleFilterChange('supplier', value)}
-                placeholder="-- Select Supplier --"
-                label="🏢 Supplier"
-              />
             </div>
 
             <div>
@@ -737,11 +695,11 @@ export default function AllSuppliersMonthly() {
 
             <div>
               <SearchableDropdown
-                options={allCompanies.map(company => ({ id: company, name: company }))}
-                value={selectedCompany}
-                onChange={(value) => handleFilterChange('company', value)}
-                placeholder="-- Select Company --"
-                label="🏭 Company"
+                options={allGrades.map(grade => ({ id: grade, name: grade }))}
+                value={selectedGrade}
+                onChange={(value) => handleFilterChange('grade', value)}
+                placeholder="-- Select Grade --"
+                label="🏷️ Grade"
               />
             </div>
           </div>
@@ -804,7 +762,7 @@ export default function AllSuppliersMonthly() {
           </div>
         ) : calculatedRows.length === 0 ? (
           <div className="bg-white rounded-xl shadow-lg p-8 sm:p-12 text-center border border-gray-200">
-            <div className="text-6xl mb-4">📊</div>
+            <div className="text-6xl mb-4">📅</div>
             <p className="text-gray-500 text-base sm:text-lg">
               {showOnlyWithValues 
                 ? '📭 No data with values greater than 0 found. Try toggling "Show All (Including 0)" or adjust your filters.'
@@ -842,67 +800,57 @@ export default function AllSuppliersMonthly() {
                   <thead className="bg-gradient-to-r from-blue-800 to-indigo-900 text-white sticky top-0">
                     <tr>
                       <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 w-16">Sl.No</th>
-                      <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[140px]">Type</th>
-                      <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[160px]">Company</th>
-                      {suppliers.map(supplier => (
-                        <th key={supplier.id} className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[120px]">
-                          {supplier.supplierName}
+                      <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[180px]">Supplier</th>
+                      <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[160px]">Grade</th>
+                      {periods.map(period => (
+                        <th key={period.id} className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[100px]">
+                          {period.period}
                         </th>
                       ))}
                       <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[110px]">Total</th>
-                      <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 w-20">Qty</th>
                     </tr>
                   </thead>
                   <tbody>
                     {currentRows.map((row, index) => (
                       <tr
-                        key={`${row.materialType}-${row.company}-${index}`}
+                        key={`${row.supplier}-${row.materialType}-${index}`}
                         className="border-b border-gray-300 hover:bg-blue-50 transition"
                       >
                         <td className="px-3 py-3 text-xs sm:text-sm text-center text-gray-700 font-medium border border-gray-300">
                           {startIndex + index + 1}
                         </td>
+                        <td className="px-3 py-3 text-xs sm:text-sm text-center text-gray-700 border border-gray-300">{row.supplier}</td>
                         <td className="px-3 py-3 text-xs sm:text-sm text-center border border-gray-300">
                           <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs font-medium">
                             {row.materialType}
                           </span>
                         </td>
-                        <td className="px-3 py-3 text-xs sm:text-sm text-center text-gray-700 font-medium border border-gray-300">{row.company}</td>
-                        {suppliers.map(supplier => (
-                          <td key={supplier.id} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-700 border border-gray-300">
-                            {(row.supplierValues[supplier.supplierName] || 0) === 0 ? '—' : formatCurrency(row.supplierValues[supplier.supplierName] || 0)}
+                        {periods.map(period => (
+                          <td key={period.id} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-700 border border-gray-300">
+                            {(row.values[period.period] || 0) === 0 ? '—' : (row.values[period.period] || 0).toFixed(2)}
                           </td>
                         ))}
                         <td className="px-3 py-3 text-xs sm:text-sm text-center font-semibold text-blue-700 border border-gray-300">
-                          {formatCurrency(row.total)}
-                        </td>
-                        <td className="px-3 py-3 text-xs sm:text-sm text-center border border-gray-300">
-                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                            row.total > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            {row.total > 0 ? 'Yes' : 'No'}
-                          </span>
+                          {row.total.toFixed(2)}
                         </td>
                       </tr>
                     ))}
                     
                     {/* Column Totals Row */}
                     <tr className="bg-gradient-to-r from-blue-100 to-indigo-200 border-t-4 border-blue-600 font-bold">
-                      <td colSpan={3} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
+                      <td colSpan={2} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
                         📊 COLUMN TOTALS
                       </td>
-                      {suppliers.map(supplier => (
-                        <td key={supplier.id} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
-                          {(columnTotals[supplier.supplierName] || 0) === 0 ? '—' : (columnTotals[supplier.supplierName] || 0).toFixed(2)}
+                      <td className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
+                        —
+                      </td>
+                      {periods.map(period => (
+                        <td key={period.id} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
+                          {(columnTotals[period.period] || 0) === 0 ? '—' : (columnTotals[period.period] || 0).toFixed(2)}
                         </td>
                       ))}
                       <td className="px-3 py-3 text-xs sm:text-sm text-center text-blue-700 font-bold text-base border border-gray-400">
                         {(columnTotals.total || 0).toFixed(2)}
-                      </td>
-                      <td className="px-3 py-3 text-xs sm:text-sm text-center border border-gray-400">
-                        <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                          —
-                        </span>
                       </td>
                     </tr>
 
@@ -911,8 +859,8 @@ export default function AllSuppliersMonthly() {
                       <td colSpan={3} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
                         💰 GRAND TOTAL
                       </td>
-                      <td colSpan={suppliers.length + 2} className="px-3 py-3 text-sm sm:text-base text-center text-green-800 font-bold border border-gray-400">
-                        {formatCurrency(grandTotal)}
+                      <td colSpan={periods.length + 1} className="px-3 py-3 text-sm sm:text-base text-center text-green-800 font-bold border border-gray-400">
+                        {grandTotal.toFixed(2)}
                       </td>
                     </tr>
                   </tbody>

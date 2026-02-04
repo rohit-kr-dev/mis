@@ -28,9 +28,14 @@ export default function ExcelUpload() {
         throw new Error(data.error || "Upload failed");
       }
 
-      setMessage(`✅ Upload completed. Saved: ${data.count || 0}`);
+      const summary = data.summary || {};
+      setMessage(`✅ Upload completed successfully!
+Total processed: ${summary.totalProcessed || 0}
+Saved: ${summary.saved || 0}
+Duplicates skipped: ${summary.duplicatesSkipped || 0}
+Errors: ${summary.errors || 0}`);
     } catch (err: any) {
-      setMessage(`❌ ${err.message}`);
+      setMessage(`❌ Upload failed: ${err.message}`);
     } finally {
       setLoading(false);
       e.target.value = ""; // reset file input
@@ -71,7 +76,7 @@ export default function ExcelUpload() {
       )}
       
       {message && (
-        <div className={`mt-4 p-3 rounded-md ${message.includes('✅') ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+        <div className={`mt-4 p-4 rounded-md whitespace-pre-line ${message.includes('✅') ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
           {message}
         </div>
       )}

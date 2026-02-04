@@ -13,6 +13,7 @@ interface SearchableDropdownProps {
   searchKey?: string;
   displayKey?: string;
   disabled?: boolean;
+  returnKey?: string; // New prop to specify which key to return
 }
 
 export default function SearchableDropdown({
@@ -24,7 +25,8 @@ export default function SearchableDropdown({
   selectedIndicator,
   searchKey = 'name',
   displayKey = 'name',
-  disabled = false
+  disabled = false,
+  returnKey = 'id' // New prop to specify which key to return
 }: SearchableDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -49,7 +51,7 @@ export default function SearchableDropdown({
     };
   }, []);
 
-  const selectedOption = options.find(option => option.id === value);
+  const selectedOption = options.find(option => option[returnKey] === value);
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -103,14 +105,14 @@ export default function SearchableDropdown({
           
           <div className="max-h-40 overflow-y-auto">
             {filteredOptions.length > 0 ? (
-              filteredOptions.map(option => (
+              filteredOptions.map((option: any) => (
                 <div
                   key={option.id}
                   className={`px-4 py-2 cursor-pointer hover:bg-blue-100 ${
-                    value === option.id ? 'bg-blue-500 text-white' : 'text-gray-700'
+                    value === option[returnKey] ? 'bg-blue-500 text-white' : 'text-gray-700'
                   }`}
                   onClick={() => {
-                    onChange(option.id);
+                    onChange(option[returnKey]);
                     setIsOpen(false);
                     setSearchTerm('');
                   }}

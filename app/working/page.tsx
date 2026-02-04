@@ -127,7 +127,8 @@ export default function Working() {
   const [filterType2, setFilterType2] = useState('');
   const [filterCompany, setFilterCompany] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  const [requiredFilters, setRequiredFilters] = useState(1);
+  const [requiredFilters, setRequiredFilters] = useState(0);
+  const [isSupplierDropdownOpen, setIsSupplierDropdownOpen] = useState(false);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -1545,16 +1546,66 @@ export default function Working() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 🏢 Supplier {filterSupplier && <span className="text-green-600">✓</span>}
               </label>
-              <select
-                value={filterSupplier}
-                onChange={(e) => handleFilterChange('supplier', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
-              >
-                <option value="">-- All Suppliers --</option>
-                {suppliers.map(s => (
-                  <option key={s.id} value={s.supplierName}>{s.supplierName}</option>
-                ))}
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search suppliers..."
+                  value={filterSupplier}
+                  onChange={(e) => handleFilterChange('supplier', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white pr-10"
+                  onFocus={() => setIsSupplierDropdownOpen(true)}
+                  onBlur={() => setTimeout(() => setIsSupplierDropdownOpen(false), 200)}
+                />
+                <button
+                  type="button"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  onClick={() => {
+                    setFilterSupplier('');
+                    setIsSupplierDropdownOpen(false);
+                  }}
+                >
+                  {filterSupplier ? '✕' : '🔍'}
+                </button>
+                
+                {/* Dropdown with filtered suppliers */}
+                {isSupplierDropdownOpen && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    <div 
+                      className="px-3 py-2 text-sm text-gray-500 border-b border-gray-200 cursor-pointer hover:bg-gray-50"
+                      onClick={() => {
+                        setFilterSupplier('');
+                        setIsSupplierDropdownOpen(false);
+                      }}
+                    >
+                      -- All Suppliers --
+                    </div>
+                    {suppliers
+                      .filter(supplier => 
+                        supplier.supplierName.toLowerCase().includes(filterSupplier.toLowerCase())
+                      )
+                      .map(supplier => (
+                        <div
+                          key={supplier.id}
+                          className="px-3 py-2 text-sm hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                          onClick={() => {
+                            setFilterSupplier(supplier.supplierName);
+                            setIsSupplierDropdownOpen(false);
+                          }}
+                        >
+                          {supplier.supplierName}
+                        </div>
+                      ))
+                    }
+                    {suppliers.filter(supplier => 
+                      supplier.supplierName.toLowerCase().includes(filterSupplier.toLowerCase())
+                    ).length === 0 && filterSupplier && (
+                      <div className="px-3 py-2 text-sm text-gray-500">
+                        No suppliers found
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div>

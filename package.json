@@ -7,7 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "convert-excel": "cd scripts && python excel_to_json.py"
+    "convert-excel": "cd scripts && python excel_to_json.py",
+    "check-data": "node scripts/check-current-data.js",
+    "cleanup-duplicates": "node scripts/cleanup-duplicates.js",
+    "check-grades": "node scripts/check-grades-in-excel.js",
+    "check-firebase": "node scripts/check-firebase-connection.js",
+    "analyze-grades": "node scripts/analyze-firebase-grades.js",
+    "grade-summary": "node scripts/grade-analysis-from-sample.js"
   },
   "dependencies": {
     "dayjs": "^1.11.19",

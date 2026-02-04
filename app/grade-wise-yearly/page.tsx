@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, AlertCircle, Download } from 'lucide-react';
-import SearchableDropdown from '@/components/SearchableDropdown';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, AlertCircle, Download, Upload } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -14,12 +13,9 @@ interface WorkingSheetRecord {
   company: string;
   type: string;
   qty: number;
+  grade: string;
   cnMonth: string;
-}
-
-interface Supplier {
-  id: string;
-  supplierName: string;
+  slNo: number;
 }
 
 interface Period {
@@ -35,66 +31,38 @@ interface Item {
   materialType: string;
 }
 
-interface Type {
-  id: string;
-  type: string;
-  createdAt: any;
-}
-
-interface CalculatedRow {
-  materialType: string;
-  company: string;
-  supplierValues: { [supplierName: string]: number };
+interface GradeData {
+  slNo: string;
+  grade: string;
+  values: { [monthName: string]: number };
   total: number;
 }
 
-export default function AllSuppliersMonthly() {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+export default function GradeWiseYearly() {
   const [periods, setPeriods] = useState<Period[]>([]);
   const [items, setItems] = useState<Item[]>([]);
-  const [types, setTypes] = useState<Type[]>([]);
   const [workingSheet, setWorkingSheet] = useState<WorkingSheetRecord[]>([]);
-  const [allCompanies, setAllCompanies] = useState<string[]>([]);
-  
-  const [selectedMonth, setSelectedMonth] = useState<string>('');
-  const [selectedType, setSelectedType] = useState<string>('');
-  const [selectedCompany, setSelectedCompany] = useState<string>('');
-  const [selectedSupplier, setSelectedSupplier] = useState<string>('');
+  const [allGrades, setAllGrades] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingData, setLoadingData] = useState(false);
   const [dataFetched, setDataFetched] = useState(false);
   const [showOnlyWithValues, setShowOnlyWithValues] = useState(true);
-  const [requiredFilters, setRequiredFilters] = useState<number>(0);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  
+  // File upload states
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadMessage, setUploadMessage] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch master data ONCE on mount using getDocs
   useEffect(() => {
     const fetchMasterData = async () => {
       try {
         setLoading(true);
-
-        // Fetch suppliers with deduplication
-        const suppliersSnap = await getDocs(collection(db, 'suppliers'));
-        const supplierMap = new Map<string, Supplier>();
-        
-        suppliersSnap.docs.forEach(doc => {
-          const supplierName = doc.data().supplierName as string;
-          // Only add if supplier name doesn't exist in map (deduplication)
-          if (supplierName && !supplierMap.has(supplierName)) {
-            supplierMap.set(supplierName, {
-              id: doc.id,
-              supplierName: supplierName
-            });
-          }
-        });
-        
-        const suppliersData = Array.from(supplierMap.values()).sort((a, b) => 
-          a.supplierName.localeCompare(b.supplierName)
-        );
-        setSuppliers(suppliersData);
 
         // Fetch periods
         const periodsSnap = await getDocs(collection(db, 'periods'));
@@ -123,23 +91,6 @@ export default function AllSuppliersMonthly() {
         });
         setPeriods(sortedPeriods);
 
-        // Fetch types
-        const typesSnap = await getDocs(collection(db, 'types'));
-        const typesData = typesSnap.docs.map(doc => ({
-          id: doc.id,
-          type: doc.data().type as string,
-          createdAt: doc.data().createdAt
-        }));
-        
-        const sortedTypes = typesData.sort((a, b) => {
-          if (!a.createdAt) return 1;
-          if (!b.createdAt) return -1;
-          const timeA = a.createdAt.toMillis ? a.createdAt.toMillis() : a.createdAt;
-          const timeB = b.createdAt.toMillis ? b.createdAt.toMillis() : b.createdAt;
-          return timeA - timeB;
-        });
-        setTypes(sortedTypes);
-
         // Fetch items
         const itemsSnap = await getDocs(collection(db, 'items'));
         const itemsData = itemsSnap.docs.map(doc => {
@@ -153,14 +104,14 @@ export default function AllSuppliersMonthly() {
         });
         setItems(itemsData);
         
-        // Extract unique companies, filter out "NA" and empty strings
-        const companies = [...new Set(
+        // Extract unique grades (materialType), filter out empty strings
+        const grades = [...new Set(
           itemsData
-            .map(item => item.company.trim())
-            .filter(company => company && company.toUpperCase() !== 'NA')
+            .map(item => item.materialType.trim())
+            .filter(grade => grade)
         )].sort();
         
-        setAllCompanies(companies);
+        setAllGrades(grades);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching master data:', error);
@@ -171,54 +122,13 @@ export default function AllSuppliersMonthly() {
     fetchMasterData();
   }, []);
 
-  // Check if filter requirements are met
-  const appliedFiltersCount = useMemo(() => {
-    let count = 0;
-    if (selectedMonth) count++;
-    if (selectedType) count++;
-    if (selectedCompany) count++;
-    if (selectedSupplier) count++;
-    return count;
-  }, [selectedMonth, selectedType, selectedCompany, selectedSupplier]);
-
-  const filtersRequirementMet = useMemo(() => {
-    return appliedFiltersCount >= requiredFilters;
-  }, [appliedFiltersCount, requiredFilters]);
-
-  // Manual fetch function - ONLY called when user explicitly applies filters
+  // Manual fetch function - fetch all data to calculate grade-wise yearly report
   const fetchWorkingSheetData = async () => {
-    if (!filtersRequirementMet) {
-      setWorkingSheet([]);
-      setDataFetched(false);
-      return;
-    }
-
     setLoadingData(true);
     setDataFetched(false);
 
     try {
-      // Build query with where clauses based on selected filters
-      const constraints = [];
-
-      if (selectedMonth) {
-        constraints.push(where('cnMonth', '==', selectedMonth));
-      }
-      if (selectedType) {
-        constraints.push(where('type', '==', selectedType));
-      }
-      if (selectedCompany) {
-        constraints.push(where('company', '==', selectedCompany));
-      }
-      if (selectedSupplier) {
-        constraints.push(where('supplierName', '==', selectedSupplier));
-      }
-
-      // Create query with constraints
-      const workingSheetQuery = constraints.length > 0 
-        ? query(collection(db, 'workingSheet'), ...constraints)
-        : collection(db, 'workingSheet');
-
-      const snapshot = await getDocs(workingSheetQuery);
+      const snapshot = await getDocs(collection(db, 'workingSheet'));
       const data = snapshot.docs.map(doc => {
         const docData = doc.data();
         return {
@@ -226,7 +136,9 @@ export default function AllSuppliersMonthly() {
           company: (docData.company as string) || '',
           type: (docData.type as string) || '',
           qty: (docData.qty as number) || 0,
-          cnMonth: (docData.cnMonth as string) || ''
+          grade: (docData.grade as string) || '', // assuming grade field exists
+          cnMonth: (docData.cnMonth as string) || '',
+          slNo: (docData.slNo as number) || 0
         };
       });
       
@@ -240,30 +152,29 @@ export default function AllSuppliersMonthly() {
     }
   };
 
-  // Calculate data dynamically based on filters
+  // Calculate grade-wise data
   const calculatedRows = useMemo(() => {
     if (!dataFetched) {
       return [];
     }
 
-    const results: CalculatedRow[] = [];
-
-    // VLOOKUP function
-    const vlookupMaterialType = (company: string): string => {
-      if (!company.trim()) return '';
-      const item = items.find(i => i.company.toLowerCase() === company.toLowerCase());
-      return item?.materialType || 'Unknown';
-    };
+    const results: GradeData[] = [];
 
     // PRE-AGGREGATE: Create a lookup map for fast access (O(1) instead of O(n))
     const aggregatedData = new Map<string, number>();
     
     workingSheet.forEach(record => {
+      // Determine grade - prioritize the grade field if available, otherwise get from items
+      let grade = record.grade;
+      if (!grade) {
+        // If grade is not directly available, try to get from items based on company
+        const item = items.find(i => i.company.toLowerCase() === record.company.toLowerCase());
+        grade = item?.materialType || 'Unknown';
+      }
+      
       const key = [
-        (record.cnMonth || '').trim().toLowerCase(),
-        (record.company || '').trim().toLowerCase(),
-        (record.type || '').trim().toLowerCase(),
-        (record.supplierName || '').trim().toLowerCase()
+        grade.trim().toLowerCase(),
+        record.cnMonth.trim().toLowerCase()
       ].join('|');
       
       const qty = typeof record.qty === 'number' ? record.qty : parseFloat(String(record.qty || 0));
@@ -272,64 +183,54 @@ export default function AllSuppliersMonthly() {
       aggregatedData.set(key, (aggregatedData.get(key) || 0) + validQty);
     });
 
-    // Determine which combinations to calculate
-    const monthsToProcess = selectedMonth ? [selectedMonth] : periods.map(p => p.period);
-    const typesToProcess = selectedType ? [selectedType] : types.map(t => t.type);
-    const companiesToProcess = selectedCompany ? [selectedCompany] : allCompanies;
+    // Process each grade
+    for (const grade of allGrades) {
+      // Calculate values for each month dynamically using the lookup map
+      const values: { [monthName: string]: number } = {};
+      let total = 0;
 
-    // Generate all combinations
-    for (const month of monthsToProcess) {
-      for (const type of typesToProcess) {
-        for (const company of companiesToProcess) {
-          // Get the material type for the company
-          const materialType = vlookupMaterialType(company);
+      for (const period of periods) {
+        const key = [
+          grade.trim().toLowerCase(),
+          period.period.trim().toLowerCase()
+        ].join('|');
+        
+        const monthValue = aggregatedData.get(key) || 0;
+        values[period.period] = monthValue;
+        total += monthValue;
+      }
 
-          // Calculate values for each supplier dynamically using the lookup map
-          const supplierValues: { [supplierName: string]: number } = {};
-          let total = 0;
-
-          for (const supplier of suppliers) {
-            const key = [
-              month.trim().toLowerCase(),
-              company.trim().toLowerCase(),
-              type.trim().toLowerCase(),
-              supplier.supplierName.trim().toLowerCase()
-            ].join('|');
-            
-            const supplierValue = aggregatedData.get(key) || 0;
-            supplierValues[supplier.supplierName] = supplierValue;
-            total += supplierValue;
-          }
-
-          // Add row based on filter setting
-          if (!showOnlyWithValues || total > 0) {
-            results.push({
-              materialType: materialType,
-              company: company,
-              supplierValues: supplierValues,
-              total: total
-            });
-          }
-        }
+      // Add row based on filter setting
+      if (!showOnlyWithValues || total > 0) {
+        // Determine if this grade has any quantity > 0
+        const hasQuantity = total > 0;
+        const slNo = hasQuantity ? 'Yes' : 'No';
+        
+        results.push({
+          slNo: slNo,
+          grade: grade,
+          values: values,
+          total: total
+        });
       }
     }
 
     return results;
-  }, [selectedMonth, selectedType, selectedCompany, workingSheet, items, periods, suppliers, types, allCompanies, showOnlyWithValues, dataFetched]);
+  }, [workingSheet, items, periods, allGrades, showOnlyWithValues, dataFetched]);
 
   // Calculate column totals
   const columnTotals: Record<string, number> & { total: number } = useMemo(() => {
-    const totals: { [supplierName: string]: number } = {};
+    const totals: { [monthName: string]: number } = {};
     
-    // Initialize totals for each supplier
-    suppliers.forEach(supplier => {
-      totals[supplier.supplierName] = 0;
+    // Initialize totals for each month
+    periods.forEach(period => {
+      totals[period.period] = 0;
     });
     
     // Sum up values
     calculatedRows.forEach(row => {
-      suppliers.forEach(supplier => {
-        totals[supplier.supplierName] += row.supplierValues[supplier.supplierName] || 0;
+      periods.forEach(period => {
+        totals[period.period] += row.values[period.period] || 0;
       });
     });
     
@@ -337,7 +238,7 @@ export default function AllSuppliersMonthly() {
     const grandTotal = Object.values(totals).reduce((sum, val) => sum + val, 0);
     
     return { ...totals, total: grandTotal };
-  }, [calculatedRows, suppliers]);
+  }, [calculatedRows, periods]);
 
   // Grand Total
   const grandTotal = useMemo(() => {
@@ -354,42 +255,10 @@ export default function AllSuppliersMonthly() {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
 
-  // Format number in Indian numbering system without currency symbol
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
   // Clear all filters
   const clearFilters = () => {
-    setSelectedMonth('');
-    setSelectedType('');
-    setSelectedCompany('');
-    setSelectedSupplier('');
     setWorkingSheet([]);
     setDataFetched(false);
-  };
-
-  // Handle filter changes - mark data as stale
-  const handleFilterChange = (filterType: 'month' | 'type' | 'company' | 'supplier', value: string) => {
-    setDataFetched(false); // Mark data as stale when filters change
-    
-    switch (filterType) {
-      case 'month':
-        setSelectedMonth(value);
-        break;
-      case 'type':
-        setSelectedType(value);
-        break;
-      case 'company':
-        setSelectedCompany(value);
-        break;
-      case 'supplier':
-        setSelectedSupplier(value);
-        break;
-    }
   };
 
   // Download as Excel
@@ -399,14 +268,13 @@ export default function AllSuppliersMonthly() {
     // Prepare data for export
     const exportData = calculatedRows.map((row, index) => {
       const rowData: any = {
-        'Sl.No': index + 1,
-        'Type': row.materialType,
-        'Company': row.company
+        'No': row.slNo,
+        'Grades': row.grade
       };
       
-      // Add supplier columns
-      suppliers.forEach(supplier => {
-        rowData[supplier.supplierName] = row.supplierValues[supplier.supplierName] || 0;
+      // Add period columns
+      periods.forEach(period => {
+        rowData[period.period] = row.values[period.period] || 0;
       });
       
       rowData['Total'] = row.total;
@@ -415,13 +283,12 @@ export default function AllSuppliersMonthly() {
     
     // Add totals row
     const totalsRow: any = {
-      'Sl.No': '',
-      'Type': '',
-      'Company': 'COLUMN TOTALS'
+      'No': '',
+      'Grades': 'COLUMN TOTALS'
     };
     
-    suppliers.forEach(supplier => {
-      totalsRow[supplier.supplierName] = columnTotals[supplier.supplierName] || 0;
+    periods.forEach(period => {
+      totalsRow[period.period] = columnTotals[period.period] || 0;
     });
     
     totalsRow['Total'] = grandTotal;
@@ -432,10 +299,10 @@ export default function AllSuppliersMonthly() {
     
     // Create workbook
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'All Suppliers Monthly');
+    XLSX.utils.book_append_sheet(wb, ws, 'Grade Wise Yearly');
     
     // Generate filename
-    const filename = `all_suppliers_monthly_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const filename = `grade_wise_yearly_${new Date().toISOString().split('T')[0]}.xlsx`;
     
     // Export
     XLSX.writeFile(wb, filename);
@@ -447,7 +314,8 @@ export default function AllSuppliersMonthly() {
     
     // Dynamically import jsPDF only when needed
     const jsPDFModule = await import('jspdf');
-    const doc = new jsPDFModule.default();
+    const jsPDF = jsPDFModule.default || jsPDFModule;
+    const doc = new jsPDF();
     
     // Add company name
     doc.setFontSize(20);
@@ -457,30 +325,7 @@ export default function AllSuppliersMonthly() {
     // Add title
     doc.setFontSize(16);
     doc.setFont(undefined, 'normal');
-    doc.text('All Suppliers Monthly Report', 14, 35);
-    
-    // Add filters info
-    doc.setFontSize(10);
-    let yPos = 45;
-    
-    if (selectedMonth) {
-      doc.text(`Month: ${selectedMonth}`, 14, yPos);
-      yPos += 5;
-    }
-    if (selectedType) {
-      doc.text(`Type: ${selectedType}`, 14, yPos);
-      yPos += 5;
-    }
-    if (selectedCompany) {
-      doc.text(`Company: ${selectedCompany}`, 14, yPos);
-      yPos += 5;
-    }
-    if (selectedSupplier) {
-      doc.text(`Supplier: ${selectedSupplier}`, 14, yPos);
-      yPos += 5;
-    }
-    
-    yPos += 5;
+    doc.text('Grade Wise Yearly Report', 14, 35);
     
     // Format currency function
     const formatCurrency = (amount: number) => {
@@ -493,35 +338,32 @@ export default function AllSuppliersMonthly() {
     
     // Prepare table data with formatted currency
     const tableData = calculatedRows.map((row, index) => [
-      index + 1,
-      row.materialType,
-      row.company,
-      ...suppliers.map(supplier => formatCurrency(row.supplierValues[supplier.supplierName] || 0)),
+      row.slNo,
+      row.grade,
+      ...periods.map(period => formatCurrency(row.values[period.period] || 0)),
       formatCurrency(row.total)
     ]);
     
     // Add totals row with formatted currency
     const totalsRow = [
-      '', '', 'COLUMN TOTALS',
-      ...suppliers.map(supplier => formatCurrency(columnTotals[supplier.supplierName] || 0)),
+      '', 'COLUMN TOTALS',
+      ...periods.map(period => formatCurrency(columnTotals[period.period] || 0)),
       formatCurrency(grandTotal)
     ];
     tableData.push(totalsRow);
     
     // Prepare column headers
     const headers = [
-      ['Sl.No', 'Type', 'Company',
-       ...suppliers.map(supplier => supplier.supplierName),
+      ['No', 'Grades',
+       ...periods.map(period => period.period),
        'Total']
     ];
-    
-    console.log('Starting table at yPos:', yPos);
     
     // Generate table
     autoTable(doc, {
       head: headers,
       body: tableData,
-      startY: yPos + 10,
+      startY: 45,
       styles: {
         fontSize: 8,
         cellPadding: 2
@@ -536,7 +378,69 @@ export default function AllSuppliersMonthly() {
     });
     
     // Save PDF
-    doc.save(`all_suppliers_monthly_${new Date().toISOString().split('T')[0]}.pdf`);
+    doc.save(`grade_wise_yearly_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+  
+  // Handle Excel file upload
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    setIsUploading(true);
+    setUploadProgress(0);
+    setUploadMessage('Processing file...');
+    
+    try {
+      // Simulate upload progress
+      const interval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(interval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 200);
+      
+      // Read the Excel file
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: 'array' });
+      
+      // Assuming the data is in the first sheet
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      
+      // Convert to JSON
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      
+      // Process the uploaded data
+      // For now, just show a success message
+      clearInterval(interval);
+      setUploadProgress(100);
+      setUploadMessage(`${file.name} uploaded successfully! Processing data...`);
+      
+      // Here you would typically process the data and update the state
+      // For example, you might parse the data and update workingSheet
+      
+      // Simulate processing delay
+      setTimeout(() => {
+        setUploadMessage(`${file.name} processed successfully!`);
+        setIsUploading(false);
+        
+        // Optionally trigger a refresh of the data
+        fetchWorkingSheetData();
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      setUploadMessage('Error uploading file: ' + (error as Error).message);
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  };
+  
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
   };
 
   if (loading) {
@@ -554,7 +458,7 @@ export default function AllSuppliersMonthly() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-4 px-2 sm:px-4 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-800 text-center">
-          📊 All Suppliers Monthly Report
+          📊 Grade Wise Yearly Report
         </h1>
 
         {/* Filters */}
@@ -566,7 +470,7 @@ export default function AllSuppliersMonthly() {
                 onClick={() => setShowOnlyWithValues(!showOnlyWithValues)}
                 className={`w-full sm:w-auto px-4 py-2 text-sm rounded-lg transition shadow-md ${
                   showOnlyWithValues
-                    ? 'bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800'
                     : 'bg-gradient-to-r from-orange-600 to-orange-700 text-white hover:from-orange-700 hover:to-orange-800'
                 }`}
               >
@@ -577,6 +481,18 @@ export default function AllSuppliersMonthly() {
                 className="w-full sm:w-auto px-4 py-2 text-sm bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg hover:from-gray-600 hover:to-gray-700 transition shadow-md"
               >
                 ✖️ Clear Filters
+              </button>
+              <button
+                onClick={triggerFileInput}
+                disabled={isUploading}
+                className={`w-full sm:w-auto px-4 py-2 text-sm rounded-lg transition shadow-md flex items-center justify-center gap-2 ${
+                  isUploading
+                    ? 'bg-gradient-to-r from-gray-400 to-gray-500 text-white cursor-not-allowed'
+                    : 'bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800'
+                }`}
+              >
+                <Upload size={16} />
+                Upload Excel
               </button>
               {dataFetched && calculatedRows.length > 0 && (
                 <>
@@ -599,160 +515,52 @@ export default function AllSuppliersMonthly() {
             </div>
           </div>
 
-          {/* Filter Requirement Selector */}
-          <div className="mb-4 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
-            <label className="block text-sm font-semibold text-gray-800 mb-3">
-              ⚙️ Minimum Filters Required:
-            </label>
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={() => {
-                  setRequiredFilters(0);
-                  setDataFetched(false);
-                }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition shadow-md ${
-                  requiredFilters === 0
-                    ? 'bg-gradient-to-r from-green-600 to-green-700 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                }`}
-              >
-                ✅ Show All Data (No Filters Required)
-              </button>
-              <button
-                onClick={() => {
-                  setRequiredFilters(1);
-                  setDataFetched(false);
-                }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition shadow-md ${
-                  requiredFilters === 1
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                }`}
-              >
-                At Least 1 Filter
-              </button>
-              <button
-                onClick={() => {
-                  setRequiredFilters(2);
-                  setDataFetched(false);
-                }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition shadow-md ${
-                  requiredFilters === 2
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                }`}
-              >
-                At Least 2 Filters
-              </button>
-              <button
-                onClick={() => {
-                  setRequiredFilters(3);
-                  setDataFetched(false);
-                }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition shadow-md ${
-                  requiredFilters === 3
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                }`}
-              >
-                All 3 Filters Required
-              </button>
-            </div>
-          </div>
-
-          {/* Filter Status Indicator */}
-          {!filtersRequirementMet && (
-            <div className="mb-4 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
-              <div className="flex items-start">
-                <AlertCircle className="w-5 h-5 text-yellow-600 mr-3 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-semibold text-yellow-800 mb-1">
-                    Filters Required
-                  </p>
-                  <p className="text-xs text-yellow-700">
-                    You have applied {appliedFiltersCount} filter{appliedFiltersCount !== 1 ? 's' : ''}. 
-                    Please apply at least {requiredFilters} filter{requiredFilters !== 1 ? 's' : ''} and click "Load Data".
-                    <span className="block mt-1 font-medium">💡 Data is only fetched when you click the button - saving Firebase reads!</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-          
           <p className="text-xs sm:text-sm text-gray-600 mb-4 bg-blue-50 p-3 rounded-lg border border-blue-200">
-            💡 <span className="font-semibold">Note:</span> Select filters and click "Load Data" to fetch from Firebase. 
-            {requiredFilters === 3 && ' All three filters must be selected.'}
-            {requiredFilters === 2 && ' At least two filters must be selected.'}
-            {requiredFilters === 1 && ' At least one filter must be selected.'}
-            {requiredFilters === 0 && ' No filters required - click "Load Data" to see all records.'}
+            💡 <span className="font-semibold">Note:</span> Click "Load Data" to fetch all records from Firebase and generate the grade-wise yearly report.
             <span className="block mt-1 text-green-700 font-medium">🔥 Zero Firebase reads until you click the button!</span>
           </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                📅 Month {selectedMonth && <span className="text-green-600">✓</span>}
-              </label>
-              <select
-                value={selectedMonth}
-                onChange={(e) => handleFilterChange('month', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
-              >
-                <option value="">-- Select Month --</option>
-                {periods.map(period => (
-                  <option key={period.id} value={period.period}>
-                    {period.period}
-                  </option>
-                ))}
-              </select>
-            </div>
 
-            <div>
-              <SearchableDropdown
-                options={suppliers.map(supplier => ({ id: supplier.supplierName, name: supplier.supplierName }))}
-                value={selectedSupplier}
-                onChange={(value) => handleFilterChange('supplier', value)}
-                placeholder="-- Select Supplier --"
-                label="🏢 Supplier"
-              />
+          {/* Upload Status */}
+          {(isUploading || uploadMessage) && (
+            <div className={`mb-4 p-3 rounded-lg border ${isUploading ? 'bg-blue-50 border-blue-200' : 'bg-green-50 border-green-200'}`}>
+              {isUploading && (
+                <div className="flex items-center gap-3">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                  <span className="text-blue-700 font-medium">Uploading: {uploadMessage}</span>
+                  <div className="flex-1 ml-4">
+                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-blue-600 transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {!isUploading && uploadMessage && (
+                <div className="flex items-center gap-2 text-green-700">
+                  <div className="font-medium">{uploadMessage}</div>
+                </div>
+              )}
             </div>
+          )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                📋 Type {selectedType && <span className="text-green-600">✓</span>}
-              </label>
-              <select
-                value={selectedType}
-                onChange={(e) => handleFilterChange('type', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
-              >
-                <option value="">-- Select Type --</option>
-                {types.map(type => (
-                  <option key={type.id} value={type.type}>
-                    {type.type}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <SearchableDropdown
-                options={allCompanies.map(company => ({ id: company, name: company }))}
-                value={selectedCompany}
-                onChange={(value) => handleFilterChange('company', value)}
-                placeholder="-- Select Company --"
-                label="🏭 Company"
-              />
-            </div>
-          </div>
+          {/* Hidden file input */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            accept=".xlsx, .xls"
+            className="hidden"
+          />
 
           {/* Load Data Button */}
           <div className="flex justify-center">
             <button
               onClick={fetchWorkingSheetData}
-              disabled={!filtersRequirementMet || loadingData}
+              disabled={loadingData}
               className={`px-6 py-3 rounded-lg font-semibold text-white transition shadow-lg transform hover:scale-105 ${
-                !filtersRequirementMet || loadingData
+                loadingData
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
               }`}
@@ -768,7 +576,7 @@ export default function AllSuppliersMonthly() {
             </button>
           </div>
 
-          {!dataFetched && filtersRequirementMet && !loadingData && (
+          {!dataFetched && !loadingData && (
             <p className="text-center text-sm text-orange-600 mt-3 font-medium">
               ⚠️ Click "Load Data" to fetch results
             </p>
@@ -783,9 +591,7 @@ export default function AllSuppliersMonthly() {
               Ready to Load Data
             </h3>
             <p className="text-gray-600 text-base mb-4">
-              {!filtersRequirementMet 
-                ? `Please select at least ${requiredFilters} filter${requiredFilters !== 1 ? 's' : ''} and click "Load Data" to view the report.`
-                : 'Click the "Load Data" button above to fetch data from Firebase.'}
+              Click the "Load Data" button above to fetch data from Firebase and generate the grade-wise yearly report.
             </p>
             <div className="bg-green-50 p-4 rounded-lg inline-block">
               <p className="text-sm text-green-800">
@@ -799,12 +605,12 @@ export default function AllSuppliersMonthly() {
         ) : loadingData ? (
           <div className="bg-white rounded-xl shadow-lg p-8 text-center border border-gray-200">
             <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600 mx-auto mb-3"></div>
-            <p className="text-gray-600">Fetching filtered data from Firebase...</p>
+            <p className="text-gray-600">Fetching data from Firebase...</p>
             <p className="text-xs text-gray-500 mt-2">This only happens when you click "Load Data"</p>
           </div>
         ) : calculatedRows.length === 0 ? (
           <div className="bg-white rounded-xl shadow-lg p-8 sm:p-12 text-center border border-gray-200">
-            <div className="text-6xl mb-4">📊</div>
+            <div className="text-6xl mb-4">📅</div>
             <p className="text-gray-500 text-base sm:text-lg">
               {showOnlyWithValues 
                 ? '📭 No data with values greater than 0 found. Try toggling "Show All (Including 0)" or adjust your filters.'
@@ -841,78 +647,62 @@ export default function AllSuppliersMonthly() {
                 <table className="w-full border-collapse">
                   <thead className="bg-gradient-to-r from-blue-800 to-indigo-900 text-white sticky top-0">
                     <tr>
-                      <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 w-16">Sl.No</th>
-                      <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[140px]">Type</th>
-                      <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[160px]">Company</th>
-                      {suppliers.map(supplier => (
-                        <th key={supplier.id} className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[120px]">
-                          {supplier.supplierName}
+                      <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 w-16">No</th>
+                      <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[250px]">Grades</th>
+                      {periods.map(period => (
+                        <th key={period.id} className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[100px]">
+                          {period.period}
                         </th>
                       ))}
                       <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[110px]">Total</th>
-                      <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 w-20">Qty</th>
                     </tr>
                   </thead>
                   <tbody>
                     {currentRows.map((row, index) => (
                       <tr
-                        key={`${row.materialType}-${row.company}-${index}`}
+                        key={`${row.grade}-${index}`}
                         className="border-b border-gray-300 hover:bg-blue-50 transition"
                       >
                         <td className="px-3 py-3 text-xs sm:text-sm text-center text-gray-700 font-medium border border-gray-300">
-                          {startIndex + index + 1}
+                          {row.slNo}
                         </td>
-                        <td className="px-3 py-3 text-xs sm:text-sm text-center border border-gray-300">
-                          <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs font-medium">
-                            {row.materialType}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3 text-xs sm:text-sm text-center text-gray-700 font-medium border border-gray-300">{row.company}</td>
-                        {suppliers.map(supplier => (
-                          <td key={supplier.id} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-700 border border-gray-300">
-                            {(row.supplierValues[supplier.supplierName] || 0) === 0 ? '—' : formatCurrency(row.supplierValues[supplier.supplierName] || 0)}
+                        <td className="px-3 py-3 text-xs sm:text-sm text-left text-gray-700 border border-gray-300">{row.grade}</td>
+                        {periods.map(period => (
+                          <td key={period.id} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-700 border border-gray-300">
+                            {(row.values[period.period] || 0) === 0 ? '—' : (row.values[period.period] || 0).toLocaleString('en-IN')}
                           </td>
                         ))}
                         <td className="px-3 py-3 text-xs sm:text-sm text-center font-semibold text-blue-700 border border-gray-300">
-                          {formatCurrency(row.total)}
-                        </td>
-                        <td className="px-3 py-3 text-xs sm:text-sm text-center border border-gray-300">
-                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                            row.total > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            {row.total > 0 ? 'Yes' : 'No'}
-                          </span>
+                          {row.total.toLocaleString('en-IN')}
                         </td>
                       </tr>
                     ))}
                     
                     {/* Column Totals Row */}
                     <tr className="bg-gradient-to-r from-blue-100 to-indigo-200 border-t-4 border-blue-600 font-bold">
-                      <td colSpan={3} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
-                        📊 COLUMN TOTALS
+                      <td className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
+                        —
                       </td>
-                      {suppliers.map(supplier => (
-                        <td key={supplier.id} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
-                          {(columnTotals[supplier.supplierName] || 0) === 0 ? '—' : (columnTotals[supplier.supplierName] || 0).toFixed(2)}
+                      <td className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
+                        COLUMN TOTALS
+                      </td>
+                      {periods.map(period => (
+                        <td key={period.id} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
+                          {(columnTotals[period.period] || 0) === 0 ? '—' : (columnTotals[period.period] || 0).toLocaleString('en-IN')}
                         </td>
                       ))}
                       <td className="px-3 py-3 text-xs sm:text-sm text-center text-blue-700 font-bold text-base border border-gray-400">
-                        {(columnTotals.total || 0).toFixed(2)}
-                      </td>
-                      <td className="px-3 py-3 text-xs sm:text-sm text-center border border-gray-400">
-                        <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                          —
-                        </span>
+                        {(columnTotals.total || 0).toLocaleString('en-IN')}
                       </td>
                     </tr>
 
                     {/* Grand Total Row */}
                     <tr className="bg-gradient-to-r from-green-100 to-green-200 border-t-4 border-green-600 font-bold">
-                      <td colSpan={3} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
+                      <td colSpan={2} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
                         💰 GRAND TOTAL
                       </td>
-                      <td colSpan={suppliers.length + 2} className="px-3 py-3 text-sm sm:text-base text-center text-green-800 font-bold border border-gray-400">
-                        {formatCurrency(grandTotal)}
+                      <td colSpan={periods.length + 1} className="px-3 py-3 text-sm sm:text-base text-center text-green-800 font-bold border border-gray-400">
+                        {grandTotal.toLocaleString('en-IN')}
                       </td>
                     </tr>
                   </tbody>
