@@ -15,6 +15,7 @@ interface WorkingSheetRecord {
   type: string;
   qty: number;
   cnMonth: string;
+  grade: string;  // Add grade field to match working sheet data
 }
 
 interface Supplier {
@@ -44,6 +45,7 @@ interface Type {
 interface CalculatedRow {
   supplier: string;
   materialType: string;
+  gradeName: string;  // Add actual grade name
   values: { [monthName: string]: number };
   total: number;
 }
@@ -222,7 +224,8 @@ export default function SupplierGradeWiseYearly() {
           company: (docData.company as string) || '',
           type: (docData.type as string) || '',
           qty: (docData.qty as number) || 0,
-          cnMonth: (docData.cnMonth as string) || ''
+          cnMonth: (docData.cnMonth as string) || '',
+          grade: (docData.grade as string) || ''  // Include grade from workingSheet
         };
       });
       
@@ -252,15 +255,12 @@ export default function SupplierGradeWiseYearly() {
     };
 
     // PRE-AGGREGATE: Create a lookup map for fast access (O(1) instead of O(n))
-    const aggregatedData = new Map<string, number>();
+    const aggregatedData = new Map<string, { qty: number; grade: string }>();
     
     workingSheet.forEach(record => {
       // Filter by grade if selected
-      if (selectedGrade) {
-        const materialType = vlookupMaterialType(record.company);
-        if (materialType !== selectedGrade) {
-          return; // Skip this record if it doesn't match the selected grade
-        }
+      if (selectedGrade && record.grade !== selectedGrade) {
+        return; // Skip this record if it doesn't match the selected grade
       }
       
       const key = [
@@ -272,7 +272,15 @@ export default function SupplierGradeWiseYearly() {
       const qty = typeof record.qty === 'number' ? record.qty : parseFloat(String(record.qty || 0));
       const validQty = isNaN(qty) ? 0 : qty;
       
-      aggregatedData.set(key, (aggregatedData.get(key) || 0) + validQty);
+      const existing = aggregatedData.get(key);
+      if (existing) {
+        aggregatedData.set(key, { 
+          qty: existing.qty + validQty, 
+          grade: record.grade || existing.grade  // Preserve grade info
+        });
+      } else {
+        aggregatedData.set(key, { qty: validQty, grade: record.grade || '' });
+      }
     });
 
     // Determine which combinations to calculate
@@ -295,7 +303,9 @@ export default function SupplierGradeWiseYearly() {
               period.period.trim().toLowerCase()
             ].join('|');
             
-            const monthValue = aggregatedData.get(key) || 0;
+            const data = aggregatedData.get(key);
+            const monthValue = data ? data.qty : 0;
+            const gradeName = data ? data.grade : '';
             values[period.period] = monthValue;
             total += monthValue;
           }
@@ -304,7 +314,8 @@ export default function SupplierGradeWiseYearly() {
           if (!showOnlyWithValues || total > 0) {
             results.push({
               supplier: supplier,
-              materialType: grade,
+              materialType: grade,  // This will be the selected grade filter
+              gradeName: gradeName, // Actual grade name from data
               values: values,
               total: total
             });
@@ -388,7 +399,8 @@ export default function SupplierGradeWiseYearly() {
       const rowData: any = {
         'Sl.No': index + 1,
         'Supplier': row.supplier,
-        'Grade': row.materialType
+        'Grade': row.materialType,
+        'Actual Grade Name': row.gradeName || ''
       };
       
       // Add period columns
@@ -404,7 +416,8 @@ export default function SupplierGradeWiseYearly() {
     const totalsRow: any = {
       'Sl.No': '',
       'Supplier': '',
-      'Grade': 'COLUMN TOTALS'
+      'Grade': 'COLUMN TOTALS',
+      'Actual Grade Name': ''
     };
     
     periods.forEach(period => {
@@ -480,13 +493,14 @@ export default function SupplierGradeWiseYearly() {
       index + 1,
       row.supplier,
       row.materialType,
+      row.gradeName || '',
       ...periods.map(period => formatCurrency(row.values[period.period] || 0)),
       formatCurrency(row.total)
     ]);
     
     // Add totals row with formatted currency
     const totalsRow = [
-      '', '', 'COLUMN TOTALS',
+      '', '', 'COLUMN TOTALS', '',
       ...periods.map(period => formatCurrency(columnTotals[period.period] || 0)),
       formatCurrency(grandTotal)
     ];
@@ -494,7 +508,7 @@ export default function SupplierGradeWiseYearly() {
     
     // Prepare column headers
     const headers = [
-      ['Sl.No', 'Supplier', 'Grade',
+      ['Sl.No', 'Supplier', 'Grade', 'Actual Grade Name',
        ...periods.map(period => period.period),
        'Total']
     ];
@@ -802,6 +816,7 @@ export default function SupplierGradeWiseYearly() {
                       <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 w-16">Sl.No</th>
                       <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[180px]">Supplier</th>
                       <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[160px]">Grade</th>
+                      <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[200px]">Actual Grade Name</th>
                       {periods.map(period => (
                         <th key={period.id} className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[100px]">
                           {period.period}
@@ -825,6 +840,9 @@ export default function SupplierGradeWiseYearly() {
                             {row.materialType}
                           </span>
                         </td>
+                        <td className="px-3 py-3 text-xs sm:text-sm text-center text-gray-700 border border-gray-300 font-medium">
+                          {row.gradeName || '—'}
+                        </td>
                         {periods.map(period => (
                           <td key={period.id} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-700 border border-gray-300">
                             {(row.values[period.period] || 0) === 0 ? '—' : (row.values[period.period] || 0).toFixed(2)}
@@ -838,7 +856,7 @@ export default function SupplierGradeWiseYearly() {
                     
                     {/* Column Totals Row */}
                     <tr className="bg-gradient-to-r from-blue-100 to-indigo-200 border-t-4 border-blue-600 font-bold">
-                      <td colSpan={2} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
+                      <td colSpan={3} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
                         📊 COLUMN TOTALS
                       </td>
                       <td className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
@@ -856,7 +874,7 @@ export default function SupplierGradeWiseYearly() {
 
                     {/* Grand Total Row */}
                     <tr className="bg-gradient-to-r from-green-100 to-green-200 border-t-4 border-green-600 font-bold">
-                      <td colSpan={3} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
+                      <td colSpan={4} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
                         💰 GRAND TOTAL
                       </td>
                       <td colSpan={periods.length + 1} className="px-3 py-3 text-sm sm:text-base text-center text-green-800 font-bold border border-gray-400">
