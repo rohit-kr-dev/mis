@@ -185,10 +185,9 @@ export default function SupplierGradeWiseYearly() {
   const appliedFiltersCount = useMemo(() => {
     let count = 0;
     if (selectedSupplier) count++;
-    if (selectedType) count++;
     if (selectedGrade) count++;
     return count;
-  }, [selectedSupplier, selectedType, selectedGrade]);
+  }, [selectedSupplier, selectedGrade]);
 
   const filtersRequirementMet = useMemo(() => {
     return appliedFiltersCount >= requiredFilters;
@@ -212,12 +211,8 @@ export default function SupplierGradeWiseYearly() {
       if (selectedSupplier) {
         constraints.push(where('supplierName', '==', selectedSupplier));
       }
-      if (selectedType) {
-        constraints.push(where('type', '==', selectedType));
-      }
       if (selectedGrade) {
-        // For grade filtering, we need to filter by materialType from items
-        constraints.push(where('company', '!=', '')); // This will be filtered later
+        constraints.push(where('grade', '==', selectedGrade));
       }
 
       // Create query with constraints
@@ -347,9 +342,8 @@ export default function SupplierGradeWiseYearly() {
       const [supplier, type, actualGrade] = key.split('|');
       
       const supplierMatch = !selectedSupplier || supplier === selectedSupplier;
-      const typeMatch = !selectedType || type === selectedType;
       
-      if (supplierMatch && typeMatch) {
+      if (supplierMatch) {
         if (!showOnlyWithValues || groupData.total > 0) {
           results.push({
             supplier: groupData.supplier,
@@ -363,7 +357,7 @@ export default function SupplierGradeWiseYearly() {
     });
 
     return results;
-  }, [selectedSupplier, selectedType, selectedGrade, workingSheet, items, periods, suppliers, types, allGrades, showOnlyWithValues, dataFetched]);
+  }, [selectedSupplier, selectedGrade, workingSheet, items, periods, suppliers, allGrades, showOnlyWithValues, dataFetched]);
 
   // Calculate column totals
   const columnTotals: Record<string, number> & { total: number } = useMemo(() => {
@@ -405,22 +399,18 @@ export default function SupplierGradeWiseYearly() {
   // Clear all filters
   const clearFilters = () => {
     setSelectedSupplier('');
-    setSelectedType('');
     setSelectedGrade('');
     setWorkingSheet([]);
     setDataFetched(false);
   };
 
   // Handle filter changes - mark data as stale
-  const handleFilterChange = (filterType: 'supplier' | 'type' | 'grade', value: string) => {
+  const handleFilterChange = (filterType: 'supplier' | 'grade', value: string) => {
     setDataFetched(false); // Mark data as stale when filters change
     
     switch (filterType) {
       case 'supplier':
         setSelectedSupplier(value);
-        break;
-      case 'type':
-        setSelectedType(value);
         break;
       case 'grade':
         setSelectedGrade(value);
@@ -521,10 +511,6 @@ export default function SupplierGradeWiseYearly() {
     
     if (selectedSupplier) {
       doc.text(`Supplier: ${selectedSupplier}`, 14, yPos);
-      yPos += 5;
-    }
-    if (selectedType) {
-      doc.text(`Type: ${selectedType}`, 14, yPos);
       yPos += 5;
     }
     if (selectedGrade) {
@@ -731,7 +717,7 @@ export default function SupplierGradeWiseYearly() {
             <span className="block mt-1 text-green-700 font-medium">🔥 Zero Firebase reads until you click the button!</span>
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 🏢 Supplier {selectedSupplier && <span className="text-green-600">✓</span>}
@@ -757,24 +743,6 @@ export default function SupplierGradeWiseYearly() {
                   ))}
                 </select>
               </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                📋 Type {selectedType && <span className="text-green-600">✓</span>}
-              </label>
-              <select
-                value={selectedType}
-                onChange={(e) => handleFilterChange('type', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
-              >
-                <option value="">-- Select Type --</option>
-                {types.map(type => (
-                  <option key={type.id} value={type.type}>
-                    {type.type}
-                  </option>
-                ))}
-              </select>
             </div>
 
             <div>

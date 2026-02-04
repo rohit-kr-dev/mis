@@ -181,18 +181,6 @@ export default function Sidebar() {
                   </li>
                   <li>
                     <Link
-                      href="/grade-wise-yearly"
-                      className={`block px-4 py-2 rounded-lg transition-colors ${
-                        isActive('/grade-wise-yearly')
-                          ? 'bg-blue-600 text-white'
-                          : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                      }`}
-                    >
-                      Grade Wise Yearly
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
                       href="/all-suppliers-monthly"
                       className={`block px-4 py-2 rounded-lg transition-colors ${
                         isActive('/all-suppliers-monthly')
