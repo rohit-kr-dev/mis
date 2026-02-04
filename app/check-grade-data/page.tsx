@@ -4,9 +4,15 @@ import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query } from 'firebase/firestore';
 
+interface GradeDataItem {
+  collection: string;
+  gradeValues: string[];
+  count: number;
+}
+
 export default function CheckGradeData() {
-  const [collections, setCollections] = useState([]);
-  const [gradeData, setGradeData] = useState([]);
+  const [collections, setCollections] = useState<string[]>([]);
+  const [gradeData, setGradeData] = useState<GradeDataItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,7 +33,7 @@ export default function CheckGradeData() {
           'domestic-transactions'
         ];
         
-        const foundGradeData = [];
+        const foundGradeData: GradeDataItem[] = [];
         
         for (const collectionName of collectionsToCheck) {
           try {
@@ -59,14 +65,14 @@ export default function CheckGradeData() {
               if (hasGradeField) {
                 foundGradeData.push({
                   collection: collectionName,
-                  gradeValues: Array.from(gradeValues),
+                  gradeValues: Array.from(gradeValues) as string[],
                   count: snapshot.size
                 });
                 console.log(`🎯 Grade data found:`, Array.from(gradeValues));
               }
             }
           } catch (error) {
-            console.log(`❌ Error checking ${collectionName}:`, error.message);
+            console.log(`❌ Error checking ${collectionName}:`, error instanceof Error ? error.message : String(error));
           }
         }
         
