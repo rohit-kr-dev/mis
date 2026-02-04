@@ -377,11 +377,29 @@ export default function SupplierWiseYearly() {
     }
   };
 
+  // Format currency function for Indian numbering system
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'decimal',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
+
+  // Format for downloads (without decimals for cleaner look)
+  const formatForDownload = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
   // Download as Excel
   const downloadExcel = () => {
     if (calculatedRows.length === 0) return;
     
-    // Prepare data for export
+    // Prepare data for export with formatted numbers
     const exportData = calculatedRows.map((row, index) => {
       const rowData: any = {
         'Sl.No': index + 1,
@@ -390,12 +408,13 @@ export default function SupplierWiseYearly() {
         'Company': row.company
       };
       
-      // Add period columns
+      // Add period columns with formatted numbers
       periods.forEach(period => {
-        rowData[period.period] = row.values[period.period] || 0;
+        const value = row.values[period.period] || 0;
+        rowData[period.period] = value === 0 ? 0 : formatForDownload(value);
       });
       
-      rowData['Total'] = row.total;
+      rowData['Total'] = formatForDownload(row.total);
       return rowData;
     });
     
@@ -408,10 +427,11 @@ export default function SupplierWiseYearly() {
     };
     
     periods.forEach(period => {
-      totalsRow[period.period] = columnTotals[period.period] || 0;
+      const value = columnTotals[period.period] || 0;
+      totalsRow[period.period] = value === 0 ? 0 : formatForDownload(value);
     });
     
-    totalsRow['Total'] = grandTotal;
+    totalsRow['Total'] = formatForDownload(grandTotal);
     exportData.push(totalsRow);
     
     // Create worksheet
@@ -466,30 +486,27 @@ export default function SupplierWiseYearly() {
     
     yPos += 5;
     
-    // Format currency function
-    const formatCurrency = (amount: number) => {
-      return new Intl.NumberFormat('en-IN', {
-        style: 'decimal',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(amount);
-    };
-    
     // Prepare table data with formatted currency
     const tableData = calculatedRows.map((row, index) => [
       index + 1,
       row.supplier,
       row.materialType,
       row.company,
-      ...periods.map(period => formatCurrency(row.values[period.period] || 0)),
-      formatCurrency(row.total)
+      ...periods.map(period => {
+        const value = row.values[period.period] || 0;
+        return value === 0 ? '0' : formatForDownload(value);
+      }),
+      formatForDownload(row.total)
     ]);
     
     // Add totals row with formatted currency
     const totalsRow = [
       '', '', '', 'COLUMN TOTALS',
-      ...periods.map(period => formatCurrency(columnTotals[period.period] || 0)),
-      formatCurrency(grandTotal)
+      ...periods.map(period => {
+        const value = columnTotals[period.period] || 0;
+        return value === 0 ? '0' : formatForDownload(value);
+      }),
+      formatForDownload(grandTotal)
     ];
     tableData.push(totalsRow);
     
@@ -526,9 +543,9 @@ export default function SupplierWiseYearly() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-50 to-pink-100">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
           <div className="text-lg text-gray-700 font-medium">Loading initial data...</div>
         </div>
       </div>
@@ -536,10 +553,10 @@ export default function SupplierWiseYearly() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 py-4 px-2 sm:px-4 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-4 px-2 sm:px-4 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-800 text-center">
-          📅 Supplier Wise Yearly Report
+          📊 Supplier Wise Yearly Report
         </h1>
 
         {/* Filters */}
@@ -551,7 +568,7 @@ export default function SupplierWiseYearly() {
                 onClick={() => setShowOnlyWithValues(!showOnlyWithValues)}
                 className={`w-full sm:w-auto px-4 py-2 text-sm rounded-lg transition shadow-md ${
                   showOnlyWithValues
-                    ? 'bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800'
                     : 'bg-gradient-to-r from-orange-600 to-orange-700 text-white hover:from-orange-700 hover:to-orange-800'
                 }`}
               >
@@ -585,7 +602,7 @@ export default function SupplierWiseYearly() {
           </div>
 
           {/* Filter Requirement Selector */}
-          <div className="mb-4 bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg border border-purple-200">
+          <div className="mb-4 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
             <label className="block text-sm font-semibold text-gray-800 mb-3">
               ⚙️ Minimum Filters Required:
             </label>
@@ -597,7 +614,7 @@ export default function SupplierWiseYearly() {
                 }}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition shadow-md ${
                   requiredFilters === 1
-                    ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
                 }`}
               >
@@ -610,7 +627,7 @@ export default function SupplierWiseYearly() {
                 }}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition shadow-md ${
                   requiredFilters === 2
-                    ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
                 }`}
               >
@@ -623,7 +640,7 @@ export default function SupplierWiseYearly() {
                 }}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition shadow-md ${
                   requiredFilters === 3
-                    ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
                 }`}
               >
@@ -651,7 +668,7 @@ export default function SupplierWiseYearly() {
             </div>
           )}
           
-          <p className="text-xs sm:text-sm text-gray-600 mb-4 bg-purple-50 p-3 rounded-lg border border-purple-200">
+          <p className="text-xs sm:text-sm text-gray-600 mb-4 bg-blue-50 p-3 rounded-lg border border-blue-200">
             💡 <span className="font-semibold">Note:</span> Select filters and click "Load Data" to fetch from Firebase. 
             {requiredFilters === 3 && ' All three filters must be selected.'}
             {requiredFilters === 2 && ' At least two filters must be selected.'}
@@ -680,7 +697,7 @@ export default function SupplierWiseYearly() {
               <select
                 value={selectedType}
                 onChange={(e) => handleFilterChange('type', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm bg-white"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
               >
                 <option value="">-- Select Type --</option>
                 {types.map(type => (
@@ -710,7 +727,7 @@ export default function SupplierWiseYearly() {
               className={`px-6 py-3 rounded-lg font-semibold text-white transition shadow-lg transform hover:scale-105 ${
                 !filtersRequirementMet || loadingData
                   ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
+                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
               }`}
             >
               {loadingData ? (
@@ -754,7 +771,7 @@ export default function SupplierWiseYearly() {
           </div>
         ) : loadingData ? (
           <div className="bg-white rounded-xl shadow-lg p-8 text-center border border-gray-200">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-purple-600 mx-auto mb-3"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600 mx-auto mb-3"></div>
             <p className="text-gray-600">Fetching filtered data from Firebase...</p>
             <p className="text-xs text-gray-500 mt-2">This only happens when you click "Load Data"</p>
           </div>
@@ -779,7 +796,7 @@ export default function SupplierWiseYearly() {
                     setRowsPerPage(Number(e.target.value));
                     setCurrentPage(1);
                   }}
-                  className="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white text-sm"
+                  className="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-sm"
                 >
                   <option value={10}>10</option>
                   <option value={25}>25</option>
@@ -787,7 +804,7 @@ export default function SupplierWiseYearly() {
                   <option value={100}>100</option>
                 </select>
               </div>
-              <div className="text-sm text-gray-600 bg-purple-50 px-3 py-1 rounded-lg border border-purple-200">
+              <div className="text-sm text-gray-600 bg-blue-50 px-3 py-1 rounded-lg border border-blue-200">
                 📊 Showing {startIndex + 1}-{Math.min(endIndex, calculatedRows.length)} of {calculatedRows.length} records
               </div>
             </div>
@@ -795,7 +812,7 @@ export default function SupplierWiseYearly() {
             <div className="bg-white shadow-lg overflow-hidden border border-gray-300">
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
-                  <thead className="bg-gradient-to-r from-purple-800 to-pink-900 text-white sticky top-0">
+                  <thead className="bg-gradient-to-r from-blue-800 to-indigo-900 text-white sticky top-0">
                     <tr>
                       <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 w-16">Sl.No</th>
                       <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[180px]">Supplier</th>
@@ -807,60 +824,47 @@ export default function SupplierWiseYearly() {
                         </th>
                       ))}
                       <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 min-w-[110px]">Total</th>
-                      <th className="px-3 py-3 text-center text-xs sm:text-sm font-semibold border border-gray-400 w-20">Qty</th>
                     </tr>
                   </thead>
                   <tbody>
                     {currentRows.map((row, index) => (
                       <tr
                         key={`${row.supplier}-${row.materialType}-${row.company}-${index}`}
-                        className="border-b border-gray-300 hover:bg-purple-50 transition"
+                        className="border-b border-gray-300 hover:bg-blue-50 transition"
                       >
                         <td className="px-3 py-3 text-xs sm:text-sm text-center text-gray-700 font-medium border border-gray-300">
                           {startIndex + index + 1}
                         </td>
                         <td className="px-3 py-3 text-xs sm:text-sm text-center text-gray-700 border border-gray-300">{row.supplier}</td>
                         <td className="px-3 py-3 text-xs sm:text-sm text-center border border-gray-300">
-                          <span className="bg-pink-100 text-pink-800 px-2 py-1 rounded-full text-xs font-medium">
+                          <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs font-medium">
                             {row.materialType}
                           </span>
                         </td>
                         <td className="px-3 py-3 text-xs sm:text-sm text-center text-gray-700 font-medium border border-gray-300">{row.company}</td>
                         {periods.map(period => (
                           <td key={period.id} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-700 border border-gray-300">
-                            {(row.values[period.period] || 0) === 0 ? '—' : (row.values[period.period] || 0).toFixed(2)}
+                            {(row.values[period.period] || 0) === 0 ? '—' : formatCurrency(row.values[period.period] || 0)}
                           </td>
                         ))}
-                        <td className="px-3 py-3 text-xs sm:text-sm text-center font-semibold text-purple-700 border border-gray-300">
-                          {row.total.toFixed(2)}
-                        </td>
-                        <td className="px-3 py-3 text-xs sm:text-sm text-center border border-gray-300">
-                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                            row.total > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            {row.total > 0 ? 'Yes' : 'No'}
-                          </span>
+                        <td className="px-3 py-3 text-xs sm:text-sm text-center font-semibold text-blue-700 border border-gray-300">
+                          {formatCurrency(row.total)}
                         </td>
                       </tr>
                     ))}
                     
                     {/* Column Totals Row */}
-                    <tr className="bg-gradient-to-r from-purple-100 to-pink-200 border-t-4 border-purple-600 font-bold">
+                    <tr className="bg-gradient-to-r from-blue-100 to-indigo-200 border-t-4 border-blue-600 font-bold">
                       <td colSpan={4} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
                         📊 COLUMN TOTALS
                       </td>
                       {periods.map(period => (
                         <td key={period.id} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
-                          {(columnTotals[period.period] || 0) === 0 ? '—' : (columnTotals[period.period] || 0).toFixed(2)}
+                          {(columnTotals[period.period] || 0) === 0 ? '—' : formatCurrency(columnTotals[period.period] || 0)}
                         </td>
                       ))}
-                      <td className="px-3 py-3 text-xs sm:text-sm text-center text-purple-700 font-bold text-base border border-gray-400">
-                        {(columnTotals.total || 0).toFixed(2)}
-                      </td>
-                      <td className="px-3 py-3 text-xs sm:text-sm text-center border border-gray-400">
-                        <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                          —
-                        </span>
+                      <td className="px-3 py-3 text-xs sm:text-sm text-center text-blue-700 font-bold text-base border border-gray-400">
+                        {formatCurrency(columnTotals.total || 0)}
                       </td>
                     </tr>
 
@@ -869,8 +873,8 @@ export default function SupplierWiseYearly() {
                       <td colSpan={4} className="px-3 py-3 text-xs sm:text-sm text-center text-gray-900 border border-gray-400">
                         💰 GRAND TOTAL
                       </td>
-                      <td colSpan={periods.length + 2} className="px-3 py-3 text-sm sm:text-base text-center text-green-800 font-bold border border-gray-400">
-                        {grandTotal.toFixed(2)}
+                      <td colSpan={periods.length + 1} className="px-3 py-3 text-sm sm:text-base text-center text-green-800 font-bold border border-gray-400">
+                        {formatCurrency(grandTotal)}
                       </td>
                     </tr>
                   </tbody>
@@ -882,7 +886,7 @@ export default function SupplierWiseYearly() {
             <div className="bg-white rounded-b-xl shadow-lg px-4 py-4 border border-gray-200">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="text-xs sm:text-sm text-gray-600">
-                  Page <span className="font-bold text-purple-600">{currentPage}</span> of <span className="font-bold">{totalPages}</span>
+                  Page <span className="font-bold text-blue-600">{currentPage}</span> of <span className="font-bold">{totalPages}</span>
                 </div>
                 
                 <div className="flex items-center gap-2">
@@ -923,7 +927,7 @@ export default function SupplierWiseYearly() {
                           onClick={() => goToPage(pageNum)}
                           className={`px-3 py-1 rounded-lg text-sm font-medium transition ${
                             currentPage === pageNum
-                              ? 'bg-purple-600 text-white shadow-md'
+                              ? 'bg-blue-600 text-white shadow-md'
                               : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
                           }`}
                         >
@@ -965,7 +969,7 @@ export default function SupplierWiseYearly() {
                         goToPage(page);
                       }
                     }}
-                    className="w-16 px-2 py-1 border border-gray-300 rounded-lg text-center text-sm focus:ring-2 focus:ring-purple-500"
+                    className="w-16 px-2 py-1 border border-gray-300 rounded-lg text-center text-sm focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
