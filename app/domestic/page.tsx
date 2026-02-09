@@ -45,9 +45,6 @@ export default function DomesticPage() {
   const [domesticData, setDomesticData] = useState<DomesticData[]>([]);
   const [grades, setGrades] = useState<Grade[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [filteredSuppliers, setFilteredSuppliers] = useState<Supplier[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editingTransaction, setEditingTransaction] = useState<DomesticData | null>(null);
   const [formData, setFormData] = useState<DomesticData>(initialFormData);
@@ -386,7 +383,6 @@ export default function DomesticPage() {
       );
       
       setSuppliers(uniqueSuppliers);
-      setFilteredSuppliers(uniqueSuppliers);
     } catch (error) {
       console.error('Error fetching suppliers:', error);
     }
@@ -412,31 +408,6 @@ export default function DomesticPage() {
       console.error('Error fetching grades:', error);
     }
   };
-
-  // Filter suppliers based on search term
-  useEffect(() => {
-    if (searchTerm.trim() === '') {
-      setFilteredSuppliers(suppliers);
-    } else {
-      const filtered = suppliers.filter(supplier =>
-        supplier.supplierName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (supplier.alias && supplier.alias.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-      setFilteredSuppliers(filtered);
-    }
-  }, [searchTerm, suppliers]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setShowDropdown(false);
-    };
-    
-    if (showDropdown) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
-  }, [showDropdown]);
 
   // Load data on component mount
   useEffect(() => {
@@ -465,8 +436,6 @@ export default function DomesticPage() {
                     // Cancel edit mode
                     setEditingTransaction(null);
                     setFormData(initialFormData);
-                    setSearchTerm('');
-                    setShowDropdown(false);
                   }
                   setShowAddForm(!showAddForm);
                 }}
@@ -506,62 +475,19 @@ export default function DomesticPage() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">🏢 Vendor</label>
-                  <div 
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-green-500 focus-within:border-green-500 bg-white cursor-pointer"
-                    onClick={() => setShowDropdown(!showDropdown)}
-                  >
-                    <div className="flex justify-between items-center">
-                      <span className={`${formData.vendor ? 'text-gray-900' : 'text-gray-500'}`}>
-                        {formData.vendor || (suppliers.length === 0 ? 'Loading vendors...' : 'Select Vendor')}
-                      </span>
-                      <svg 
-                        className={`w-5 h-5 text-gray-400 transition-transform ${showDropdown ? 'rotate-180' : ''}`}
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </div>
-                  
-                  {showDropdown && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
-                      <div className="p-2 border-b border-gray-200 sticky top-0 bg-white">
-                        <input
-                          type="text"
-                          placeholder="Search vendors..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                          autoFocus
-                        />
-                      </div>
-                      <div className="py-1">
-                        {filteredSuppliers.length === 0 ? (
-                          <div className="px-4 py-2 text-gray-500 text-sm">No vendors found</div>
-                        ) : (
-                          filteredSuppliers.map((supplier) => (
-                            <div
-                              key={supplier.id}
-                              className={`px-4 py-2 cursor-pointer hover:bg-green-50 ${formData.vendor === supplier.supplierName ? 'bg-green-100 text-green-800' : 'text-gray-700'}`}
-                              onClick={() => {
-                                handleFormChange('vendor', supplier.supplierName);
-                                setShowDropdown(false);
-                                setSearchTerm('');
-                              }}
-                            >
-                              <div className="font-medium">{supplier.supplierName}</div>
-                              {supplier.alias && (
-                                <div className="text-sm text-gray-500">{supplier.alias}</div>
-                              )}
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  )}
+                  <SearchableDropdown
+                    options={suppliers.map(supplier => ({
+                      id: supplier.supplierName,
+                      name: supplier.supplierName,
+                      alias: supplier.alias
+                    }))}
+                    value={formData.vendor}
+                    onChange={(value) => handleFormChange('vendor', value)}
+                    placeholder="Select Vendor"
+                    label="🏢 Vendor"
+                    displayKey="name"
+                    searchKey="name"
+                  />
                 </div>
               </div>
               
@@ -633,8 +559,6 @@ export default function DomesticPage() {
                   onClick={() => {
                     setEditingTransaction(null);
                     setFormData(initialFormData);
-                    setSearchTerm('');
-                    setShowDropdown(false);
                   }}
                   className="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition shadow-md flex items-center space-x-2"
                 >

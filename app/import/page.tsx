@@ -352,11 +352,30 @@ export default function ImportPage() {
         console.log('Document ID:', doc.id);
         console.log('Document data:', doc.data());
         
-        const transactionData = {
-          id: doc.id,
-          ...doc.data()
-        } as BookingData;
+        // Create the transaction data object
+        const baseData = doc.data();
         
+        // Explicitly set the ID to the document ID
+        const transactionData: BookingData = {
+          id: doc.id,  // This should be the Firestore document ID
+          dateOfBooking: baseData.dateOfBooking || '',
+          vendor: baseData.vendor || '',
+          port: baseData.port || '',
+          grade: baseData.grade || '',
+          qty: baseData.qty || '',
+          commission: baseData.commission || '',
+          commissionCurrency: baseData.commissionCurrency || 'USD',
+          exchRate: baseData.exchRate || '',
+          customDuty: baseData.customDuty || '',
+          calculatedCustomDuty: baseData.calculatedCustomDuty || '',
+          bookingRate: baseData.bookingRate || '',
+          clearanceCharges: baseData.clearanceCharges || '',
+          netLanded: baseData.netLanded || '',
+          status: baseData.status || '',
+          completed: baseData.completed || ''
+        };
+        
+        console.log('Processed transaction ID:', transactionData.id);
         console.log('Processed transaction:', transactionData);
         transactions.push(transactionData);
       });
@@ -424,16 +443,26 @@ export default function ImportPage() {
 
   // Edit transaction
   const startEditTransaction = (transaction: BookingData) => {
+    console.log('Starting edit for transaction:', transaction);
+    console.log('Transaction ID:', transaction.id);
+    console.log('Transaction type:', typeof transaction.id);
+    
     setEditingTransaction(transaction);
     setFormData({
-      ...transaction,
-      id: 0
+      ...transaction
+      // Don't override the ID - keep the original Firestore document ID
     });
+    
+    console.log('FormData after setting:', { ...transaction });
     setShowAddForm(true);
   };
 
   // Update transaction in Firestore
   const updateTransaction = async () => {
+    console.log('=== UPDATE TRANSACTION DEBUG ===');
+    console.log('Editing transaction:', editingTransaction);
+    console.log('FormData:', formData);
+    
     if (!editingTransaction) {
       console.error('No editing transaction found');
       alert('Error: No transaction selected for update');
@@ -446,9 +475,25 @@ export default function ImportPage() {
         updatedAt: serverTimestamp()
       };
       
-      const idString = typeof editingTransaction.id === 'number' ? editingTransaction.id.toString() : editingTransaction.id;
+      // Remove the id field from the data being sent to Firestore
+      // as Firestore documents shouldn't have their own ID in the data
+      const { id, ...cleanTransactionData } = transactionData;
       
-      await updateDoc(doc(db, 'import-transactions', idString), transactionData);
+      // Use the original document ID from editingTransaction
+      // The ID should already be the correct Firestore document ID
+      const docId = editingTransaction.id;
+      
+      console.log('Document ID to update:', docId);
+      console.log('Document ID type:', typeof docId);
+      console.log('Transaction data to save:', cleanTransactionData);
+      
+      if (!docId) {
+        throw new Error('Document ID is missing');
+      }
+      
+      await updateDoc(doc(db, 'import-transactions', docId.toString()), cleanTransactionData);
+      
+      console.log('Document updated successfully');
       
       // Reset form and editing state
       setFormData({
@@ -479,6 +524,7 @@ export default function ImportPage() {
       console.error('Error updating transaction:', error);
       alert(`Error updating transaction: ${(error as Error).message || 'Unknown error occurred'}`);
     }
+    console.log('=== END UPDATE TRANSACTION DEBUG ===');
   };
 
   // Delete transaction from Firestore - Using actual document ID
@@ -1108,6 +1154,7 @@ export default function ImportPage() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Port</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty (Kg)</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booking Rate</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comm Value</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Currency</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exch Rate</th>
@@ -1120,7 +1167,11 @@ export default function ImportPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredData.map((row, index) => (
+                  {filteredData.map((row, index) => {
+                    console.log(`Row ${index} data:`, row);
+                    console.log(`Row ${index} ID:`, row.id);
+                    console.log(`Row ${index} ID type:`, typeof row.id);
+                    return (
                     <tr key={row.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3 text-sm text-gray-900 font-medium">{index + 1}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{row.dateOfBooking || '-'}</td>
@@ -1128,6 +1179,7 @@ export default function ImportPage() {
                       <td className="px-4 py-3 text-sm text-gray-900">{row.port || '-'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{row.grade || '-'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{formatIndianNumber(row.qty || '0')}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{formatCurrency(row.bookingRate || '0.00')}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{formatCurrency(row.commission || '0.00')}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{row.commissionCurrency || 'USD'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{row.exchRate || '0.0000'}</td>
@@ -1169,7 +1221,8 @@ export default function ImportPage() {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
