@@ -134,9 +134,30 @@ export async function POST(request: NextRequest) {
     // Sort by SL No to get the latest records
     processedData.sort((a, b) => a.slNo - b.slNo);
     
-    // Process ALL new records (not just the last 100)
-    const newRecords = processedData.filter(record => record.slNo > maxExistingSlNo);
-    const recordsToProcess = newRecords; // All new records
+    // Debug: Log SL number distribution
+    console.log('SL Number analysis:');
+    console.log('- Min SL No:', Math.min(...processedData.map(r => r.slNo)));
+    console.log('- Max SL No:', Math.max(...processedData.map(r => r.slNo)));
+    console.log('- Records with SL No > maxExisting:', processedData.filter(record => record.slNo > maxExistingSlNo).length);
+    
+    // Process ALL records when database is empty, otherwise process only new records
+    let recordsToProcess;
+    let newRecordsCount = 0;
+    
+    if (maxExistingSlNo === 0) {
+      // Database is empty - process all records
+      console.log('Database is empty, processing all records');
+      recordsToProcess = processedData;
+      newRecordsCount = processedData.length;
+    } else {
+      // Database has existing data - process only new records
+      const newRecords = processedData.filter(record => record.slNo > maxExistingSlNo);
+      newRecordsCount = newRecords.length;
+      console.log(`Found ${newRecordsCount} new records (SL No > ${maxExistingSlNo})`);
+      recordsToProcess = newRecords;
+    }
+    
+    console.log(`Records to process: ${recordsToProcess.length} records`);
 
     // Save to Firestore with proper duplicate check
     const batchSize = 100; // Increased batch size for better performance with large datasets
@@ -192,7 +213,7 @@ export async function POST(request: NextRequest) {
         errors: errorCount,
         maxExistingSlNo: maxExistingSlNo,
         totalExcelRows: jsonData.length,
-        newRecordsFound: newRecords.length
+        newRecordsFound: newRecordsCount
       }
     }, { status: 200 });
     
