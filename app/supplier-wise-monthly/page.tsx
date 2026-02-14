@@ -943,7 +943,7 @@ export default function SupplierWiseMonthly() {
                     'VALUE PACKAGING INDUSTRIES PRIVATE LIMITED',
                     'SRI VENKATESHWARA POLYMERS',
                     'ALLIED PLASTICS',
-                    'Alpha Polymers'
+                    'ALPHA POLYMERS'
                   ].includes(supplier.supplierName))
                   .filter((supplier, index, self) => 
                     index === self.findIndex(s => s.supplierName === supplier.supplierName)
