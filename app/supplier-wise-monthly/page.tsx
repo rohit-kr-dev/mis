@@ -16,6 +16,7 @@ interface WorkingSheetRecord {
   qty: number;
   cnMonth: string;
   status: string;
+  billMonth?: string;
 }
 
 interface WorkingSheetData {
