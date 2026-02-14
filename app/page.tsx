@@ -135,6 +135,7 @@ export default async function HomePage() {
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">📋 Reports & Analytics</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
             <Link href="/supplier-wise-monthly" className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-200 group">
               <div className="text-4xl font-bold text-green-600 mb-4 group-hover:scale-110 transition-transform">📈</div>
               <h3 className="text-xl font-semibold text-gray-800 mb-2">Supplier Wise Monthly</h3>
@@ -168,13 +169,6 @@ export default async function HomePage() {
               <h3 className="text-xl font-semibold text-gray-800 mb-2">All Suppliers Monthly</h3>
               <p className="text-gray-600 mb-4">Compare all suppliers across different types</p>
               <div className="text-red-600 font-medium">View &raquo;</div>
-            </Link>
-
-            <Link href="/grade-wise-yearly" className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-200 group">
-              <div className="text-4xl font-bold text-teal-600 mb-4 group-hover:scale-110 transition-transform">📊</div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">Grade Wise Yearly</h3>
-              <p className="text-gray-600 mb-4">View yearly transactions by grade</p>
-              <div className="text-teal-600 font-medium">View &raquo;</div>
             </Link>
           </div>
         </div>

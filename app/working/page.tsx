@@ -1769,253 +1769,6 @@ export default function Working() {
           </div>
         ) : (
           <>
-            {/* Overall Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-md p-6 text-white">
-                <h3 className="text-sm opacity-90">Total Transactions</h3>
-                <p className="text-3xl font-bold">{summary.totalTransactions}</p>
-              </div>
-              <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-md p-6 text-white">
-                <h3 className="text-sm opacity-90">Purchase Amount</h3>
-                <p className="text-2xl font-bold">{formatCurrency(summary.totalPurchaseAmount)}</p>
-              </div>
-              <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-md p-6 text-white">
-                <h3 className="text-sm opacity-90">Total of TOTAL</h3>
-                <p className="text-2xl font-bold">{formatCurrency(summary.totalOfTotal)}</p>
-              </div>
-              <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-md p-6 text-white">
-                <h3 className="text-sm opacity-90">Total DIFF</h3>
-                <p className="text-2xl font-bold">{formatCurrency(summary.totalDiff)}</p>
-              </div>
-            </div>
-
-            {/* Last Completed Transaction */}
-            {workingSheetData.length > 0 && (
-              <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl shadow-lg p-6 mb-6 text-white">
-                <h3 className="text-lg font-semibold mb-3">Last Completed Transaction</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  {(() => {
-                    // Filter for completed/closed transactions and get the most recent one
-                    const completedTransactions = [...workingSheetData]
-                      .filter(row => (row.status || '').toLowerCase() === 'closed')
-                      .sort((a, b) => new Date(b.purchaseDate || '').getTime() - new Date(a.purchaseDate || '').getTime());
-                    
-                    if (completedTransactions.length > 0) {
-                      const lastCompleted = completedTransactions[0];
-                      return (
-                        <>
-                          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                            <p className="text-xs opacity-80">Supplier</p>
-                            <p className="font-semibold truncate">{lastCompleted.supplierName}</p>
-                          </div>
-                          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                            <p className="text-xs opacity-80">Bill No</p>
-                            <p className="font-semibold">{lastCompleted.billNo}</p>
-                          </div>
-                          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                            <p className="text-xs opacity-80">Date</p>
-                            <p className="font-semibold">{lastCompleted.purchaseDate}</p>
-                          </div>
-                          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                            <p className="text-xs opacity-80">Status</p>
-                            <p className="font-semibold">{lastCompleted.status}</p>
-                          </div>
-                          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                            <p className="text-xs opacity-80">Amount</p>
-                            <p className="font-semibold">{formatCurrency(lastCompleted.total)}</p>
-                          </div>
-                          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                            <p className="text-xs opacity-80">Grade</p>
-                            <p className="font-semibold truncate">{lastCompleted.grade}</p>
-                          </div>
-                        </>
-                      );
-                    } else {
-                      // If no completed transactions, show the most recent transaction of any status
-                      const mostRecent = [...workingSheetData]
-                        .sort((a, b) => new Date(b.purchaseDate || '').getTime() - new Date(a.purchaseDate || '').getTime())[0];
-                      return (
-                        <>
-                          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                            <p className="text-xs opacity-80">Supplier</p>
-                            <p className="font-semibold truncate">{mostRecent.supplierName}</p>
-                          </div>
-                          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                            <p className="text-xs opacity-80">Bill No</p>
-                            <p className="font-semibold">{mostRecent.billNo}</p>
-                          </div>
-                          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                            <p className="text-xs opacity-80">Date</p>
-                            <p className="font-semibold">{mostRecent.purchaseDate}</p>
-                          </div>
-                          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                            <p className="text-xs opacity-80">Status</p>
-                            <p className="font-semibold">{mostRecent.status}</p>
-                          </div>
-                          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                            <p className="text-xs opacity-80">Amount</p>
-                            <p className="font-semibold">{formatCurrency(mostRecent.total)}</p>
-                          </div>
-                          <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                            <p className="text-xs opacity-80">Grade</p>
-                            <p className="font-semibold truncate">{mostRecent.grade}</p>
-                          </div>
-                        </>
-                      );
-                    }
-                  })()}
-                </div>
-              </div>
-            )}
-
-            {/* Summary Cards for Selected Supplier */}
-            {filterSupplier && workingSheetData.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-md p-6 text-white">
-                  <h3 className="text-sm opacity-90">Open Transactions</h3>
-                  <p className="text-3xl font-bold">
-                    {workingSheetData.filter(row => (row.status || 'Open') === 'Open').length}
-                  </p>
-                </div>
-                <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-md p-6 text-white">
-                  <h3 className="text-sm opacity-90">Verified Transactions</h3>
-                  <p className="text-3xl font-bold">
-                    {workingSheetData.filter(row => (row.status || 'Open') === 'Verified').length}
-                  </p>
-                </div>
-                <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-md p-6 text-white">
-                  <h3 className="text-sm opacity-90">Closed Transactions</h3>
-                  <p className="text-3xl font-bold">
-                    {workingSheetData.filter(row => (row.status || 'Open') === 'Closed').length}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Last Transaction for Selected Supplier */}
-            {filterSupplier && workingSheetData.length > 0 && (
-              <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Last Transaction Details</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  {(() => {
-                    const lastTransaction = [...workingSheetData]
-                      .sort((a, b) => new Date(b.purchaseDate || '').getTime() - new Date(a.purchaseDate || '').getTime())[0];
-                    return (
-                      <>
-                        <div className="p-3 bg-blue-50 rounded-lg">
-                          <p className="text-xs text-gray-600">Bill No</p>
-                          <p className="font-semibold">{lastTransaction.billNo}</p>
-                        </div>
-                        <div className="p-3 bg-green-50 rounded-lg">
-                          <p className="text-xs text-gray-600">Purchase Date</p>
-                          <p className="font-semibold">{lastTransaction.purchaseDate}</p>
-                        </div>
-                        <div className="p-3 bg-yellow-50 rounded-lg">
-                          <p className="text-xs text-gray-600">Status</p>
-                          <p className="font-semibold">{lastTransaction.status}</p>
-                        </div>
-                        <div className="p-3 bg-purple-50 rounded-lg">
-                          <p className="text-xs text-gray-600">Total</p>
-                          <p className="font-semibold">{formatCurrency(lastTransaction.total)}</p>
-                        </div>
-                        <div className="p-3 bg-pink-50 rounded-lg">
-                          <p className="text-xs text-gray-600">Grade</p>
-                          <p className="font-semibold">{lastTransaction.grade}</p>
-                        </div>
-                        <div className="p-3 bg-indigo-50 rounded-lg">
-                          <p className="text-xs text-gray-600">Bill Month</p>
-                          <p className="font-semibold">{lastTransaction.billMonth}</p>
-                        </div>
-                      </>
-                    );
-                  })()}
-                </div>
-              </div>
-            )}
-
-            {/* Monthly Summary for Selected Supplier */}
-            {filterSupplier && workingSheetData.length > 0 && (
-              <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">&gt;Monthly Purchase Summary</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse text-sm">
-                    <thead>
-                      <tr className="bg-gradient-to-r from-gray-800 to-gray-900 text-white">
-                        <th className="px-3 py-2 border text-xs">Month</th>
-                        <th className="px-3 py-2 border text-xs text-right">Open Amount</th>
-                        <th className="px-3 py-2 border text-xs text-right">Verified Amount</th>
-                        <th className="px-3 py-2 border text-xs text-right">Closed Amount</th>
-                        <th className="px-3 py-2 border text-xs text-right">Total Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(() => {
-                        // Group data by month and status
-                        const monthlySummary: Record<string, Record<string, number>> = {};
-                        workingSheetData.forEach(row => {
-                          const month = row.billMonth;
-                          // Ensure we have a valid month to group by
-                          if (!month) return;
-                          
-                          // Initialize the month entry if it doesn't exist
-                          if (!monthlySummary[month]) {
-                            monthlySummary[month] = { Open: 0, Verified: 0, Closed: 0, Total: 0 };
-                          }
-                          
-                          // Use the actual status value from the row, defaulting to 'Open'
-                          const status = row.status || 'Open';
-                          
-                          // Increment the appropriate status amount
-                          if (status === 'Open') {
-                            monthlySummary[month]['Open'] += row.total || 0;
-                          } else if (status === 'Verified') {
-                            monthlySummary[month]['Verified'] += row.total || 0;
-                          } else if (status === 'Closed') {
-                            monthlySummary[month]['Closed'] += row.total || 0;
-                          }
-                          
-                          // Always increment the total
-                          monthlySummary[month].Total += row.total || 0;
-                        });
-
-                        // Convert to sorted array
-                        const sortedMonths = Object.entries(monthlySummary)
-                          .sort(([a], [b]) => {
-                            // Sort months chronologically
-                            const parseMonth = (month: string) => {
-                              if (!month) return { year: 0, month: 0 };
-                              const [monthStr, yearStr] = month.split('-');
-                              const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-                              const monthIndex = months.indexOf(monthStr.toLowerCase());
-                              const year = parseInt('20' + yearStr);
-                              return { year, month: monthIndex };
-                            };
-                            
-                            const dateA = parseMonth(a);
-                            const dateB = parseMonth(b);
-                            
-                            if (dateA.year !== dateB.year) {
-                              return dateB.year - dateA.year;
-                            }
-                            return dateB.month - dateA.month;
-                          });
-
-                        return sortedMonths.map(([month, amounts]) => (
-                          <tr key={month} className="hover:bg-blue-50 transition">
-                            <td className="px-3 py-2 border text-gray-700 font-medium">{month}</td>
-                            <td className="px-3 py-2 border text-right text-gray-700">{formatCurrency(amounts.Open)}</td>
-                            <td className="px-3 py-2 border text-right text-gray-700">{formatCurrency(amounts.Verified)}</td>
-                            <td className="px-3 py-2 border text-right text-gray-700">{formatCurrency(amounts.Closed)}</td>
-                            <td className="px-3 py-2 border text-right font-semibold text-blue-700">{formatCurrency(amounts.Total)}</td>
-                          </tr>
-                        ));
-                      })()}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
             {/* Rows per page selector */}
             <div className="bg-white rounded-t-xl shadow-lg px-4 py-3 border border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <div className="flex items-center gap-2 text-sm text-gray-700">
@@ -2107,6 +1860,34 @@ export default function Working() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+              {/* Table Footer with Totals */}
+              <div className="border-t-2 border-gray-800 bg-gray-50">
+                <div className="flex px-4 py-3 text-sm font-semibold text-gray-800">
+                  <div className="w-[4.16%] flex items-center justify-center border-r">Total</div>
+                  <div className="w-[8.33%] flex items-center justify-start border-r pl-2"></div>
+                  <div className="w-[8.33%] flex items-center justify-start border-r pl-2"></div>
+                  <div className="w-[8.33%] flex items-center justify-start border-r pl-2"></div>
+                  <div className="w-[8.33%] flex items-center justify-start border-r pl-2"></div>
+                  <div className="w-[8.33%] flex items-center justify-start border-r pl-2"></div>
+                  <div className="w-[8.33%] flex items-center justify-end border-r pr-2"></div>
+                  <div className="w-[8.33%] flex items-center justify-end font-bold pr-2 text-blue-700">
+                    {formatCurrency(
+                      workingSheetData.reduce((sum, row) => sum + (typeof row.qty === 'number' ? row.qty : 0), 0)
+                    )}
+                  </div>
+                  <div className="w-[8.33%] flex items-center justify-start border-r pl-2"></div>
+                  <div className="w-[8.33%] flex items-center justify-start border-r pl-2"></div>
+                  <div className="w-[8.33%] flex items-center justify-start border-r pl-2"></div>
+                  <div className="w-[8.33%] flex items-center justify-end border-r pr-2 text-blue-700 font-bold">
+                    {formatCurrency(
+                      workingSheetData.reduce((sum, row) => sum + (typeof row.total === 'number' ? row.total : 0), 0)
+                    )}
+                  </div>
+                  <div className="w-[8.33%] flex items-center justify-end border-r pr-2"></div>
+                  <div className="w-[8.33%] flex items-center justify-start border-r pl-2"></div>
+                  <div className="w-[8.33%] flex items-center justify-center"></div>
+                </div>
               </div>
             </div>
 

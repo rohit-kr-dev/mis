@@ -35,9 +35,9 @@ export default function Header() {
   }, []);
   
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
-      <div className="px-8 py-4">
-        <div className="flex items-center justify-between">
+    <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10" suppressHydrationWarning>
+      <div className="px-8 py-4" suppressHydrationWarning>
+        <div className="flex items-center justify-between" suppressHydrationWarning>
           {/* Left: Current Page Title */}
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{currentPage}</h1>
@@ -56,8 +56,8 @@ export default function Header() {
             </button>
 
             {/* User Profile */}
-            <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
-              <div className="text-right">
+            <div className="flex items-center gap-3 pl-4 border-l border-gray-200" suppressHydrationWarning>
+              <div className="text-right" suppressHydrationWarning>
                 <p className="text-sm font-medium text-gray-900">Admin User</p>
                 <p className="text-xs text-gray-500">Administrator</p>
               </div>

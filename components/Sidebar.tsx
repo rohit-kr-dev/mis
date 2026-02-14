@@ -21,8 +21,8 @@ export default function Sidebar() {
   const isActive = (path: string) => pathname === path;
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-gray-900 text-white overflow-y-auto">
-      <div className="p-6">
+    <aside className="fixed left-0 top-0 h-screen w-64 bg-gray-900 text-white overflow-y-auto" suppressHydrationWarning>
+      <div className="p-6" suppressHydrationWarning>
         <h1 className="text-2xl font-bold mb-8">Material MIS</h1>
         <nav>
           <ul className="space-y-2">
