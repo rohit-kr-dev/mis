@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const firstSheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[firstSheetName];
     
-    // Convert to JSON, skipping the first row (range: 1 means start from row 2)
+    // Convert to JSON, reading all data starting from row 2 (header row is row 1)
     const rawJsonData: any[] = XLSX.utils.sheet_to_json(worksheet, { range: 1, defval: null });
     
     // Excel date conversion function
@@ -73,6 +73,11 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       console.log('Could not fetch existing records, proceeding with full check');
     }
+    
+    // Log data processing info
+    console.log(`Processing Excel file: ${file.name}`);
+    console.log(`Total rows in Excel: ${jsonData.length}`);
+    console.log(`Max existing SL No: ${maxExistingSlNo}`);
     
     // Process data and prepare for Firestore
     const processedData = jsonData.map((row, index) => {
@@ -129,12 +134,12 @@ export async function POST(request: NextRequest) {
     // Sort by SL No to get the latest records
     processedData.sort((a, b) => a.slNo - b.slNo);
     
-    // Get only the last 100 new records (or all new records if less than 100)
+    // Process ALL new records (not just the last 100)
     const newRecords = processedData.filter(record => record.slNo > maxExistingSlNo);
-    const recordsToProcess = newRecords.slice(-100); // Last 100 new records
+    const recordsToProcess = newRecords; // All new records
 
     // Save to Firestore with proper duplicate check
-    const batchSize = 50;
+    const batchSize = 100; // Increased batch size for better performance with large datasets
     let savedCount = 0;
     let duplicateCount = 0;
     let errorCount = 0;
@@ -169,6 +174,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Log final results
+    console.log(`Upload completed for ${file.name}:`);
+    console.log(`- Total Excel rows: ${jsonData.length}`);
+    console.log(`- New records found: ${newRecords.length}`);
+    console.log(`- Records processed: ${recordsToProcess.length}`);
+    console.log(`- Successfully saved: ${savedCount}`);
+    console.log(`- Duplicates skipped: ${duplicateCount}`);
+    console.log(`- Errors: ${errorCount}`);
+    
     return NextResponse.json({ 
       message: `Upload completed successfully`,
       summary: {
@@ -176,7 +190,9 @@ export async function POST(request: NextRequest) {
         saved: savedCount,
         duplicatesSkipped: duplicateCount,
         errors: errorCount,
-        maxExistingSlNo: maxExistingSlNo
+        maxExistingSlNo: maxExistingSlNo,
+        totalExcelRows: jsonData.length,
+        newRecordsFound: newRecords.length
       }
     }, { status: 200 });
     
