@@ -21,9 +21,25 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const workbook = XLSX.read(arrayBuffer, { type: 'array' });
     
-    // Get the first sheet
-    const firstSheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[firstSheetName];
+    // Find the Working sheet - look for "Working" in sheet name (handles "<< Working >>" or "Working")
+    let workingSheetName = workbook.SheetNames.find(name => 
+      name.toLowerCase().includes('working') && !name.toLowerCase().includes('dropdown')
+    ) || workbook.SheetNames[0];
+    
+    // If no working sheet found, try to find by checking for 'Sr. No.' column in first few rows
+    if (!workingSheetName.toLowerCase().includes('working')) {
+      for (const sheetName of workbook.SheetNames) {
+        const testSheet = workbook.Sheets[sheetName];
+        const testData = XLSX.utils.sheet_to_json(testSheet, { defval: null, header: 1 });
+        if (testData.length > 0 && Object.keys(testData[0] || {}).some(k => k.toLowerCase().includes('sr') || k.toLowerCase().includes('no.'))) {
+          workingSheetName = sheetName;
+          break;
+        }
+      }
+    }
+    
+    console.log(`Using sheet: ${workingSheetName}`);
+    const worksheet = workbook.Sheets[workingSheetName];
     
     // Convert to JSON, reading all data starting from row 2 (header row is row 1)
     const rawJsonData: any[] = XLSX.utils.sheet_to_json(worksheet, { range: 1, defval: null });
@@ -91,12 +107,12 @@ export async function POST(request: NextRequest) {
         billMonth: row['Bill Month'] || '',
         period: row['Bill Month'] || '',
         billNo: row['Bill No.'] || '',
-        buyRate: parseFloat(row['Buy Rate']) || 0,
-        qty: parseFloat(row['QTY']) || 0,
-        grade: row['Grade'] || '',
-        itemName: row['Grade'] || '',
-        company: row['Company'] || '',
-        productCategory: row['Product Cat'] || '',
+        buyRate: parseFloat(row['Buy Rate']) || parseFloat(row[' Buy Rate ']) || 0,
+        qty: parseFloat(row['QTY']) || parseFloat(row[' QTY ']) || 0,
+        grade: row['Grade'] || row[' Grade '] || '',
+        itemName: row['Grade'] || row[' Grade '] || '',
+        company: row['Company'] || row[' Company '] || '',
+        productCategory: row['Product Cat'] || row[' Product Cat '] || '',
         type: row['Type'] || '',
         buyingTerms: row['Buying Terms (If Outright with Disc)'] || '',
         dateForCN: typeof row['Date for CN'] === 'string' ? row['Date for CN'] : (row['Date for CN'] instanceof Date ? row['Date for CN'].toISOString() : ''),
@@ -104,26 +120,26 @@ export async function POST(request: NextRequest) {
         ebiStatus: row['EBI'] || 'No',
         pp: parseFloat(row['PP']) || null,
         source: row['Source'] || null,
-        rateAsPerConfirmation: parseFloat(row['Rate, As per Confirmation']) || null,
-        rateAsPerPriceList: parseFloat(row['Rate, As per Price List']) || null,
-        priceType: row['Price Type'] || null,
-        location: row['Location'] || null,
-        mou: parseFloat(row['MOU']) || null,
-        qd: parseFloat(row['QD']) || null,
-        ebiValue: parseFloat(row['EBI']) || null,
-        gsi: parseFloat(row['GSI']) || null,
-        scheme: parseFloat(row['Scheme']) || null,
-        extra: parseFloat(row['Extra']) || null,
-        loading: parseFloat(row['Loading']) || null,
-        tpt: parseFloat(row['TPT']) || null,
-        insurance: parseFloat(row['Insurance']) || null,
-        roundOff: parseFloat(row['Round Off']) || null,
-        commission: parseFloat(row['Commission']) || null,
-        gstCn: parseFloat(row['GST CN']) || null,
-        total: parseFloat(row['Total']) || 0,
-        diff: parseFloat(row['Diff']) || 0,
-        status: row['Status'] || 'Pending',
-        remarks: row['Remarks, if any diff'] || '',
+        rateAsPerConfirmation: parseFloat(row['Rate, As per Confirmation']) || parseFloat(row[' Rate, As per Confirmation ']) || null,
+        rateAsPerPriceList: parseFloat(row['Rate, As per Price List']) || parseFloat(row[' Rate, As per Price List ']) || null,
+        priceType: row['Price Type'] || row[' Price Type '] || null,
+        location: row['Location'] || row[' Location '] || null,
+        mou: parseFloat(row['MOU']) || parseFloat(row[' MOU ']) || null,
+        qd: parseFloat(row['QD']) || parseFloat(row[' QD ']) || null,
+        ebiValue: parseFloat(row['EBI']) || parseFloat(row[' EBI ']) || null,
+        gsi: parseFloat(row['GSI']) || parseFloat(row[' GSI ']) || null,
+        scheme: parseFloat(row['Scheme']) || parseFloat(row[' Scheme ']) || null,
+        extra: parseFloat(row['Extra']) || parseFloat(row[' Extra ']) || null,
+        loading: parseFloat(row['Loading']) || parseFloat(row[' Loading ']) || null,
+        tpt: parseFloat(row['TPT']) || parseFloat(row[' TPT ']) || null,
+        insurance: parseFloat(row['Insurance']) || parseFloat(row[' Insurance ']) || null,
+        roundOff: parseFloat(row['Round Off']) || parseFloat(row[' Round Off ']) || null,
+        commission: parseFloat(row['Commission']) || parseFloat(row[' Commission ']) || null,
+        gstCn: parseFloat(row['GST CN']) || parseFloat(row[' GST CN ']) || null,
+        total: parseFloat(row['Total']) || parseFloat(row[' Total ']) || 0,
+        diff: parseFloat(row['Diff']) || parseFloat(row[' Diff ']) || 0,
+        status: row['Status'] || row[' Status '] || 'Pending',
+        remarks: row['Remarks, if any diff'] || row[' Remarks, if any diff '] || '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -198,7 +214,7 @@ export async function POST(request: NextRequest) {
     // Log final results
     console.log(`Upload completed for ${file.name}:`);
     console.log(`- Total Excel rows: ${jsonData.length}`);
-    console.log(`- New records found: ${newRecords.length}`);
+    console.log(`- New records found: ${newRecordsCount}`);
     console.log(`- Records processed: ${recordsToProcess.length}`);
     console.log(`- Successfully saved: ${savedCount}`);
     console.log(`- Duplicates skipped: ${duplicateCount}`);
