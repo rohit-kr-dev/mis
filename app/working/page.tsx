@@ -395,7 +395,7 @@ export default function Working() {
       } else if (filterPeriod) {
         workingSheetQuery = query(
           collection(db, 'workingSheet'), 
-          where('billMonth', '==', filterPeriod),
+          where('cnMonth', '==', filterPeriod),  // Changed to use cnMonth instead of billMonth
           orderBy('slNo', 'asc')
         );
       } else if (filterBranch) {
@@ -443,7 +443,7 @@ export default function Working() {
           alias: docData.alias || '',
           purchaseDate: convertTimestampToDateString(docData.purchaseDate),
           billMonth: docData.billMonth || '',
-          period: docData.billMonth || '',
+          period: docData.cnMonth || '',  // Changed to use cnMonth instead of billMonth
           billNo: docData.billNo || '',
           buyRate: docData.buyRate || 0,
           qty: docData.qty || 0,
@@ -486,7 +486,7 @@ export default function Working() {
       // Apply remaining filters in-memory (client-side filtering)
       const filteredData = allData.filter(row => {
         if (filterSupplier && row.supplierName !== filterSupplier) return false;
-        if (filterPeriod && row.billMonth !== filterPeriod) return false;
+        if (filterPeriod && row.period !== filterPeriod) return false;  // Changed to use period (which now uses cnMonth)
         if (filterBranch && row.branch !== filterBranch) return false;
         // If Type 2 is selected, it takes precedence for Domestic/Import values
         if (filterType2) {
@@ -842,7 +842,7 @@ export default function Working() {
         ...formData,
         alias: lookupAlias(formData.supplierName || ''),
         billMonth: formatDateToMonth(formData.purchaseDate || ''),
-        period: formatDateToMonth(formData.purchaseDate || ''),
+        period: formatDateToMonth(formData.dateForCN || ''),  // Changed to use dateForCN (which becomes cnMonth) instead of purchaseDate
         cnMonth: formatDateToMonth(formData.dateForCN || ''),
         purchaseDate: convertToTimestamp(formData.purchaseDate || ''),
         dateForCN: convertToTimestamp(formData.dateForCN || ''),
@@ -922,12 +922,17 @@ export default function Working() {
   const saveEdit = async (id: string) => {
     try {
       const { id: _, createdAt, ...dataToUpdate } = editData as any;
-      await updateDoc(doc(db, 'workingSheet', id), {
+      
+      // Ensure period is updated based on dateForCN (which creates cnMonth)
+      const updatedData = {
         ...dataToUpdate,
+        period: formatDateToMonth(dataToUpdate.dateForCN || ''),  // Update period to match cnMonth
         purchaseDate: convertToTimestamp(dataToUpdate.purchaseDate),
         dateForCN: convertToTimestamp(dataToUpdate.dateForCN),
         updatedAt: new Date().toISOString()
-      });
+      };
+      
+      await updateDoc(doc(db, 'workingSheet', id), updatedData);
       
       // Mark data as stale
       setDataFetched(false);
@@ -1803,6 +1808,7 @@ export default function Working() {
                       <th className="px-2 py-2 border text-xs">Alias</th>
                       <th className="px-2 py-2 border text-xs">Purchase Date</th>
                       <th className="px-2 py-2 border text-xs">Bill Month</th>
+                      <th className="px-2 py-2 border text-xs">CN Month</th>
                       <th className="px-2 py-2 border text-xs">Bill No</th>
                       <th className="px-2 py-2 border text-xs">Buy Rate</th>
                       <th className="px-2 py-2 border text-xs">Qty</th>
@@ -1823,6 +1829,7 @@ export default function Working() {
                         <td className="px-2 py-2 border text-gray-700">{row.alias || ''}</td>
                         <td className="px-2 py-2 border text-gray-700">{row.purchaseDate || ''}</td>
                         <td className="px-2 py-2 border text-gray-700">{row.billMonth || ''}</td>
+                        <td className="px-2 py-2 border text-gray-700">{row.cnMonth || ''}</td>
                         <td className="px-2 py-2 border text-gray-700">{row.billNo || ''}</td>
                         <td className="px-2 py-2 border text-right text-gray-700">{formatCurrency(row.buyRate || 0)}</td>
                         <td className="px-2 py-2 border text-right text-gray-700">{row.qty || 0}</td>

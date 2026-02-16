@@ -21,9 +21,11 @@ async function directDatabaseCheck() {
     const suppliersSnapshot = await db.collection('suppliers').get();
     console.log(`Total suppliers: ${suppliersSnapshot.size}`);
     
-    suppliersSnapshot.forEach((doc, index) => {
+    let supplierIndex = 0;
+    suppliersSnapshot.forEach((doc) => {
       const data = doc.data();
-      console.log(`  ${index + 1}. ${data.supplierName || 'No name'} (${data.alias || 'No alias'})`);
+      supplierIndex++;
+      console.log(`  ${supplierIndex}. ${data.supplierName || 'No name'} (${data.alias || 'No alias'})`);
       if (data.supplierName && data.supplierName.includes('ALPHA')) {
         console.log(`     ⚠️  FOUND ALPHA SUPPLIER: ${data.supplierName}`);
       }
@@ -35,6 +37,9 @@ async function directDatabaseCheck() {
     console.log(`Total transactions: ${workingSheetSnapshot.size}`);
     
     const supplierNames = new Set();
+    const cnMonths = new Set(); // Track CN months specifically
+    const billMonths = new Set(); // Track bill months for comparison
+    
     workingSheetSnapshot.forEach((doc) => {
       const data = doc.data();
       if (data.supplierName) {
@@ -42,6 +47,16 @@ async function directDatabaseCheck() {
         if (data.supplierName.includes('ALPHA')) {
           console.log(`   ⚠️  FOUND ALPHA TRANSACTION: ${data.transactionId || 'No ID'} - ${data.supplierName}`);
         }
+      }
+      
+      // Track CN months (which you want to focus on)
+      if (data.cnMonth) {
+        cnMonths.add(data.cnMonth);
+      }
+      
+      // Track bill months for comparison
+      if (data.billMonth) {
+        billMonths.add(data.billMonth);
       }
     });
     
@@ -53,6 +68,20 @@ async function directDatabaseCheck() {
           console.log(`  ⚠️  ALPHA SUPPLIER IN TRANSACTIONS: ${name}`);
         }
       });
+    }
+    
+    // Show CN month data analysis (now prioritized)
+    console.log(`\nUnique CN Months in transactions: ${cnMonths.size}`);
+    if (cnMonths.size > 0) {
+      const sortedCnMonths = Array.from(cnMonths).sort();
+      console.log('CN Months found:', sortedCnMonths);
+    }
+    
+    // Show bill month data for comparison
+    console.log(`\nUnique Bill Months in transactions: ${billMonths.size}`);
+    if (billMonths.size > 0) {
+      const sortedBillMonths = Array.from(billMonths).sort();
+      console.log('Bill Months found:', sortedBillMonths);
     }
     
     console.log('\n✅ Direct database check completed!');

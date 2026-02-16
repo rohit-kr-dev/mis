@@ -281,7 +281,7 @@ export default function SupplierWiseMonthly() {
       const constraints = [];
 
       if (selectedMonth) {
-        constraints.push(where('billMonth', '==', selectedMonth));
+        constraints.push(where('cnMonth', '==', selectedMonth));  // Changed to use cnMonth instead of billMonth
       }
       if (selectedSupplier) {
         constraints.push(where('supplierName', '==', selectedSupplier));
@@ -355,7 +355,7 @@ export default function SupplierWiseMonthly() {
     
     workingSheet.forEach(record => {
       const key = [
-        (record.billMonth || '').trim().toLowerCase(),
+        (record.cnMonth || '').trim().toLowerCase(),
         (record.supplierName || '').trim().toLowerCase(),
         (record.company || '').trim().toLowerCase(),
         (record.type || '').trim().toLowerCase()
@@ -371,7 +371,7 @@ export default function SupplierWiseMonthly() {
     const uniqueCombinations = new Set<string>();
     workingSheet.forEach(record => {
       const combo = [
-        (record.billMonth || '').trim().toLowerCase(),
+        (record.cnMonth || '').trim().toLowerCase(),
         (record.supplierName || '').trim().toLowerCase(),
         (record.company || '').trim().toLowerCase()
       ].join('|');
@@ -406,8 +406,8 @@ export default function SupplierWiseMonthly() {
       if (matchesShowOnlyWithValues && matchesType2Filter) {
         // Convert back to original case for display
         const originalMonth = workingSheet.find(r => 
-          r.billMonth?.trim().toLowerCase() === month
-        )?.billMonth || month;
+          r.cnMonth?.trim().toLowerCase() === month
+        )?.cnMonth || month;
         
         const originalSupplier = workingSheet.find(r => 
           r.supplierName?.trim().toLowerCase() === supplier
