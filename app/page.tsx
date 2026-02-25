@@ -46,6 +46,7 @@ async function getLastTransaction(): Promise<WorkingSheetData | null> {
   }
 }
 
+
 async function getStats() {
   try {
     const snapshot = await getDocs(collection(db, 'workingSheet'));

@@ -149,41 +149,8 @@ export default function EnhancedVendorManagement() {
     };
   }, [vendors]);
 
-  // Clean up duplicate entries in periodData
-  useEffect(() => {
-    if (periodData.length > 0) {
-      setPeriodData(prev => {
-        // Create a map to store unique entries by vendorId and period
-        const uniqueMap = new Map<string, PeriodData>();
-        
-        prev.forEach(entry => {
-          const key = `${entry.vendorId}-${entry.period}`;
-          // If there's a duplicate, keep the latest one (or just keep one)
-          uniqueMap.set(key, entry);
-        });
-        
-        return Array.from(uniqueMap.values());
-      });
-    }
-  }, [periodData]); // Run when periodData changes
-
-  // Additional cleanup: Periodically check for duplicates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (periodData.length > 0) {
-        setPeriodData(prev => {
-          const uniqueMap = new Map<string, PeriodData>();
-          prev.forEach(entry => {
-            const key = `${entry.vendorId}-${entry.period}`;
-            uniqueMap.set(key, entry);
-          });
-          return Array.from(uniqueMap.values());
-        });
-      }
-    }, 2000); // Check every 2 seconds
-
-    return () => clearInterval(interval);
-  }, [periodData]);
+  // Note: duplicate detection / cleanup is handled where data is fetched,
+  // to avoid state-update loops that can affect navigation performance.
 
   // Real-time subscription to periods collection
   useEffect(() => {

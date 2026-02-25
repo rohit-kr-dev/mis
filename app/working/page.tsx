@@ -386,16 +386,21 @@ export default function Working() {
       
       // Only apply ONE filter to Firebase query to avoid needing multiple indexes
       // We'll filter the rest in-memory
-      if (filterSupplier) {
-        workingSheetQuery = query(
-          collection(db, 'workingSheet'), 
-          where('supplierName', '==', filterSupplier),
-          orderBy('slNo', 'asc')
-        );
-      } else if (filterPeriod) {
+      // Prioritize the filter that user selected most recently or give preference to certain filters
+      
+      // Check if any filter is applied, and use the one that's selected
+      // Allow user to choose which filter to apply to Firebase by checking in sequence
+      // But we'll improve this to work more intuitively
+      if (filterPeriod) {  // Period filter has priority for your use case
         workingSheetQuery = query(
           collection(db, 'workingSheet'), 
           where('cnMonth', '==', filterPeriod),  // Changed to use cnMonth instead of billMonth
+          orderBy('slNo', 'asc')
+        );
+      } else if (filterSupplier) {
+        workingSheetQuery = query(
+          collection(db, 'workingSheet'), 
+          where('supplierName', '==', filterSupplier),
           orderBy('slNo', 'asc')
         );
       } else if (filterBranch) {
@@ -1546,7 +1551,7 @@ export default function Working() {
             <span className="block mt-1 text-green-700 font-medium">🔥 Uses ONE Firebase filter + client-side filtering to avoid complex indexes!</span>
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 sm:gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 🏢 Supplier {filterSupplier && <span className="text-green-600">✓</span>}
@@ -1673,7 +1678,7 @@ export default function Working() {
           </div>
 
           {/* Status Filter Section */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 sm:gap-4 mb-4 mt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-4 mt-2">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 📦 Type 2 {filterType2 && <span className="text-green-600">✓</span>}
@@ -1704,7 +1709,7 @@ export default function Working() {
               </select>
             </div>
 
-            <div className="md:col-span-3"></div> {/* Empty space to maintain alignment */}
+            <div className="sm:col-span-1 md:col-span-2 lg:col-span-3"></div> {/* Empty space to maintain alignment */}
           </div>
 
 
