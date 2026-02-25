@@ -735,7 +735,7 @@ export default function Working() {
         row.purchaseDate || '',
         row.billMonth || '',
         row.billNo || '',
-        formatCurrency(row.buyRate || 0),
+        formatCurrency(row.buyRate || 0, true),
         row.qty || '',
         row.grade || '',
         row.company || '',
@@ -976,13 +976,15 @@ export default function Working() {
     return { totalTransactions, totalPurchaseAmount, totalOfTotal, totalDiff };
   }, [workingSheetData]);
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number, isBuyRate: boolean = false) => {
     const formatted = new Intl.NumberFormat('en-IN', {
       style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
+      minimumFractionDigits: isBuyRate ? 3 : 0,
+      maximumFractionDigits: isBuyRate ? 3 : 0,
     }).format(amount);
-    console.log(`Formatting ${amount} -> ${formatted}`);
+    if (isBuyRate) {
+      console.log(`Formatting buyRate ${amount} -> ${formatted}`);
+    }
     return formatted;
   };
 
@@ -1191,6 +1193,7 @@ export default function Working() {
               <input
   type="number"
   min="0"
+  step="0.001"
   placeholder="Buy Rate"
   value={formData.buyRate}
   onChange={(e) => {
@@ -1335,7 +1338,7 @@ export default function Working() {
                   <input type="text" placeholder="Bill Month  " value={editData.billMonth || ''} disabled className="px-3 py-2 border rounded-lg bg-gray-100" />
                   <input type="text" placeholder="Bill No" value={editData.billNo} onChange={(e) => handleEditChange('billNo', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
                   
-                  <input type="number" placeholder="Buy Rate" value={editData.buyRate} onChange={(e) => handleEditChange('buyRate', Number(e.target.value))} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+                  <input type="number" step="0.001" placeholder="Buy Rate" value={editData.buyRate} onChange={(e) => handleEditChange('buyRate', Number(e.target.value))} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
                   <input type="number" placeholder="Qty" value={editData.qty} onChange={(e) => handleEditChange('qty', Number(e.target.value))} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
                   
                   <input type="text" placeholder="Grade" value={editData.grade} onChange={(e) => handleEditChange('grade', e.target.value)} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
@@ -1836,7 +1839,7 @@ export default function Working() {
                         <td className="px-2 py-2 border text-gray-700">{row.billMonth || ''}</td>
                         <td className="px-2 py-2 border text-gray-700">{row.cnMonth || ''}</td>
                         <td className="px-2 py-2 border text-gray-700">{row.billNo || ''}</td>
-                        <td className="px-2 py-2 border text-right text-gray-700">{formatCurrency(row.buyRate || 0)}</td>
+                        <td className="px-2 py-2 border text-right text-gray-700">{formatCurrency(row.buyRate || 0, true)}</td>
                         <td className="px-2 py-2 border text-right text-gray-700">{row.qty || 0}</td>
                         <td className="px-2 py-2 border text-gray-700">{row.grade || ''}</td>
                         <td className="px-2 py-2 border text-gray-700">{row.company || ''}</td>
